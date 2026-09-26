@@ -1,0 +1,71 @@
+"use client";
+
+import { useRef } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
+import * as THREE from "three";
+import { useDriveStore, EYE_HEIGHT } from "@/lib/drive-store";
+
+/**
+ * DriverRig — architecture.md §6.
+ *
+ * The camera sits at a fixed local offset approximating a driver's eye
+ * height/position (not the car centre, not a hood dashcam). Dashboard rim,
+ * hood edge and wing mirrors are near-field meshes parented to the same rig
+ * group so they sell the "inside the vehicle" feeling without a full car body.
+ *
+ * The rig reads kinematic state straight from the zustand store inside
+ * useFrame (no React re-renders per frame).
+ */
+export default function DriverRig() {
+  const camera = useThree((s) => s.camera);
+  const group = useRef<THREE.Group>(null);
+
+  useFrame(() => {
+    const { lateralOffset } = useDriveStore.getState();
+    group.current?.position.set(lateralOffset, 0, 0);
+    camera.position.set(lateralOffset, EYE_HEIGHT, 0);
+    camera.lookAt(lateralOffset, 1.05, -40);
+  });
+
+  return (
+    <group ref={group}>
+      {/* dashboard rim */}
+      <mesh position={[0, 0.72, -0.85]}>
+        <boxGeometry args={[2.3, 0.42, 0.55]} />
+        <meshLambertMaterial color="#232023" />
+      </mesh>
+      {/* dashboard top pad */}
+      <mesh position={[0, 0.97, -0.95]}>
+        <boxGeometry args={[2.1, 0.1, 0.5]} />
+        <meshLambertMaterial color="#2e2a2e" />
+      </mesh>
+      {/* hood edge */}
+      <mesh position={[0, 1.02, -2.4]}>
+        <boxGeometry args={[1.9, 0.08, 1.6]} />
+        <meshLambertMaterial color="#4a4a52" />
+      </mesh>
+      {/* wing mirrors */}
+      <mesh position={[-1.15, 1.32, -0.55]}>
+        <boxGeometry args={[0.16, 0.12, 0.06]} />
+        <meshLambertMaterial color="#1c1a1c" />
+      </mesh>
+      <mesh position={[1.15, 1.32, -0.55]}>
+        <boxGeometry args={[0.16, 0.12, 0.06]} />
+        <meshLambertMaterial color="#1c1a1c" />
+      </mesh>
+      <mesh position={[-1.08, 1.18, -0.55]}>
+        <boxGeometry args={[0.04, 0.18, 0.04]} />
+        <meshLambertMaterial color="#1c1a1c" />
+      </mesh>
+      <mesh position={[1.08, 1.18, -0.55]}>
+        <boxGeometry args={[0.04, 0.18, 0.04]} />
+        <meshLambertMaterial color="#1c1a1c" />
+      </mesh>
+      {/* rear-view mirror */}
+      <mesh position={[0, 1.72, -0.7]}>
+        <boxGeometry args={[0.42, 0.14, 0.05]} />
+        <meshLambertMaterial color="#1c1a1c" />
+      </mesh>
+    </group>
+  );
+}
