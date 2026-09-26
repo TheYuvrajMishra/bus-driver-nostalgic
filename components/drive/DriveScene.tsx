@@ -2,11 +2,15 @@
 
 import { Canvas } from "@react-three/fiber";
 import DriverRig from "./DriverRig";
+import DriveController from "./DriveController";
 import StaticRoad from "./StaticRoad";
+import SteeringKeys from "./SteeringKeys";
+import SteeringWheel from "./SteeringWheel";
 
 /**
- * DriveScene — the R3F canvas. Step 2: one static flat-textured road plane,
- * camera fixed at driver-eye height. No chunks, no props yet.
+ * DriveScene — the R3F canvas. Step 3: kinematic steering is live
+ * (keyboard ←/→ or A/D + on-screen wheel). Still the static road — chunks
+ * arrive in step 4.
  *
  * Perf: dpr locked to 1 (Vega 8 floor), no shadows, no postprocessing.
  */
@@ -24,9 +28,12 @@ export default function DriveScene() {
         <directionalLight position={[6, 12, 4]} intensity={1.6} />
         <StaticRoad />
         <DriverRig />
+        <DriveController />
       </Canvas>
+      <SteeringKeys />
+      <SteeringWheel />
       <div className="pointer-events-none absolute left-3 top-3 rounded-md bg-black/50 px-2 py-1 text-[11px] text-amber-200/80">
-        Step 2 — static road, no steering yet
+        Step 3 — ←/→ or A/D to steer, or drag the wheel
       </div>
     </div>
   );
