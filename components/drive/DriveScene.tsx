@@ -3,14 +3,14 @@
 import { Canvas } from "@react-three/fiber";
 import DriverRig from "./DriverRig";
 import DriveController from "./DriveController";
-import StaticRoad from "./StaticRoad";
+import RoadChunkManager from "./RoadChunkManager";
 import SteeringKeys from "./SteeringKeys";
 import SteeringWheel from "./SteeringWheel";
 
 /**
- * DriveScene — the R3F canvas. Step 3: kinematic steering is live
- * (keyboard ←/→ or A/D + on-screen wheel). Still the static road — chunks
- * arrive in step 4.
+ * DriveScene — the R3F canvas. Step 4: the static road is replaced by the
+ * chunked procedural system (spawn/despawn ring buffer, seeded curves).
+ * Still no props.
  *
  * Perf: dpr locked to 1 (Vega 8 floor), no shadows, no postprocessing.
  */
@@ -26,14 +26,14 @@ export default function DriveScene() {
         <color attach="background" args={["#101418"]} />
         <ambientLight intensity={0.75} />
         <directionalLight position={[6, 12, 4]} intensity={1.6} />
-        <StaticRoad />
+        <RoadChunkManager />
         <DriverRig />
         <DriveController />
       </Canvas>
       <SteeringKeys />
       <SteeringWheel />
       <div className="pointer-events-none absolute left-3 top-3 rounded-md bg-black/50 px-2 py-1 text-[11px] text-amber-200/80">
-        Step 3 — ←/→ or A/D to steer, or drag the wheel
+        Step 4 — endless procedural road: ←/→ or A/D, or drag the wheel
       </div>
     </div>
   );
