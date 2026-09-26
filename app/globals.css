@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+/* Warm dark chrome per design.md — the "frame" around the future game canvas.
+   In-world cartoon palette arrives with the 3D steps. */
+:root {
+  --background: #150803;
+  --foreground: #fde9c8;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
