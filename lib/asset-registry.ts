@@ -75,4 +75,10 @@ export const ASSET_REGISTRY: AssetEntry[] = [
     factory: "public/audio/placeholder-sunset-chill.mp3",
     note: "Generated placeholder drone (98 Hz base) for the Sunset Chill rotation.",
   },
+  {
+    name: "horn",
+    category: "audio",
+    factory: "public/audio/horn.mp3",
+    note: "Synthesized dual-tone horn (392 + 494 Hz, 0.9 s) for the horn easter egg (components/drive/HornButton.tsx). Plays on its own audio element, never through the radio player.",
+  },
 ];

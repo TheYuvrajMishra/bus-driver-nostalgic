@@ -20,11 +20,18 @@ export default function DriverRig() {
   const camera = useThree((s) => s.camera);
   const group = useRef<THREE.Group>(null);
 
-  useFrame(() => {
-    const { lateralOffset } = useDriveStore.getState();
+  useFrame((state) => {
+    const { lateralOffset, steeringAngle, speed } = useDriveStore.getState();
+    const t = state.clock.elapsedTime;
+    // Subtle procedural bob/sway — architecture.md §6, design.md §4.
+    // Ambient, not intense: it must never fight the listening experience.
+    const speedK = speed / 14;
+    const bobY = Math.sin(t * 7.0) * 0.018 * speedK;
+    const bobX = Math.sin(t * 4.3) * 0.012 * speedK;
     group.current?.position.set(lateralOffset, 0, 0);
-    camera.position.set(lateralOffset, EYE_HEIGHT, 0);
-    camera.lookAt(lateralOffset, 1.05, -40);
+    camera.position.set(lateralOffset + bobX, EYE_HEIGHT + bobY, 0);
+    camera.lookAt(lateralOffset + bobX * 2, 1.05, -40);
+    camera.rotateZ(-steeringAngle * 0.025); // gentle lean into the turn
   });
 
   return (

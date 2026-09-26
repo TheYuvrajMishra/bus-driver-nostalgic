@@ -34,15 +34,21 @@ export default function PersistentPlayer() {
     }
   }, [isPlaying, pause]);
 
-  // Reflect the element's real state back into the store (e.g. track ended,
-  // or playback was paused by the OS/media keys).
+  // Switch the element's source when the rotation/track changes,
+  // preserving play state across the switch.
   useEffect(() => {
     const el = audioRef.current;
     if (!el) return;
-    const onEnded = () => pause();
-    el.addEventListener("ended", onEnded);
-    return () => el.removeEventListener("ended", onEnded);
-  }, [pause]);
+    const current = el.getAttribute("src");
+    if (current !== track.src) {
+      const wasPlaying = !el.paused;
+      el.src = track.src;
+      el.load();
+      if (wasPlaying || useAudioStore.getState().isPlaying) {
+        el.play().catch(() => pause());
+      }
+    }
+  }, [track, pause]);
 
   // Space = play/pause (prd.md Phase 1). Skip when focus is on an interactive
   // element so we don't double-trigger the player's own button.

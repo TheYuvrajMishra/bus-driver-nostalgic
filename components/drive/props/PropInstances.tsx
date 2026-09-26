@@ -12,6 +12,7 @@ import {
   getTruckGeometry,
   getMilestoneGeometry,
 } from "@/lib/prop-assets";
+import { getToonGradient } from "@/lib/toon-material";
 import { useDriveStore, EYE_HEIGHT } from "@/lib/drive-store";
 
 const MAX_TREE = 40;
@@ -47,12 +48,14 @@ export default function PropInstances() {
   const assets = useMemo(() => {
     const treeGeo = new THREE.PlaneGeometry(3.2, 4.6);
     treeGeo.translate(0, 2.3, 0); // base at ground
-    const treeMat = new THREE.MeshLambertMaterial({
+    const gradientMap = getToonGradient();
+    const treeMat = new THREE.MeshToonMaterial({
       map: getTreeTexture() ?? undefined,
       alphaTest: 0.45,
       side: THREE.DoubleSide,
+      gradientMap,
     });
-    const propMat = new THREE.MeshLambertMaterial({ vertexColors: true });
+    const propMat = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap });
     const shadowGeo = new THREE.PlaneGeometry(1, 1);
     const shadowMat = new THREE.MeshBasicMaterial({
       map: getBlobShadowTexture() ?? undefined,

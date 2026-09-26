@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { ROAD_TILE_LENGTH } from "./road-constants";
+import { getToonGradient } from "./toon-material";
 
 const TEX_W = 128;
 const TEX_H = 256;
@@ -12,7 +13,7 @@ const TEX_H = 256;
  * `document` (R3F scene children only render in the browser).
  */
 let texture: THREE.CanvasTexture | null = null;
-let material: THREE.MeshLambertMaterial | null = null;
+let material: THREE.MeshToonMaterial | null = null;
 
 function makeRoadTexture(): THREE.CanvasTexture {
   const c = document.createElement("canvas");
@@ -52,13 +53,14 @@ function makeRoadTexture(): THREE.CanvasTexture {
   return tex;
 }
 
-export function getRoadMaterial(): THREE.MeshLambertMaterial {
+export function getRoadMaterial(): THREE.MeshToonMaterial {
   if (!material) {
     const map = typeof document !== "undefined" ? makeRoadTexture() : null;
     texture = map;
-    material = new THREE.MeshLambertMaterial({
+    material = new THREE.MeshToonMaterial({
       map: map ?? undefined,
       vertexColors: true,
+      gradientMap: getToonGradient(),
     });
   }
   return material;
