@@ -4,6 +4,7 @@ import { Canvas } from "@react-three/fiber";
 import DriverRig from "./DriverRig";
 import DriveController from "./DriveController";
 import RoadChunkManager from "./RoadChunkManager";
+import PropInstances from "./props/PropInstances";
 import SteeringKeys from "./SteeringKeys";
 import SteeringWheel from "./SteeringWheel";
 
@@ -27,13 +28,14 @@ export default function DriveScene() {
         <ambientLight intensity={0.75} />
         <directionalLight position={[6, 12, 4]} intensity={1.6} />
         <RoadChunkManager />
+        <PropInstances />
         <DriverRig />
         <DriveController />
       </Canvas>
       <SteeringKeys />
       <SteeringWheel />
       <div className="pointer-events-none absolute left-3 top-3 rounded-md bg-black/50 px-2 py-1 text-[11px] text-amber-200/80">
-        Step 4 — endless procedural road: ←/→ or A/D, or drag the wheel
+        Step 5 — instanced props: ←/→ or A/D, or drag the wheel
       </div>
     </div>
   );

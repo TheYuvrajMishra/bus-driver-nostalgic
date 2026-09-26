@@ -10,6 +10,8 @@ import {
   rotY,
   evictChunkGeometry,
 } from "@/lib/road-generator";
+import { driveWorld } from "@/lib/drive-world";
+import { evictProps } from "@/lib/prop-placer";
 import RoadChunk from "./RoadChunk";
 
 const CHUNKS_BEHIND = 1;
@@ -95,7 +97,12 @@ export default function RoadChunkManager() {
       liveRef.current = next;
       setLive(next);
       evictChunkGeometry(new Set(next));
+      evictProps(new Set(next));
     }
+
+    // Publish the live world for PropInstances (module-level, no re-render).
+    driveWorld.live = liveRef.current;
+    driveWorld.cur = cur;
 
     // Place every live chunk in car-space.
     for (const n of liveRef.current) {
@@ -103,8 +110,10 @@ export default function RoadChunkManager() {
       if (!g) continue;
       const [qx, qz, qh] = posAt(n);
       const [cx, cz] = rotY(qx - pdx, qz - pdz, hd);
+      const ry = hd - qh;
       g.position.set(cx, 0, cz);
-      g.rotation.y = hd - qh;
+      g.rotation.y = ry;
+      driveWorld.transforms.set(n, { px: cx, pz: cz, ry });
     }
   });
 
