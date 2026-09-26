@@ -94,8 +94,8 @@ function buildChunkGeometry(n: number): THREE.BufferGeometry {
   const colors: number[] = [];
   const indices: number[] = [];
 
-  const asphalt: [number, number, number] = [0.24, 0.24, 0.25];
-  const edge: [number, number, number] = [0.12, 0.12, 0.13];
+  const asphalt: [number, number, number] = [0.95, 0.95, 0.97];
+  const edge: [number, number, number] = [0.5, 0.5, 0.53];
 
   let x = 0;
   let z = 0;

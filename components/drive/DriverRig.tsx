@@ -68,10 +68,19 @@ export default function DriverRig() {
         <boxGeometry args={[0.04, 0.18, 0.04]} />
         <meshLambertMaterial color="#1c1a1c" />
       </mesh>
-      {/* rear-view mirror */}
-      <mesh position={[0, 1.72, -0.7]}>
-        <boxGeometry args={[0.42, 0.14, 0.05]} />
-        <meshLambertMaterial color="#1c1a1c" />
+      {/* rear-view mirror — sits near the top edge of the windshield:
+          dark frame + blue glass so it reads as a mirror, not a black bar */}
+      <mesh position={[0, 1.82, -0.735]}>
+        <boxGeometry args={[0.4, 0.15, 0.03]} />
+        <meshLambertMaterial color="#2e2e34" />
+      </mesh>
+      <mesh position={[0, 1.82, -0.726]} rotation={[-0.06, 0, 0]}>
+        <boxGeometry args={[0.36, 0.11, 0.02]} />
+        <meshLambertMaterial
+          color="#222b3a"
+          emissive="#2a3d5c"
+          emissiveIntensity={0.55}
+        />
       </mesh>
     </group>
   );
