@@ -207,7 +207,7 @@ export default function CockpitOverlay() {
               />
             </div>
 
-            {/* 4. Interactive 3D Perspective Steering Wheel */}
+            {/* 4. Interactive 3D Volumetric Steering Wheel */}
             {/* 3D Perspective Gimbal Container matching driver POV slant */}
             <div
               className="pointer-events-none absolute"
@@ -217,7 +217,7 @@ export default function CockpitOverlay() {
                 width: "36%",
                 aspectRatio: "1 / 1",
                 transform: "translate(-50%, -50%)",
-                perspective: "700px",
+                perspective: "580px",
                 perspectiveOrigin: "50% 35%",
                 zIndex: 20,
               }}
@@ -227,7 +227,7 @@ export default function CockpitOverlay() {
                 className="pointer-events-auto h-full w-full cursor-grab active:cursor-grabbing will-change-transform"
                 style={{
                   transformStyle: "preserve-3d",
-                  transform: "rotateX(58deg) rotateY(4deg) rotateZ(-3deg)",
+                  transform: "rotateX(62deg) rotateY(4deg) rotateZ(-3deg)",
                   transformOrigin: "50% 50%",
                   touchAction: "none",
                 }}
@@ -236,7 +236,7 @@ export default function CockpitOverlay() {
                 onPointerUp={handlePointerUp}
                 onPointerCancel={handlePointerUp}
               >
-                {/* Rotating Wheel Disk on 3D Plane */}
+                {/* Rotating Volumetric 3D Wheel Disk */}
                 <div
                   ref={wheelRef}
                   className="relative h-full w-full will-change-transform"
@@ -246,17 +246,58 @@ export default function CockpitOverlay() {
                     transform: "rotateZ(0deg)",
                   }}
                 >
+                  {/* Dense Volumetric Extrusion Depth Slices (Creates solid heavy 3D thickness) */}
+                  {[
+                    { z: -56, b: 0.15, s: 0.970 },
+                    { z: -52, b: 0.18, s: 0.973 },
+                    { z: -48, b: 0.22, s: 0.976 },
+                    { z: -44, b: 0.26, s: 0.979 },
+                    { z: -40, b: 0.30, s: 0.982 },
+                    { z: -36, b: 0.35, s: 0.985 },
+                    { z: -32, b: 0.40, s: 0.988 },
+                    { z: -28, b: 0.46, s: 0.990 },
+                    { z: -24, b: 0.52, s: 0.992 },
+                    { z: -20, b: 0.58, s: 0.994 },
+                    { z: -16, b: 0.65, s: 0.996 },
+                    { z: -12, b: 0.72, s: 0.997 },
+                    { z: -8,  b: 0.80, s: 0.998 },
+                    { z: -5,  b: 0.86, s: 0.999 },
+                    { z: -2,  b: 0.92, s: 0.9995 },
+                  ].map((layer, i) => (
+                    <img
+                      key={i}
+                      src="/assets/cockpit_processed/steering_wheel.webp"
+                      alt=""
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-0 h-full w-full object-contain"
+                      style={{
+                        transform: `translateZ(${layer.z}px) scale(${layer.s})`,
+                        filter: `brightness(${layer.b}) contrast(1.2)`,
+                        transformStyle: "preserve-3d",
+                      }}
+                      draggable={false}
+                    />
+                  ))}
+
+                  {/* Top Face of Steering Wheel */}
                   <img
                     src="/assets/cockpit_processed/steering_wheel.webp"
                     alt="Steering Wheel"
-                    className="h-full w-full object-contain pointer-events-none drop-shadow-[0_25px_30px_rgba(0,0,0,0.9)]"
+                    className="relative h-full w-full object-contain pointer-events-none drop-shadow-[0_30px_35px_rgba(0,0,0,0.95)]"
+                    style={{
+                      transform: "translateZ(0px)",
+                      transformStyle: "preserve-3d",
+                    }}
                     draggable={false}
                   />
 
                   {/* Center Horn Clickable Area */}
                   <button
                     type="button"
-                    className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full cursor-pointer opacity-0 hover:opacity-10 active:opacity-25 bg-amber-400"
+                    className="absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full cursor-pointer opacity-0 hover:opacity-10 active:opacity-25 bg-amber-400"
+                    style={{
+                      transform: "translate(-50%, -50%) translateZ(12px)",
+                    }}
                     onClick={playHorn}
                     aria-label="Honk Horn"
                     title="Click to Honk Musical Horn!"
