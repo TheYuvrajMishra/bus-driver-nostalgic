@@ -12,7 +12,7 @@ import { useEffect } from "react";
  * Rendered on detuned square waves through a lowpass for that buzzy
  * pressure-horn bite. Short snippet, horn-style — not the song itself.
  *
- * Button + `H` key. Never routed through the radio player.
+ * Button + `H` key + steering wheel boss click.
  */
 
 // Frequencies (Hz)
@@ -64,7 +64,7 @@ function peep(freq: number, t: number, dur: number) {
   gain.connect(ac.destination);
 }
 
-function honk() {
+export function honk() {
   try {
     if (!ctx) {
       const AC =

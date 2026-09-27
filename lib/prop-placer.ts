@@ -5,7 +5,15 @@ import { ROAD_WIDTH } from "./road-constants";
  * Same chunk index → same prop list, always (seeded PRNG keyed by n).
  */
 
-export type PropType = "tree" | "rock" | "dhaba" | "truck" | "milestone";
+export type PropType =
+  | "grass"
+  | "tree"
+  | "rock"
+  | "dhaba"
+  | "truck"
+  | "milestone"
+  | "pole"
+  | "reflector";
 
 export interface PropItem {
   type: PropType;
@@ -39,49 +47,83 @@ function buildProps(n: number): PropItem[] {
   const rand = mulberry32((Math.imul(n, 2654435761) ^ 0x9e3779b9) >>> 0);
   const items: PropItem[] = [];
 
-  // Low-poly Acacia trees lining both sides of the desert highway
+  // 1. Spiky Desert Grass Tufts (Yucca clumps lining highway edges)
+  const grassCount = 16 + Math.floor(rand() * 8);
+  for (let i = 0; i < grassCount; i++) {
+    const side = rand() < 0.5 ? -1 : 1;
+    items.push({
+      type: "grass",
+      x: side * (ROAD_HALF + 0.4 + rand() * 4.5),
+      z: -rand() * 58,
+      s: 0.8 + rand() * 0.6,
+      ry: rand() * Math.PI * 2,
+      v: Math.floor(rand() * 3),
+    });
+  }
+
+  // 2. Low-poly desert rocks / boulders scattered along shoulders and dunes
+  const rockCount = 8 + Math.floor(rand() * 6);
+  for (let i = 0; i < rockCount; i++) {
+    const side = rand() < 0.5 ? -1 : 1;
+    items.push({
+      type: "rock",
+      x: side * (ROAD_HALF + 1.2 + rand() * 12.0),
+      z: -rand() * 58,
+      s: 0.6 + rand() * 1.1,
+      ry: rand() * Math.PI * 2,
+      v: Math.floor(rand() * 3),
+    });
+  }
+
+  // 3. Low-poly Acacia trees lining both sides of the desert highway
   const treeCount = 8 + Math.floor(rand() * 4);
   for (let i = 0; i < treeCount; i++) {
     const side = i % 2 === 0 ? -1 : 1;
     items.push({
       type: "tree",
-      x: side * (ROAD_HALF + 3.0 + rand() * 9),
-      z: -(i / treeCount) * 60 - rand() * 4,
+      x: side * (ROAD_HALF + 3.2 + rand() * 14.0),
+      z: -(i / treeCount) * 60 - rand() * 3,
       s: 0.85 + rand() * 0.65,
       ry: rand() * Math.PI * 2,
       v: Math.floor(rand() * 2),
     });
   }
 
-  // Low-poly desert rocks / boulders scattered along shoulders
-  const rockCount = 6 + Math.floor(rand() * 4);
-  for (let i = 0; i < rockCount; i++) {
-    const side = rand() < 0.5 ? -1 : 1;
+  // 4. Telegraph & Power Transmission Poles along the left shoulder
+  if (n % 2 === 0) {
     items.push({
-      type: "rock",
-      x: side * (ROAD_HALF + 1.2 + rand() * 5),
-      z: -rand() * 58,
-      s: 0.6 + rand() * 0.7,
-      ry: rand() * Math.PI * 2,
-      v: Math.floor(rand() * 3),
+      type: "pole",
+      x: -(ROAD_HALF + 2.6),
+      z: -15,
+      s: 1.0,
+      ry: 0,
+      v: 0,
     });
-  }
-
-  // Dhaba on one side, some chunks.
-  if (rand() < 0.35) {
-    const side = rand() < 0.5 ? -1 : 1;
     items.push({
-      type: "dhaba",
-      x: side * (ROAD_HALF + 7 + rand() * 4),
-      z: -12 - rand() * 36,
-      s: 0.9 + rand() * 0.3,
-      ry: side > 0 ? -Math.PI / 2 : Math.PI / 2, // face the road
+      type: "pole",
+      x: -(ROAD_HALF + 2.6),
+      z: -45,
+      s: 1.0,
+      ry: 0,
       v: 0,
     });
   }
 
-  // Hand-painted truck parked on the shoulder, some chunks.
-  if (rand() < 0.45) {
+  // 5. Roadside Dhaba / Abandoned Brick House
+  if (rand() < 0.38) {
+    const side = rand() < 0.5 ? -1 : 1;
+    items.push({
+      type: "dhaba",
+      x: side * (ROAD_HALF + 6.5 + rand() * 3.5),
+      z: -14 - rand() * 32,
+      s: 0.95 + rand() * 0.25,
+      ry: side > 0 ? -Math.PI / 2 : Math.PI / 2, // face the highway
+      v: 0,
+    });
+  }
+
+  // 6. Parked Truck on shoulder
+  if (rand() < 0.35) {
     const side = rand() < 0.5 ? -1 : 1;
     items.push({
       type: "truck",
@@ -93,41 +135,50 @@ function buildProps(n: number): PropItem[] {
     });
   }
 
-  // Milestone stone every chunk, alternating sides.
+  // 7. Milestone stone every chunk
   items.push({
     type: "milestone",
     x: (n % 2 === 0 ? 1 : -1) * (ROAD_HALF + 0.8),
-    z: -30,
-    s: 1,
-    ry: 0,
+    z: -28,
+    s: 1.0,
+    ry: n % 2 === 0 ? -Math.PI / 2 : Math.PI / 2,
     v: 0,
   });
+
+  // 8. Roadside Cat-Eye Reflectors along both lane edges
+  for (let zStep = -5; zStep >= -55; zStep -= 10) {
+    items.push({
+      type: "reflector",
+      x: -(ROAD_HALF - 0.15),
+      z: zStep,
+      s: 1.0,
+      ry: 0,
+      v: 0,
+    });
+    items.push({
+      type: "reflector",
+      x: ROAD_HALF - 0.15,
+      z: zStep,
+      s: 1.0,
+      ry: 0,
+      v: 0,
+    });
+  }
 
   return items;
 }
 
 const cache = new Map<number, PropItem[]>();
 
-function fullProps(n: number): PropItem[] {
-  let p = cache.get(n);
-  if (!p) {
-    p = buildProps(n);
-    cache.set(n, p);
+export function propsForChunk(n: number): PropItem[] {
+  let list = cache.get(n);
+  if (!list) {
+    list = buildProps(n);
+    cache.set(n, list);
   }
-  return p;
+  return list;
 }
 
-/**
- * Props for chunk n. Sparse LOD (far-ahead chunks) keeps only the major
- * landmarks — road surface + sparse majors (architecture.md §3).
- */
-export function propsForChunk(n: number, lod: Lod): PropItem[] {
-  const full = fullProps(n);
-  if (lod === "full") return full;
-  return full.filter((p) => p.type !== "tree" && p.type !== "rock");
-}
-
-/** Drop cached prop lists that left the live window. */
 export function evictProps(keep: Set<number>) {
   for (const k of cache.keys()) {
     if (!keep.has(k)) cache.delete(k);

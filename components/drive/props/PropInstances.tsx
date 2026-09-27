@@ -6,45 +6,59 @@ import * as THREE from "three";
 import { driveWorld } from "@/lib/drive-world";
 import { propsForChunk, type PropItem } from "@/lib/prop-placer";
 import {
+  getGrassGeometry,
   getTreeGeometry,
   getRockGeometry,
   getBlobShadowTexture,
   getDhabaGeometry,
   getTruckGeometry,
   getMilestoneGeometry,
+  getPoleGeometry,
+  getReflectorGeometry,
 } from "@/lib/prop-assets";
 import { getToonGradient } from "@/lib/toon-material";
-import { useDriveStore } from "@/lib/drive-store";
 
-const MAX_TREE = 50;
-const MAX_ROCK = 40;
-const MAX_DHABA = 6;
-const MAX_TRUCK = 10;
-const MAX_MILESTONE = 6;
-const MAX_SHADOW = 80;
+const MAX_GRASS = 120;
+const MAX_TREE = 60;
+const MAX_ROCK = 60;
+const MAX_DHABA = 8;
+const MAX_TRUCK = 12;
+const MAX_MILESTONE = 8;
+const MAX_POLE = 16;
+const MAX_REFLECTOR = 60;
+const MAX_SHADOW = 120;
 
 const TREE_TINTS = ["#ffffff", "#e8f4dd", "#d6ecc8"];
 const ROCK_TINTS = ["#ffffff", "#ebd4b8", "#d9be9e"];
 const TRUCK_TINTS = ["#ffffff", "#ffe9c4", "#d9e6ff"];
+const GRASS_TINTS = ["#ffffff", "#e8f0cb", "#dce8b5"];
+
 const SHADOW_SIZE: Record<PropItem["type"], [number, number]> = {
   tree: [4.8, 4.8],
   rock: [2.2, 2.2],
-  dhaba: [7.0, 6.0],
+  dhaba: [7.2, 6.2],
   truck: [4.2, 9.0],
-  milestone: [0, 0], // no shadow
+  milestone: [0, 0],
+  grass: [0.9, 0.9],
+  pole: [1.2, 1.2],
+  reflector: [0, 0],
 };
 
 export default function PropInstances() {
+  const grassRef = useRef<THREE.InstancedMesh>(null);
   const treeRef = useRef<THREE.InstancedMesh>(null);
   const rockRef = useRef<THREE.InstancedMesh>(null);
   const dhabaRef = useRef<THREE.InstancedMesh>(null);
   const truckRef = useRef<THREE.InstancedMesh>(null);
   const milestoneRef = useRef<THREE.InstancedMesh>(null);
+  const poleRef = useRef<THREE.InstancedMesh>(null);
+  const reflectorRef = useRef<THREE.InstancedMesh>(null);
   const shadowRef = useRef<THREE.InstancedMesh>(null);
 
   const assets = useMemo(() => {
     const gradientMap = getToonGradient();
     const propMat = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap });
+    const reflectorMat = new THREE.MeshBasicMaterial({ color: "#ff9900" });
     const shadowGeo = new THREE.PlaneGeometry(1, 1);
     const shadowMat = new THREE.MeshBasicMaterial({
       map: getBlobShadowTexture() ?? undefined,
@@ -52,12 +66,16 @@ export default function PropInstances() {
       depthWrite: false,
     });
     return {
+      grassGeo: getGrassGeometry(),
       treeGeo: getTreeGeometry(),
       rockGeo: getRockGeometry(),
       dhabaGeo: getDhabaGeometry(),
       truckGeo: getTruckGeometry(),
       milestoneGeo: getMilestoneGeometry(),
+      poleGeo: getPoleGeometry(),
+      reflectorGeo: getReflectorGeometry(),
       propMat,
+      reflectorMat,
       shadowGeo,
       shadowMat,
     };
@@ -78,17 +96,26 @@ export default function PropInstances() {
   );
 
   useFrame(() => {
+    const grass = grassRef.current;
     const tree = treeRef.current;
     const rock = rockRef.current;
     const dhaba = dhabaRef.current;
     const truck = truckRef.current;
     const milestone = milestoneRef.current;
+    const pole = poleRef.current;
+    const reflector = reflectorRef.current;
     const shadow = shadowRef.current;
-    if (!tree || !rock || !dhaba || !truck || !milestone || !shadow) return;
+
+    if (!grass || !tree || !rock || !dhaba || !truck || !milestone || !pole || !reflector || !shadow) {
+      return;
+    }
     const { m, q, e, v, s, c } = scratch;
 
     if (!tinted.current) {
       tinted.current = true;
+      for (let i = 0; i < MAX_GRASS; i++) {
+        grass.setColorAt(i, c.set(GRASS_TINTS[i % GRASS_TINTS.length]));
+      }
       for (let i = 0; i < MAX_TREE; i++) {
         tree.setColorAt(i, c.set(TREE_TINTS[i % TREE_TINTS.length]));
       }
@@ -98,16 +125,20 @@ export default function PropInstances() {
       for (let i = 0; i < MAX_TRUCK; i++) {
         truck.setColorAt(i, c.set(TRUCK_TINTS[i % TRUCK_TINTS.length]));
       }
+      if (grass.instanceColor) grass.instanceColor.needsUpdate = true;
       if (tree.instanceColor) tree.instanceColor.needsUpdate = true;
       if (rock.instanceColor) rock.instanceColor.needsUpdate = true;
       if (truck.instanceColor) truck.instanceColor.needsUpdate = true;
     }
 
+    let gi = 0;
     let ti = 0;
     let ri = 0;
     let di = 0;
     let ki = 0;
     let mi = 0;
+    let pi = 0;
+    let rfi = 0;
     let si = 0;
 
     const place = (
@@ -121,7 +152,7 @@ export default function PropInstances() {
       yaw: number,
       sc: number,
       y = 0
-    ): [number, number] => {
+    ) => {
       const cos = Math.cos(cry);
       const sin = Math.sin(cry);
       const wx = cx + px * cos + pz * sin;
@@ -132,7 +163,6 @@ export default function PropInstances() {
       s.set(sc, sc, sc);
       m.compose(v, q, s);
       mesh.setMatrixAt(i, m);
-      return [wx, wz];
     };
 
     const placeShadow = (
@@ -158,15 +188,22 @@ export default function PropInstances() {
     for (const n of driveWorld.live) {
       const T = driveWorld.transforms.get(n);
       if (!T) continue;
-      const lod = n - driveWorld.cur <= 1 ? "full" : "sparse";
-      for (const p of propsForChunk(n, lod)) {
-        if (p.type === "tree" && ti < MAX_TREE) {
+      for (const p of propsForChunk(n)) {
+        if (p.type === "grass" && gi < MAX_GRASS) {
+          place(grass, gi++, T.px, T.pz, T.ry, p.x, p.z, p.ry, p.s, 0);
+          const [sw, sd] = SHADOW_SIZE.grass;
+          placeShadow(T.px, T.pz, T.ry, p.x, p.z, sw * p.s, sd * p.s);
+        } else if (p.type === "tree" && ti < MAX_TREE) {
           place(tree, ti++, T.px, T.pz, T.ry, p.x, p.z, p.ry, p.s, 0);
           const [sw, sd] = SHADOW_SIZE.tree;
           placeShadow(T.px, T.pz, T.ry, p.x, p.z, sw * p.s, sd * p.s);
         } else if (p.type === "rock" && ri < MAX_ROCK) {
           place(rock, ri++, T.px, T.pz, T.ry, p.x, p.z, p.ry, p.s, 0);
           const [sw, sd] = SHADOW_SIZE.rock;
+          placeShadow(T.px, T.pz, T.ry, p.x, p.z, sw * p.s, sd * p.s);
+        } else if (p.type === "pole" && pi < MAX_POLE) {
+          place(pole, pi++, T.px, T.pz, T.ry, p.x, p.z, p.ry, p.s, 0);
+          const [sw, sd] = SHADOW_SIZE.pole;
           placeShadow(T.px, T.pz, T.ry, p.x, p.z, sw * p.s, sd * p.s);
         } else if (p.type === "dhaba" && di < MAX_DHABA) {
           place(dhaba, di++, T.px, T.pz, T.ry, p.x, p.z, p.ry, p.s, 0);
@@ -178,17 +215,23 @@ export default function PropInstances() {
           placeShadow(T.px, T.pz, T.ry, p.x, p.z, sw * p.s, sd * p.s);
         } else if (p.type === "milestone" && mi < MAX_MILESTONE) {
           place(milestone, mi++, T.px, T.pz, T.ry, p.x, p.z, p.ry, p.s, 0);
+        } else if (p.type === "reflector" && rfi < MAX_REFLECTOR) {
+          place(reflector, rfi++, T.px, T.pz, T.ry, p.x, p.z, p.ry, p.s, 0);
         }
       }
     }
 
+    grass.count = gi;
     tree.count = ti;
     rock.count = ri;
+    pole.count = pi;
     dhaba.count = di;
     truck.count = ki;
     milestone.count = mi;
+    reflector.count = rfi;
     shadow.count = si;
-    for (const mesh of [tree, rock, dhaba, truck, milestone, shadow]) {
+
+    for (const mesh of [grass, tree, rock, pole, dhaba, truck, milestone, reflector, shadow]) {
       mesh.instanceMatrix.needsUpdate = true;
     }
   });
@@ -203,11 +246,14 @@ export default function PropInstances() {
 
   return (
     <group>
+      <instancedMesh args={[assets.grassGeo, assets.propMat, MAX_GRASS]} {...dynamic(grassRef)} />
       <instancedMesh args={[assets.treeGeo, assets.propMat, MAX_TREE]} {...dynamic(treeRef)} />
       <instancedMesh args={[assets.rockGeo, assets.propMat, MAX_ROCK]} {...dynamic(rockRef)} />
+      <instancedMesh args={[assets.poleGeo, assets.propMat, MAX_POLE]} {...dynamic(poleRef)} />
       <instancedMesh args={[assets.dhabaGeo, assets.propMat, MAX_DHABA]} {...dynamic(dhabaRef)} />
       <instancedMesh args={[assets.truckGeo, assets.propMat, MAX_TRUCK]} {...dynamic(truckRef)} />
       <instancedMesh args={[assets.milestoneGeo, assets.propMat, MAX_MILESTONE]} {...dynamic(milestoneRef)} />
+      <instancedMesh args={[assets.reflectorGeo, assets.reflectorMat, MAX_REFLECTOR]} {...dynamic(reflectorRef)} />
       <instancedMesh args={[assets.shadowGeo, assets.shadowMat, MAX_SHADOW]} {...dynamic(shadowRef)} />
     </group>
   );
