@@ -86,3 +86,26 @@ export function getTerrainMaterial(): THREE.MeshLambertMaterial {
   return terrainMaterial;
 }
 
+let guardrailMaterial: THREE.MeshLambertMaterial | null = null;
+
+export function getGuardrailMaterial(): THREE.MeshLambertMaterial {
+  if (!guardrailMaterial) {
+    guardrailMaterial = new THREE.MeshLambertMaterial({
+      vertexColors: true,
+      flatShading: true,
+    });
+  }
+  return guardrailMaterial;
+}
+
+let wireMaterial: THREE.MeshBasicMaterial | null = null;
+
+export function getWireMaterial(): THREE.MeshBasicMaterial {
+  if (!wireMaterial) {
+    wireMaterial = new THREE.MeshBasicMaterial({
+      color: "#181b1e",
+    });
+  }
+  return wireMaterial;
+}
+

@@ -28,11 +28,27 @@ function SceneLighting() {
     <>
       <color attach="background" args={[L.skyHorizon]} />
       <fog attach="fog" args={[L.fogColor, L.fogNear, L.fogFar]} />
-      <ambientLight color={L.ambientColor} intensity={L.ambientIntensity} />
+      <ambientLight color={L.ambientColor} intensity={L.ambientIntensity * 0.7} />
+      
+      {/* 1. Primary Warm Directional Sunlight */}
       <directionalLight
         color={L.sunColor}
         intensity={L.sunIntensity}
         position={L.sunPosition}
+      />
+
+      {/* 2. Secondary Saturated Azure Sky Bounce Directional Light (illuminates opposing rock facets) */}
+      <directionalLight
+        color={timeOfDay === "morning" ? "#7ac0ff" : "#8a9ab0"}
+        intensity={timeOfDay === "morning" ? 1.4 : 0.6}
+        position={[35, 30, -40]}
+      />
+
+      {/* 3. Zenith Daylight Downward Fill for crisp facet contrast */}
+      <directionalLight
+        color="#ffffff"
+        intensity={timeOfDay === "morning" ? 0.75 : 0.35}
+        position={[0, 60, 0]}
       />
     </>
   );

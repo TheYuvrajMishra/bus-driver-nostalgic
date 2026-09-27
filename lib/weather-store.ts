@@ -5,6 +5,7 @@ export type TimeOfDay = "morning" | "noon";
 export interface WeatherLighting {
   skyTop: string;
   skyHorizon: string;
+  skyBottom: string;
   skyCloud: string;
   fogColor: string;
   fogNear: number;
@@ -21,21 +22,22 @@ export interface WeatherLighting {
 }
 
 export const TIME_LIGHTING_CONFIGS: Record<TimeOfDay, WeatherLighting> = {
-  // 1. Sunny Morning - Crisp Natural White Sunlight & Azure Blue Sky
+  // 1. Bright Sunny Day - Saturated Azure Sky, Crisp Warm Sunlight & Golden Terrain
   morning: {
-    skyTop: "#1e6bb8",
-    skyHorizon: "#90c8f0",
+    skyTop: "#0b66d6",
+    skyHorizon: "#6cb9ff",
+    skyBottom: "#8ec4fa", // Below horizon sky continuation
     skyCloud: "#ffffff",
-    fogColor: "#8ec4ed",
-    fogNear: 100,
-    fogFar: 550,
-    ambientColor: "#ffffff", // Pure natural white light
-    ambientIntensity: 1.05,
-    sunColor: "#ffffff", // Pure white daylight sun
-    sunIntensity: 2.3,
-    sunPosition: [12, 16, -10],
-    cloudColor: "#edf3f8",
-    groundTint: "#baa37f",
+    fogColor: "#6cb9ff",
+    fogNear: 240,
+    fogFar: 920,
+    ambientColor: "#8ec4fa", // Bright blue sky ambient bounce
+    ambientIntensity: 1.35,
+    sunColor: "#fffbf0", // Warm crisp sunlight
+    sunIntensity: 3.2,
+    sunPosition: [-32, 48, 14],
+    cloudColor: "#ffffff",
+    groundTint: "#e09848",
     isRain: false,
     isNight: false,
   },
@@ -43,8 +45,9 @@ export const TIME_LIGHTING_CONFIGS: Record<TimeOfDay, WeatherLighting> = {
   noon: {
     skyTop: "#1a212b",
     skyHorizon: "#48525e",
+    skyBottom: "#38404a",
     skyCloud: "#2b3440",
-    fogColor: "#3e4752",
+    fogColor: "#48525e",
     fogNear: 55,
     fogFar: 380,
     ambientColor: "#ccd5de", // Cool grey overcast
@@ -59,35 +62,38 @@ export const TIME_LIGHTING_CONFIGS: Record<TimeOfDay, WeatherLighting> = {
   },
 };
 
-interface WeatherStoreState {
+export interface WeatherStore {
   timeOfDay: TimeOfDay;
-  autoCycle: boolean;
-  rainIntensity: number;
-  headlights: boolean;
-  wipers: boolean;
+  isRaining: boolean;
+  headlightsOn: boolean;
+  wipersOn: boolean;
   setTimeOfDay: (t: TimeOfDay) => void;
-  setAutoCycle: (val: boolean) => void;
-  setHeadlights: (val: boolean) => void;
-  setWipers: (val: boolean) => void;
   toggleHeadlights: () => void;
   toggleWipers: () => void;
+  cycleTimeOfDay: () => void;
 }
 
-export const useWeatherStore = create<WeatherStoreState>((set) => ({
-  timeOfDay: "morning", // Default to Sunny Morning
-  autoCycle: false,
-  rainIntensity: 0,
-  headlights: false,
-  wipers: false,
+const ORDER: TimeOfDay[] = ["morning", "noon"];
+
+export const useWeatherStore = create<WeatherStore>((set) => ({
+  timeOfDay: "morning",
+  isRaining: false,
+  headlightsOn: false,
+  wipersOn: false,
   setTimeOfDay: (timeOfDay) =>
     set({
       timeOfDay,
-      rainIntensity: timeOfDay === "noon" ? 0.9 : 0,
-      wipers: timeOfDay === "noon",
+      isRaining: TIME_LIGHTING_CONFIGS[timeOfDay].isRain,
     }),
-  setAutoCycle: (autoCycle) => set({ autoCycle }),
-  setHeadlights: (headlights) => set({ headlights }),
-  setWipers: (wipers) => set({ wipers }),
-  toggleHeadlights: () => set((s) => ({ headlights: !s.headlights })),
-  toggleWipers: () => set((s) => ({ wipers: !s.wipers })),
+  toggleHeadlights: () => set((s) => ({ headlightsOn: !s.headlightsOn })),
+  toggleWipers: () => set((s) => ({ wipersOn: !s.wipersOn })),
+  cycleTimeOfDay: () =>
+    set((s) => {
+      const idx = ORDER.indexOf(s.timeOfDay);
+      const next = ORDER[(idx + 1) % ORDER.length];
+      return {
+        timeOfDay: next,
+        isRaining: TIME_LIGHTING_CONFIGS[next].isRain,
+      };
+    }),
 }));

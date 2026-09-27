@@ -3,14 +3,15 @@ import { CHUNK_LENGTH } from "./drive-store";
 import { ROAD_WIDTH, ROAD_TILE_LENGTH, CHUNK_SECTIONS } from "./road-constants";
 
 /**
- * Seeded procedural road & terrain generation.
+ * Seeded procedural road & rocky terrain generation.
  *
  * Provides:
  * 1. Continuous procedural uphill/downhill elevation & slope for the highway.
- * 2. 2D Simplex Noise for natural desert dunes, rolling hills, and valleys.
- * 3. Seamless terrain generation that blends right up to the road shoulder,
- *    leaving the asphalt clear with zero clipping or floating.
- * 4. Ground height querying for exact prop & shadow placement on slopes.
+ * 2. Asymmetric low-poly rocky terrain:
+ *    - Left side: prominent tiered rocky hills & bluffs in warm tan/orange tones with visible faceted rock detail close to the road.
+ *    - Right side: warm rolling savanna plains with rocky knolls and plateaus.
+ * 3. Seamless terrain blending right up to the road shoulder.
+ * 4. Ground height querying for exact prop, tree, and guardrail placement.
  */
 
 // -----------------------------------------------------------------------------
@@ -103,15 +104,24 @@ export function simplex2D(xin: number, yin: number): number {
   return 70.0 * (n0 + n1 + n2);
 }
 
-/** Multi-octave natural terrain noise for rolling desert dunes and hills. */
-export function sampleNaturalTerrainNoise(wx: number, wz: number): number {
-  // Octave 1: Vast rolling desert dunes & mountain ridges (scale ~240m, amp 16m)
-  const n1 = simplex2D(wx * 0.0042, wz * 0.0042) * 15.0;
-  // Octave 2: Secondary hills & road cuts (scale ~95m, amp 6.5m)
-  const n2 = simplex2D(wx * 0.0105 + 1.7, wz * 0.0105 + 3.2) * 6.0;
-  // Octave 3: Knoll & gully undulations (scale ~38m, amp 2.2m)
-  const n3 = simplex2D(wx * 0.026 - 2.1, wz * 0.026 + 0.9) * 2.0;
+/** Multi-octave faceted rocky terrain noise for layered hills & cliffs. */
+export function sampleRockyHillNoise(wx: number, wz: number): number {
+  // Octave 1: Major rocky hill massifs (scale ~180m, amp 16m)
+  const n1 = simplex2D(wx * 0.0055, wz * 0.0055) * 15.0;
+  // Octave 2: Rocky ridges & escarpments (scale ~75m, amp 7m)
+  const n2 = simplex2D(wx * 0.0135 + 2.4, wz * 0.0135 + 1.1) * 6.5;
+  // Octave 3: Faceted rock strata & terraces (quantized stepped look)
+  const raw3 = simplex2D(wx * 0.032 - 1.5, wz * 0.032 + 3.8);
+  const n3 = (Math.floor(raw3 * 3.0) / 3.0) * 3.2;
 
+  return n1 + n2 + n3;
+}
+
+/** Rolling savanna plains noise for the right side of the highway. */
+export function sampleSavannaNoise(wx: number, wz: number): number {
+  const n1 = simplex2D(wx * 0.0042, wz * 0.0042) * 8.5;
+  const n2 = simplex2D(wx * 0.011 + 3.1, wz * 0.011 + 2.4) * 3.8;
+  const n3 = simplex2D(wx * 0.028 - 0.8, wz * 0.028 + 1.7) * 1.5;
   return n1 + n2 + n3;
 }
 
@@ -124,15 +134,10 @@ export function sampleNaturalTerrainNoise(wx: number, wz: number): number {
  * Smooth multi-frequency sine series — O(1), continuous derivative, no seams.
  */
 export function roadElevationAtDistance(d: number): number {
-  // Long rolling mountain passes (wavelength ~340m, amp 11m)
   const e1 = Math.sin(d * 0.0185) * 11.0;
-  // Medium hill crests and dips (wavelength ~150m, amp 5m)
   const e2 = Math.sin(d * 0.042 + 1.2) * 4.6;
-  // Gentle micro undulations (wavelength ~80m, amp 1.6m)
   const e3 = Math.sin(d * 0.078 + 2.5) * 1.5;
-  // Regional elevation sweep (wavelength ~780m, amp 14m)
   const e4 = Math.sin(d * 0.008 + 0.4) * 13.5;
-
   return e1 + e2 + e3 + e4;
 }
 
@@ -168,10 +173,6 @@ export function rotY(x: number, z: number, a: number): [number, number] {
 
 const endLocalCache = new Map<number, [number, number, number]>();
 
-/**
- * Chunk-local position of chunk n's far end [ex, ey, ez].
- * Computed with the exact same walk the ribbon uses so chunks join with 0 seam.
- */
 export function chunkEndLocal(n: number): [number, number, number] {
   let e = endLocalCache.get(n);
   if (!e) {
@@ -202,14 +203,10 @@ interface WorldAnchor {
 }
 const anchorCache = new Map<number, WorldAnchor>();
 
-/**
- * Deterministic world route position and heading at chunk boundary n.
- */
 export function getChunkWorldAnchor(n: number): WorldAnchor {
   let a = anchorCache.get(n);
   if (a) return a;
 
-  // Compute from 0 if not cached
   let px = 0;
   let pz = 0;
   let h = chunkHeading(0);
@@ -245,13 +242,14 @@ export function getChunkWorldAnchor(n: number): WorldAnchor {
 
 const ROAD_HALF = ROAD_WIDTH / 2; // 4.5m
 const SHOULDER_WIDTH = 6.8; // gravel shoulder width from centerline (m)
-const BLEND_END = 32.0; // distance from centerline where natural terrain is 100% (m)
+const BLEND_END = 30.0; // distance from centerline where natural terrain is 100% (m)
 
 /**
- * Blends the road elevation cleanly with the natural procedural terrain height.
+ * Blends the road elevation cleanly with the layered rocky hills & savanna plains.
  * - Under and at the road: matches road elevation (sub-centimetre asphalt lip).
  * - On shoulder: gentle ditch / gravel verge slope.
- * - Beyond shoulder: smooth Hermite blend into natural rolling desert dunes.
+ * - Left side (u < -6.8m): Sharp rocky cliff / layered hill rise (matching reference).
+ * - Right side (u > 6.8m): Rolling savanna plain with rocky knolls.
  */
 export function getBlendedTerrainHeight(
   worldX: number,
@@ -271,8 +269,22 @@ export function getBlendedTerrainHeight(
 
   const t = Math.min(1.0, (absU - SHOULDER_WIDTH) / (BLEND_END - SHOULDER_WIDTH));
   const smoothT = t * t * (3 - 2 * t);
-  const natH = sampleNaturalTerrainNoise(worldX, worldZ);
   const shoulderH = roadY - 0.16;
+
+  let natH = 0;
+  if (lateralDist < 0) {
+    // Left side: Steep tiered rocky bluffs & hills rising right beside the road
+    const dLeft = Math.abs(lateralDist) - SHOULDER_WIDTH;
+    const bluffBase = Math.pow(Math.min(1.0, dLeft / 26.0), 0.65) * 13.5;
+    const rockyNoise = sampleRockyHillNoise(worldX, worldZ);
+    natH = roadY + bluffBase + rockyNoise * 0.85;
+  } else {
+    // Right side: Warm rolling savanna terrain
+    const dRight = lateralDist - SHOULDER_WIDTH;
+    const savannaBase = Math.pow(Math.min(1.0, dRight / 40.0), 1.1) * 3.5;
+    const savannaNoise = sampleSavannaNoise(worldX, worldZ);
+    natH = roadY + savannaBase + savannaNoise * 0.75;
+  }
 
   return (1 - smoothT) * shoulderH + smoothT * natH;
 }
@@ -342,6 +354,8 @@ export function getTerrainHeightLocal(
 
 const roadGeomCache = new Map<number, THREE.BufferGeometry>();
 const terrainGeomCache = new Map<number, THREE.BufferGeometry>();
+const guardrailGeomCache = new Map<number, THREE.BufferGeometry>();
+const wireGeomCache = new Map<number, THREE.BufferGeometry>();
 
 export function getChunkGeometry(n: number): THREE.BufferGeometry {
   let g = roadGeomCache.get(n);
@@ -361,6 +375,24 @@ export function getChunkTerrainGeometry(n: number): THREE.BufferGeometry {
   return g;
 }
 
+export function getChunkGuardrailGeometry(n: number): THREE.BufferGeometry {
+  let g = guardrailGeomCache.get(n);
+  if (!g) {
+    g = buildChunkGuardrailGeometry(n);
+    guardrailGeomCache.set(n, g);
+  }
+  return g;
+}
+
+export function getChunkWireGeometry(n: number): THREE.BufferGeometry {
+  let g = wireGeomCache.get(n);
+  if (!g) {
+    g = buildChunkWireGeometry(n);
+    wireGeomCache.set(n, g);
+  }
+  return g;
+}
+
 /** Dispose geometries that left the live window. */
 export function evictChunkGeometry(keep: Set<number>) {
   for (const [k, g] of roadGeomCache) {
@@ -373,6 +405,18 @@ export function evictChunkGeometry(keep: Set<number>) {
     if (!keep.has(k)) {
       g.dispose();
       terrainGeomCache.delete(k);
+    }
+  }
+  for (const [k, g] of guardrailGeomCache) {
+    if (!keep.has(k)) {
+      g.dispose();
+      guardrailGeomCache.delete(k);
+    }
+  }
+  for (const [k, g] of wireGeomCache) {
+    if (!keep.has(k)) {
+      g.dispose();
+      wireGeomCache.delete(k);
     }
   }
   for (const k of endLocalCache.keys()) {
@@ -409,7 +453,7 @@ function buildChunkGeometry(n: number): THREE.BufferGeometry {
     const rx = Math.cos(h);
     const rz = Math.sin(h);
     const currentDist = n * CHUNK_LENGTH + dist;
-    const y = roadElevationAtDistance(currentDist) - baseY + 0.04; // 4cm asphalt lip
+    const y = roadElevationAtDistance(currentDist) - baseY + 0.04;
 
     for (let j = 0; j < cols; j++) {
       const o = across[j];
@@ -445,13 +489,13 @@ function buildChunkGeometry(n: number): THREE.BufferGeometry {
   return g;
 }
 
-/** Lateral column offsets for procedural chunk terrain (18 columns, 480m total width). */
+/** Lateral column offsets for procedural chunk terrain (22 columns, dense roadside sampling). */
 const TERRAIN_COLS = [
-  -240, -160, -100, -60, -36, -20, -11, -7.0, -4.5, 4.5, 7.0, 11, 20, 36, 60,
-  100, 160, 240,
+  -260, -180, -120, -80, -50, -32, -20, -14, -9.5, -7.0, -4.5, 4.5, 7.0, 9.5, 14,
+  20, 32, 50, 80, 120, 180, 260,
 ];
 
-/** Build the seamless 3D procedural terrain mesh for chunk n. */
+/** Build the seamless 3D procedural rocky terrain mesh for chunk n. */
 function buildChunkTerrainGeometry(n: number): THREE.BufferGeometry {
   const turn = chunkTurn(n);
   const step = CHUNK_LENGTH / CHUNK_SECTIONS;
@@ -499,27 +543,35 @@ function buildChunkTerrainGeometry(n: number): THREE.BufferGeometry {
       positions.push(vx, localY, vz);
       uvs.push(j / (cols - 1), dist / ROAD_TILE_LENGTH);
 
-      // Vertex color blending based on roadside proximity and dune elevation
       const absU = Math.abs(u);
       if (absU <= 7.0) {
-        // Roadside gravel shoulder
-        colors.push(0.66, 0.59, 0.49);
-      } else {
+        // Roadside warm sand/gravel shoulder
+        colors.push(0.86, 0.67, 0.45); // #dca76e
+      } else if (u < -7.0) {
+        // Left side: Warm tan-to-orange faceted rock cliff & hill palette
         const heightRel = worldHeight - roadY;
-        if (heightRel > 7.0) {
-          // Sunlit dune crest / high ridge
-          colors.push(0.87, 0.81, 0.7);
-        } else if (heightRel < -5.0) {
-          // Deep gully / shaded valley
-          colors.push(0.55, 0.48, 0.39);
+        if (heightRel > 8.0) {
+          // Sunlit rock ledge / ridge crest (bright golden-orange)
+          colors.push(0.96, 0.70, 0.38); // #f5b261
+        } else if (heightRel > 3.0) {
+          // Steep faceted rock face (vibrant tan/terracotta)
+          colors.push(0.88, 0.54, 0.22); // #e08a38
         } else {
-          // Rolling desert sand
-          const factor = (heightRel + 5.0) / 12.0;
-          colors.push(
-            0.55 + factor * 0.32,
-            0.48 + factor * 0.33,
-            0.39 + factor * 0.31
-          );
+          // Crevices & shaded rock base (rich rust/umber)
+          colors.push(0.68, 0.34, 0.12); // #ad571f
+        }
+      } else {
+        // Right side: Golden savanna plain
+        const heightRel = worldHeight - roadY;
+        if (heightRel > 4.5) {
+          // Sunlit savanna knoll
+          colors.push(0.90, 0.73, 0.46); // #e6ba75
+        } else if (heightRel < -2.0) {
+          // Shaded desert dip
+          colors.push(0.72, 0.51, 0.26); // #b88242
+        } else {
+          // Rolling desert sand / savanna grass
+          colors.push(0.85, 0.65, 0.38); // #d9a661
         }
       }
     }
@@ -550,3 +602,261 @@ function buildChunkTerrainGeometry(n: number): THREE.BufferGeometry {
   g.computeVertexNormals();
   return g;
 }
+
+/**
+ * Build seamless, curve-following 3D guardrail geometry along the right shoulder for chunk n.
+ * Follows every turn, crest, and dip with zero gaps between chunks.
+ */
+function buildChunkGuardrailGeometry(n: number): THREE.BufferGeometry {
+  const turn = chunkTurn(n);
+  const step = CHUNK_LENGTH / CHUNK_SECTIONS;
+  const A = getChunkWorldAnchor(n);
+  const baseY = roadElevationAtDistance(n * CHUNK_LENGTH);
+  const railU = ROAD_HALF + 1.25; // 5.75m from centerline
+
+  const positions: number[] = [];
+  const colors: number[] = [];
+  const indices: number[] = [];
+
+  const colTop: [number, number, number] = [0.74, 0.79, 0.84]; // #bdc9d6
+  const colMid: [number, number, number] = [0.46, 0.51, 0.56]; // #75818d
+  const colBot: [number, number, number] = [0.62, 0.67, 0.72]; // #9eaab6
+
+  let x = 0;
+  let z = 0;
+  let h = 0;
+  let dist = 0;
+
+  for (let i = 0; i <= CHUNK_SECTIONS; i++) {
+    const rxLocal = Math.cos(h);
+    const rzLocal = Math.sin(h);
+
+    const worldAngle = A.h + h;
+    const rxWorld = Math.cos(worldAngle);
+    const rzWorld = Math.sin(worldAngle);
+
+    const currentDist = n * CHUNK_LENGTH + dist;
+    const roadY = roadElevationAtDistance(currentDist);
+
+    const [wxCenter, wzCenter] = rotY(x, z, -A.h);
+    const worldCenterX = A.px + wxCenter;
+    const worldCenterZ = A.pz + wzCenter;
+
+    const gx = x + rxLocal * railU;
+    const gz = z + rzLocal * railU;
+
+    const worldX = worldCenterX + rxWorld * railU;
+    const worldZ = worldCenterZ + rzWorld * railU;
+
+    const groundH = getBlendedTerrainHeight(worldX, worldZ, railU, roadY);
+    const gy = groundH - baseY;
+
+    // 0: Top lip (sunlit bevel)
+    positions.push(gx, gy + 0.74, gz);
+    colors.push(...colTop);
+
+    // 1: Center crease (shaded crease indented slightly inward)
+    positions.push(gx - rxLocal * 0.08, gy + 0.58, gz - rzLocal * 0.08);
+    colors.push(...colMid);
+
+    // 2: Bottom lip
+    positions.push(gx, gy + 0.44, gz);
+    colors.push(...colBot);
+
+    if (i < CHUNK_SECTIONS) {
+      x += Math.sin(h) * step;
+      z += -Math.cos(h) * step;
+      h += turn / CHUNK_SECTIONS;
+      dist += step;
+    }
+  }
+
+  // Indices for rail ribbon
+  for (let i = 0; i < CHUNK_SECTIONS; i++) {
+    const i0 = i * 3;
+    const i1 = i0 + 1;
+    const i2 = i0 + 2;
+
+    const n0 = (i + 1) * 3;
+    const n1 = n0 + 1;
+    const n2 = n0 + 2;
+
+    indices.push(i0, n0, i1);
+    indices.push(n0, n1, i1);
+
+    indices.push(i1, n1, i2);
+    indices.push(n1, n2, i2);
+  }
+
+  // Vertical support posts every 2 steps (~3m)
+  const colPost: [number, number, number] = [0.38, 0.42, 0.46]; // #616b75
+  let vertOffset = (CHUNK_SECTIONS + 1) * 3;
+
+  for (let i = 0; i <= CHUNK_SECTIONS; i += 2) {
+    const t = i / CHUNK_SECTIONS;
+    const [lx, lz, lh] = chunkLocalAt(n, t);
+    const rx = Math.cos(lh);
+    const rz = Math.sin(lh);
+
+    const currentDist = n * CHUNK_LENGTH + t * CHUNK_LENGTH;
+    const roadY = roadElevationAtDistance(currentDist);
+
+    const [wxCenter, wzCenter] = rotY(lx, lz, -A.h);
+    const worldX = A.px + wxCenter + Math.cos(A.h + lh) * railU;
+    const worldZ = A.pz + wzCenter + Math.sin(A.h + lh) * railU;
+
+    const groundH = getBlendedTerrainHeight(worldX, worldZ, railU, roadY);
+    const gy = groundH - baseY;
+
+    const px = lx + rx * (railU - 0.04);
+    const pz = lz + rz * (railU - 0.04);
+    const pw = 0.06;
+
+    // Front post face quad
+    positions.push(px - rz * pw, gy, pz + rx * pw);
+    colors.push(...colPost);
+
+    positions.push(px + rz * pw, gy, pz - rx * pw);
+    colors.push(...colPost);
+
+    positions.push(px + rz * pw, gy + 0.74, pz - rx * pw);
+    colors.push(...colPost);
+
+    positions.push(px - rz * pw, gy + 0.74, pz + rx * pw);
+    colors.push(...colPost);
+
+    indices.push(vertOffset, vertOffset + 1, vertOffset + 2);
+    indices.push(vertOffset, vertOffset + 2, vertOffset + 3);
+    vertOffset += 4;
+  }
+
+  // Yellow chevron curve warning sign on post at center of chunk for sharp turns or alternate chunks
+  if (Math.abs(turn) > 0.06 || n % 3 === 0) {
+    const t = 0.5;
+    const [lx, lz, lh] = chunkLocalAt(n, t);
+    const rx = Math.cos(lh);
+    const rz = Math.sin(lh);
+
+    const currentDist = n * CHUNK_LENGTH + t * CHUNK_LENGTH;
+    const roadY = roadElevationAtDistance(currentDist);
+
+    const [wxCenter, wzCenter] = rotY(lx, lz, -A.h);
+    const worldX = A.px + wxCenter + Math.cos(A.h + lh) * railU;
+    const worldZ = A.pz + wzCenter + Math.sin(A.h + lh) * railU;
+
+    const groundH = getBlendedTerrainHeight(worldX, worldZ, railU, roadY);
+    const gy = groundH - baseY;
+
+    const sx = lx + rx * (railU + 0.05);
+    const sz = lz + rz * (railU + 0.05);
+    const sw = 0.55;
+    const colYellow: [number, number, number] = [0.96, 0.68, 0.0];
+
+    positions.push(sx - rz * sw, gy + 0.85, sz + rx * sw);
+    colors.push(...colYellow);
+
+    positions.push(sx + rz * sw, gy + 0.85, sz - rx * sw);
+    colors.push(...colYellow);
+
+    positions.push(sx + rz * sw, gy + 1.85, sz - rx * sw);
+    colors.push(...colYellow);
+
+    positions.push(sx - rz * sw, gy + 1.85, sz + rx * sw);
+    colors.push(...colYellow);
+
+    indices.push(vertOffset, vertOffset + 1, vertOffset + 2);
+    indices.push(vertOffset, vertOffset + 2, vertOffset + 3);
+    vertOffset += 4;
+  }
+
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  g.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+  g.setIndex(indices);
+  g.computeVertexNormals();
+  return g;
+}
+
+/**
+ * Build seamless, continuous 3D wire geometry along the left telephone pole line.
+ * Flows unbroken through all road curves, hills, and dips from chunk to chunk.
+ */
+function buildChunkWireGeometry(n: number): THREE.BufferGeometry {
+  const A = getChunkWorldAnchor(n);
+  const baseY = roadElevationAtDistance(n * CHUNK_LENGTH);
+  const wireU = -(ROAD_HALF + 2.8); // -7.3m from centerline
+
+  const positions: number[] = [];
+  const indices: number[] = [];
+
+  const WIRE_SECTIONS = 30; // High resolution spline curve
+  const rw = 0.02; // ribbon half-width for visibility
+
+  let vertCount = 0;
+
+  for (let i = 0; i <= WIRE_SECTIONS; i++) {
+    const t = i / WIRE_SECTIONS;
+    const distInChunk = t * CHUNK_LENGTH;
+    const [lx, lz, lh] = chunkLocalAt(n, t);
+    const rx = Math.cos(lh);
+    const rz = Math.sin(lh);
+
+    // Catenary sag across 20m pole spans (poles at 10m, 30m, 50m)
+    let spanFrac: number;
+    if (distInChunk < 10) {
+      spanFrac = (distInChunk + 10) / 20.0;
+    } else if (distInChunk < 30) {
+      spanFrac = (distInChunk - 10) / 20.0;
+    } else if (distInChunk < 50) {
+      spanFrac = (distInChunk - 30) / 20.0;
+    } else {
+      spanFrac = (distInChunk - 50) / 20.0;
+    }
+    const sag = -4.0 * 0.45 * spanFrac * (1.0 - spanFrac);
+
+    const currentDist = n * CHUNK_LENGTH + distInChunk;
+    const roadY = roadElevationAtDistance(currentDist);
+
+    const [wxCenter, wzCenter] = rotY(lx, lz, -A.h);
+    const worldX = A.px + wxCenter + Math.cos(A.h + lh) * wireU;
+    const worldZ = A.pz + wzCenter + Math.sin(A.h + lh) * wireU;
+
+    const groundH = getBlendedTerrainHeight(worldX, worldZ, wireU, roadY);
+    const gy = groundH - baseY;
+
+    // 3 Wires matching exact pole insulator positions: Left top (-0.98m, 7.7m), Right top (+0.98m, 7.7m), Center lower (+0.68m, 6.7m)
+    const wireOffsets = [
+      { uOff: -0.98, yOff: 7.7 },
+      { uOff: 0.98, yOff: 7.7 },
+      { uOff: 0.68, yOff: 6.7 },
+    ];
+
+    for (const w of wireOffsets) {
+      const cx = lx + rx * (wireU + w.uOff);
+      const cy = gy + w.yOff + sag;
+      const cz = lz + rz * (wireU + w.uOff);
+
+      // Ribbon cross vertices
+      positions.push(cx - rz * rw, cy, cz + rx * rw);
+      positions.push(cx + rz * rw, cy, cz - rx * rw);
+    }
+  }
+
+  // Connect quad strips for all 3 wires
+  for (let i = 0; i < WIRE_SECTIONS; i++) {
+    for (let w = 0; w < 3; w++) {
+      const baseI = i * 6 + w * 2;
+      const nextI = (i + 1) * 6 + w * 2;
+
+      indices.push(baseI, nextI, baseI + 1);
+      indices.push(nextI, nextI + 1, baseI + 1);
+    }
+  }
+
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  g.setIndex(indices);
+  g.computeVertexNormals();
+  return g;
+}
+
