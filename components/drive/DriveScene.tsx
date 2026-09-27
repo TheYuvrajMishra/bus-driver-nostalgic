@@ -26,7 +26,7 @@ function SceneLighting() {
 
   return (
     <>
-      <color attach="background" args={[L.skyTop]} />
+      <color attach="background" args={[L.skyHorizon]} />
       <fog attach="fog" args={[L.fogColor, L.fogNear, L.fogFar]} />
       <ambientLight color={L.ambientColor} intensity={L.ambientIntensity} />
       <directionalLight
@@ -47,9 +47,7 @@ export default function DriveScene() {
       }
       const setTimeOfDay = useWeatherStore.getState().setTimeOfDay;
       if (e.key === "1") setTimeOfDay("morning");
-      if (e.key === "2") setTimeOfDay("storm");
-      if (e.key === "3") setTimeOfDay("sunset");
-      if (e.key === "4") setTimeOfDay("night");
+      if (e.key === "2") setTimeOfDay("noon");
       if (e.key === "l" || e.key === "L") useWeatherStore.getState().toggleHeadlights();
       if (e.key === "w" || e.key === "W") useWeatherStore.getState().toggleWipers();
     };

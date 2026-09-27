@@ -5,7 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { useWeatherStore, TIME_LIGHTING_CONFIGS } from "@/lib/weather-store";
-import { getSandTexture, xform } from "@/lib/cockpit-assets";
+import { xform } from "@/lib/cockpit-assets";
 import { useDriveStore } from "@/lib/drive-store";
 
 // ----------------------------------------------------
@@ -28,16 +28,18 @@ const SKY_FRAG = /* glsl */ `
   void main() {
     vec3 d = normalize(vDir);
     float h = d.y;
-    vec3 col = mix(uHorizon, uTop, smoothstep(0.01, 0.48, h));
-    col = mix(uHorizon * 0.95, col, smoothstep(-0.08, 0.01, h));
-    
-    // Atmospheric low-poly cloud band
-    float cl = sin(d.x * 6.0 + 1.2) * sin(d.z * 7.5 + 0.3)
-             + 0.5 * sin((d.x + d.z) * 3.8 + 1.8)
-             + 0.25 * sin(d.x * 12.0 - d.z * 10.0);
-    cl = smoothstep(0.18, 0.88, cl) * smoothstep(0.02, 0.45, h);
-    
-    col = mix(col, uCloud, cl * (0.35 + uStorm * 0.4));
+    vec3 col;
+    if (h >= 0.0) {
+      col = mix(uHorizon, uTop, smoothstep(0.0, 0.55, h));
+      // Atmospheric soft cloud wisps in upper sky
+      float cl = sin(d.x * 6.0 + 1.2) * sin(d.z * 7.5 + 0.3)
+               + 0.5 * sin((d.x + d.z) * 3.8 + 1.8);
+      cl = smoothstep(0.25, 0.85, cl) * smoothstep(0.05, 0.5, h);
+      col = mix(col, uCloud, cl * (0.35 + uStorm * 0.4));
+    } else {
+      // Below horizon: seamlessly continue the horizon sky color all the way down
+      col = uHorizon;
+    }
     gl_FragColor = vec4(col, 1.0);
   }
 `;
@@ -171,145 +173,45 @@ function LowPolyStormClouds() {
 }
 
 // ----------------------------------------------------
-// 3. Faceted Low-Poly Natural Mountains & Dunes
+// 3. 3D Volumetric Natural Rain (Scattered across entire 3D atmosphere)
 // ----------------------------------------------------
-function makeFacetedPeak(): THREE.BufferGeometry {
-  let seed = 424242;
-  const rand = () => {
-    seed = (seed * 1664525 + 1013904223) >>> 0;
-    return seed / 0xffffffff;
-  };
-  const jitter = (geo: THREE.BufferGeometry, amt: number) => {
-    const p = geo.getAttribute("position") as THREE.BufferAttribute;
-    for (let i = 0; i < p.count; i++) {
-      if (p.getY(i) > -0.3) {
-        p.setX(i, p.getX(i) + (rand() - 0.5) * amt);
-        p.setZ(i, p.getZ(i) + (rand() - 0.5) * amt);
-        p.setY(i, p.getY(i) + (rand() - 0.5) * amt * 0.7);
-      }
-    }
-    geo.computeVertexNormals();
-    return geo;
-  };
-  const parts = [
-    xform(jitter(new THREE.ConeGeometry(1.0, 1.0, 7, 1), 0.28), 0, 0.5, 0),
-    xform(jitter(new THREE.ConeGeometry(0.75, 0.85, 6, 1), 0.22), 0.95, 0.42, 0.35),
-    xform(jitter(new THREE.ConeGeometry(0.7, 0.7, 6, 1), 0.24), -0.9, 0.35, -0.3),
-    xform(jitter(new THREE.ConeGeometry(0.55, 0.55, 5, 1), 0.2), 0.25, 0.28, 0.75),
-    xform(jitter(new THREE.ConeGeometry(0.6, 0.6, 5, 1), 0.2), -0.35, 0.3, 0.85),
-  ];
-  return mergeGeometries(parts)!;
-}
+const LINE_RAIN_COUNT = 850;
 
-const MOUNTAIN_COUNT = 32;
+function LineRain() {
+  const rainIntensity = useWeatherStore((s) => s.rainIntensity);
+  const isRain = rainIntensity > 0.1;
+  const linesRef = useRef<THREE.LineSegments>(null);
 
-function Mountains() {
-  const meshRef = useRef<THREE.InstancedMesh>(null);
+  // Each rain line has 2 vertices (top & bottom) -> 6 floats per line
+  const { positions, particles } = useMemo(() => {
+    const pos = new Float32Array(LINE_RAIN_COUNT * 6);
+    const parts: { x: number; y: number; z: number; vy: number; vx: number; len: number; phase: number }[] = [];
 
-  const { geometry, placements } = useMemo(() => {
-    let seed = 777001;
+    let seed = 44556;
     const rand = () => {
       seed = (seed * 1664525 + 1013904223) >>> 0;
       return seed / 0xffffffff;
     };
-    const geometry = makeFacetedPeak();
-    const placements: { x: number; z: number; w: number; h: number; ry: number; tint: string }[] = [];
-    
-    // Natural sandstone, earth, and ridge colors (clean, non-orange)
-    const tints = [
-      "#9e9282", // sandstone grey-tan
-      "#8c8072", // earthy ridge
-      "#7d7265", // deep ridge
-      "#b3a798", // light sunlit crest
-      "#a49887", // warm stone
-      "#6e6459", // shadow ridge
-    ];
-    for (let i = 0; i < MOUNTAIN_COUNT; i++) {
-      const t = i / (MOUNTAIN_COUNT - 1);
-      const ang = (t - 0.5) * Math.PI * 1.15;
-      const dist = 260 + rand() * 180;
-      placements.push({
-        x: Math.sin(ang) * dist,
-        z: -Math.cos(ang) * dist,
-        w: 95 + rand() * 115,
-        h: 42 + rand() * 70,
-        ry: rand() * Math.PI * 2,
-        tint: tints[i % tints.length],
-      });
+
+    for (let i = 0; i < LINE_RAIN_COUNT; i++) {
+      // Uniformly scatter across the entire 3D frustum
+      const x = (rand() - 0.5) * 88;
+      const y = rand() * 34 - 1.0; // Random heights so no initial sheet
+      const z = -rand() * 82 + 2.0; // From camera origin out to horizon
+      const vy = 28 + rand() * 22; // Varied terminal velocity
+      const vx = (rand() - 0.5) * 2.8 - 1.2; // Natural drift
+      const len = 0.75 + rand() * 0.95; // Varied streak lengths
+      const phase = rand() * Math.PI * 2;
+      parts.push({ x, y, z, vy, vx, len, phase });
+
+      pos[i * 6 + 0] = x;
+      pos[i * 6 + 1] = y;
+      pos[i * 6 + 2] = z;
+      pos[i * 6 + 3] = x + vx * 0.04;
+      pos[i * 6 + 4] = y - len;
+      pos[i * 6 + 5] = z + 0.12;
     }
-    return { geometry, placements };
-  }, []);
-
-  useLayoutEffect(() => {
-    const mesh = meshRef.current;
-    if (!mesh) return;
-    const m = new THREE.Matrix4();
-    const q = new THREE.Quaternion();
-    const e = new THREE.Euler();
-    const v = new THREE.Vector3();
-    const s = new THREE.Vector3();
-    const c = new THREE.Color();
-
-    placements.forEach((p, i) => {
-      e.set(0, p.ry, 0);
-      q.setFromEuler(e);
-      v.set(p.x, -3, p.z);
-      s.set(p.w, p.h, p.w * 0.75);
-      m.compose(v, q, s);
-      mesh.setMatrixAt(i, m);
-      mesh.setColorAt(i, c.set(p.tint));
-    });
-    mesh.instanceMatrix.needsUpdate = true;
-    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-  }, [placements]);
-
-  return (
-    <instancedMesh
-      ref={meshRef}
-      args={[geometry, undefined, MOUNTAIN_COUNT]}
-      frustumCulled={false}
-    >
-      <meshLambertMaterial color="#ffffff" flatShading />
-    </instancedMesh>
-  );
-}
-
-// ----------------------------------------------------
-// 4. Endless Desert Ground Plane
-// ----------------------------------------------------
-function DesertGround() {
-  const timeOfDay = useWeatherStore((s) => s.timeOfDay);
-  const cfg = TIME_LIGHTING_CONFIGS[timeOfDay];
-  const map = getSandTexture();
-
-  return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.06, -150]}>
-      <planeGeometry args={[1600, 1600]} />
-      <meshLambertMaterial map={map ?? undefined} color={cfg.groundTint} />
-    </mesh>
-  );
-}
-
-// ----------------------------------------------------
-// 5. 3D Rain Particle System (for Storm Mode)
-// ----------------------------------------------------
-const RAIN_COUNT = 1400;
-
-function RainParticles() {
-  const rainIntensity = useWeatherStore((s) => s.rainIntensity);
-  const isRain = rainIntensity > 0.1;
-  const meshRef = useRef<THREE.Points>(null);
-
-  const { positions, velocities } = useMemo(() => {
-    const pos = new Float32Array(RAIN_COUNT * 3);
-    const vel = new Float32Array(RAIN_COUNT);
-    for (let i = 0; i < RAIN_COUNT; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 50; // X
-      pos[i * 3 + 1] = Math.random() * 25 + 0.5; // Y
-      pos[i * 3 + 2] = -Math.random() * 65; // Z
-      vel[i] = 28 + Math.random() * 16;
-    }
-    return { positions: pos, velocities: vel };
+    return { positions: pos, particles: parts };
   }, []);
 
   const geo = useMemo(() => {
@@ -320,47 +222,83 @@ function RainParticles() {
 
   const mat = useMemo(
     () =>
-      new THREE.PointsMaterial({
-        color: "#c0d4ea",
-        size: 0.18,
+      new THREE.LineBasicMaterial({
+        color: "#cfe4fa",
         transparent: true,
-        opacity: 0.65,
+        opacity: 0.42,
         depthWrite: false,
       }),
     []
   );
 
-  useFrame((_, delta) => {
-    if (!isRain || !meshRef.current) return;
+  useFrame((state, delta) => {
+    if (!isRain || !linesRef.current) return;
     const speed = useDriveStore.getState().speed;
-    const posAttr = meshRef.current.geometry.attributes.position as THREE.BufferAttribute;
+    const posAttr = linesRef.current.geometry.attributes.position as THREE.BufferAttribute;
     const arr = posAttr.array as Float32Array;
 
-    for (let i = 0; i < RAIN_COUNT; i++) {
-      arr[i * 3 + 1] -= velocities[i] * delta;
-      arr[i * 3 + 2] += (speed * 1.5 + 8.0) * delta;
+    const speedZ = speed * 1.5 + 5.0;
+    const dt = Math.min(delta, 0.05);
+    const time = state.clock.elapsedTime;
 
-      if (arr[i * 3 + 1] < 0.2 || arr[i * 3 + 2] > 2) {
-        arr[i * 3] = (Math.random() - 0.5) * 50;
-        arr[i * 3 + 1] = 22 + Math.random() * 8;
-        arr[i * 3 + 2] = -60 - Math.random() * 15;
+    let seed = (time * 1000) >>> 0;
+    const rand = () => {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      return seed / 0xffffffff;
+    };
+
+    for (let i = 0; i < LINE_RAIN_COUNT; i++) {
+      const p = particles[i];
+      p.y -= p.vy * dt;
+      p.z += speedZ * dt;
+      p.x += p.vx * dt;
+
+      // Independent continuous respawn anywhere across the 3D volume
+      if (p.y < -2.5) {
+        // Hit ground: respawn up in cloud deck at a completely RANDOM depth
+        p.y = 22 + rand() * 12;
+        p.z = -rand() * 85 + 2.0; // Random depth everywhere!
+        p.x = (rand() - 0.5) * 88;
+        p.vy = 28 + rand() * 22;
+        p.len = 0.75 + rand() * 0.95;
+      } else if (p.z > 2.5) {
+        // Passed behind camera: respawn ahead at a completely RANDOM height
+        p.z = -55 - rand() * 28;
+        p.y = rand() * 30 + 1.0;
+        p.x = (rand() - 0.5) * 88;
+      } else if (Math.abs(p.x) > 46) {
+        p.x = (rand() - 0.5) * 88;
+        p.y = rand() * 30 + 1.0;
+        p.z = -rand() * 85 + 2.0;
       }
+
+      // Micro-turbulence angle
+      const turbulence = Math.sin(time * 2.5 + p.phase) * 0.08;
+      const slantX = (p.vx * 0.04 + turbulence) * p.len;
+      const slantZ = (speedZ / 32.0) * 0.5 * p.len;
+
+      const idx = i * 6;
+      arr[idx + 0] = p.x;
+      arr[idx + 1] = p.y;
+      arr[idx + 2] = p.z;
+      arr[idx + 3] = p.x + slantX;
+      arr[idx + 4] = p.y - p.len;
+      arr[idx + 5] = p.z + slantZ;
     }
     posAttr.needsUpdate = true;
   });
 
   if (!isRain) return null;
 
-  return <points ref={meshRef} geometry={geo} material={mat} frustumCulled={false} />;
+  return <lineSegments ref={linesRef} geometry={geo} material={mat} frustumCulled={false} />;
 }
 
 // ----------------------------------------------------
-// 6. Dynamic Bus Headlights (Night / High Beams)
+// 4. Dynamic Bus Headlights (High Beams)
 // ----------------------------------------------------
 function BusHeadlights() {
   const headlights = useWeatherStore((s) => s.headlights);
-  const timeOfDay = useWeatherStore((s) => s.timeOfDay);
-  const active = headlights || timeOfDay === "night";
+  const active = headlights;
 
   if (!active) return null;
 
@@ -397,9 +335,7 @@ export default function Environment() {
     <group>
       <SkyDome />
       <LowPolyStormClouds />
-      <DesertGround />
-      <Mountains />
-      <RainParticles />
+      <LineRain />
       <BusHeadlights />
     </group>
   );

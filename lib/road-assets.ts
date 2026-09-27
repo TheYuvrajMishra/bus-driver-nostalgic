@@ -73,3 +73,16 @@ export function getRoadMaterial(): THREE.MeshToonMaterial {
   }
   return material;
 }
+
+let terrainMaterial: THREE.MeshLambertMaterial | null = null;
+
+export function getTerrainMaterial(): THREE.MeshLambertMaterial {
+  if (!terrainMaterial) {
+    terrainMaterial = new THREE.MeshLambertMaterial({
+      vertexColors: true,
+      flatShading: true,
+    });
+  }
+  return terrainMaterial;
+}
+

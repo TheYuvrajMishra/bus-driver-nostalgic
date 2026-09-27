@@ -5,6 +5,8 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { driveWorld } from "@/lib/drive-world";
 import { propsForChunk, type PropItem } from "@/lib/prop-placer";
+import { getTerrainHeightLocal, roadSlopeAtDistance } from "@/lib/road-generator";
+import { CHUNK_LENGTH } from "@/lib/drive-store";
 import {
   getGrassGeometry,
   getTreeGeometry,
@@ -145,21 +147,24 @@ export default function PropInstances() {
       mesh: THREE.InstancedMesh,
       i: number,
       cx: number,
+      cy: number,
       cz: number,
       cry: number,
       px: number,
+      py: number,
       pz: number,
       yaw: number,
       sc: number,
-      y = 0
+      pitch = 0
     ) => {
       const cos = Math.cos(cry);
       const sin = Math.sin(cry);
       const wx = cx + px * cos + pz * sin;
+      const wy = cy + py;
       const wz = cz + (-px * sin + pz * cos);
-      e.set(0, cry + yaw, 0);
+      e.set(pitch, cry + yaw, 0, "YXZ");
       q.setFromEuler(e);
-      v.set(wx, y, wz);
+      v.set(wx, wy, wz);
       s.set(sc, sc, sc);
       m.compose(v, q, s);
       mesh.setMatrixAt(i, m);
@@ -167,9 +172,11 @@ export default function PropInstances() {
 
     const placeShadow = (
       cx: number,
+      cy: number,
       cz: number,
       cry: number,
       px: number,
+      py: number,
       pz: number,
       w: number,
       d: number
@@ -177,7 +184,10 @@ export default function PropInstances() {
       if (si >= MAX_SHADOW || w === 0) return;
       const cos = Math.cos(cry);
       const sin = Math.sin(cry);
-      v.set(cx + px * cos + pz * sin, 0.02, cz + (-px * sin + pz * cos));
+      const wx = cx + px * cos + pz * sin;
+      const wy = cy + py + 0.03;
+      const wz = cz + (-px * sin + pz * cos);
+      v.set(wx, wy, wz);
       e.set(-Math.PI / 2, 0, 0);
       q.setFromEuler(e);
       s.set(w, d, 1);
@@ -189,34 +199,39 @@ export default function PropInstances() {
       const T = driveWorld.transforms.get(n);
       if (!T) continue;
       for (const p of propsForChunk(n)) {
+        const py = getTerrainHeightLocal(n, p.x, p.z);
         if (p.type === "grass" && gi < MAX_GRASS) {
-          place(grass, gi++, T.px, T.pz, T.ry, p.x, p.z, p.ry, p.s, 0);
+          place(grass, gi++, T.px, T.py, T.pz, T.ry, p.x, py, p.z, p.ry, p.s);
           const [sw, sd] = SHADOW_SIZE.grass;
-          placeShadow(T.px, T.pz, T.ry, p.x, p.z, sw * p.s, sd * p.s);
+          placeShadow(T.px, T.py, T.pz, T.ry, p.x, py, p.z, sw * p.s, sd * p.s);
         } else if (p.type === "tree" && ti < MAX_TREE) {
-          place(tree, ti++, T.px, T.pz, T.ry, p.x, p.z, p.ry, p.s, 0);
+          place(tree, ti++, T.px, T.py, T.pz, T.ry, p.x, py, p.z, p.ry, p.s);
           const [sw, sd] = SHADOW_SIZE.tree;
-          placeShadow(T.px, T.pz, T.ry, p.x, p.z, sw * p.s, sd * p.s);
+          placeShadow(T.px, T.py, T.pz, T.ry, p.x, py, p.z, sw * p.s, sd * p.s);
         } else if (p.type === "rock" && ri < MAX_ROCK) {
-          place(rock, ri++, T.px, T.pz, T.ry, p.x, p.z, p.ry, p.s, 0);
+          place(rock, ri++, T.px, T.py, T.pz, T.ry, p.x, py, p.z, p.ry, p.s);
           const [sw, sd] = SHADOW_SIZE.rock;
-          placeShadow(T.px, T.pz, T.ry, p.x, p.z, sw * p.s, sd * p.s);
+          placeShadow(T.px, T.py, T.pz, T.ry, p.x, py, p.z, sw * p.s, sd * p.s);
         } else if (p.type === "pole" && pi < MAX_POLE) {
-          place(pole, pi++, T.px, T.pz, T.ry, p.x, p.z, p.ry, p.s, 0);
+          place(pole, pi++, T.px, T.py, T.pz, T.ry, p.x, py, p.z, p.ry, p.s);
           const [sw, sd] = SHADOW_SIZE.pole;
-          placeShadow(T.px, T.pz, T.ry, p.x, p.z, sw * p.s, sd * p.s);
+          placeShadow(T.px, T.py, T.pz, T.ry, p.x, py, p.z, sw * p.s, sd * p.s);
         } else if (p.type === "dhaba" && di < MAX_DHABA) {
-          place(dhaba, di++, T.px, T.pz, T.ry, p.x, p.z, p.ry, p.s, 0);
+          place(dhaba, di++, T.px, T.py, T.pz, T.ry, p.x, py + 0.04, p.z, p.ry, p.s);
           const [sw, sd] = SHADOW_SIZE.dhaba;
-          placeShadow(T.px, T.pz, T.ry, p.x, p.z, sw * p.s, sd * p.s);
+          placeShadow(T.px, T.py, T.pz, T.ry, p.x, py, p.z, sw * p.s, sd * p.s);
         } else if (p.type === "truck" && ki < MAX_TRUCK) {
-          place(truck, ki++, T.px, T.pz, T.ry, p.x, p.z, p.ry, p.s, 0);
+          const tFrac = Math.max(0, Math.min(1, -p.z / CHUNK_LENGTH));
+          const propDist = n * CHUNK_LENGTH + tFrac * CHUNK_LENGTH;
+          const slope = roadSlopeAtDistance(propDist);
+          const pitch = Math.atan(slope);
+          place(truck, ki++, T.px, T.py, T.pz, T.ry, p.x, py + 0.06, p.z, p.ry, p.s, pitch);
           const [sw, sd] = SHADOW_SIZE.truck;
-          placeShadow(T.px, T.pz, T.ry, p.x, p.z, sw * p.s, sd * p.s);
+          placeShadow(T.px, T.py, T.pz, T.ry, p.x, py, p.z, sw * p.s, sd * p.s);
         } else if (p.type === "milestone" && mi < MAX_MILESTONE) {
-          place(milestone, mi++, T.px, T.pz, T.ry, p.x, p.z, p.ry, p.s, 0);
+          place(milestone, mi++, T.px, T.py, T.pz, T.ry, p.x, py + 0.04, p.z, p.ry, p.s);
         } else if (p.type === "reflector" && rfi < MAX_REFLECTOR) {
-          place(reflector, rfi++, T.px, T.pz, T.ry, p.x, p.z, p.ry, p.s, 0);
+          place(reflector, rfi++, T.px, T.py, T.pz, T.ry, p.x, py + 0.04, p.z, p.ry, p.s);
         }
       }
     }

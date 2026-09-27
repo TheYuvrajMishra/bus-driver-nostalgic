@@ -47,13 +47,13 @@ function buildProps(n: number): PropItem[] {
   const rand = mulberry32((Math.imul(n, 2654435761) ^ 0x9e3779b9) >>> 0);
   const items: PropItem[] = [];
 
-  // 1. Spiky Desert Grass Tufts (Yucca clumps lining highway edges)
+  // 1. Spiky Desert Grass Tufts (Yucca clumps lining highway shoulder)
   const grassCount = 16 + Math.floor(rand() * 8);
   for (let i = 0; i < grassCount; i++) {
     const side = rand() < 0.5 ? -1 : 1;
     items.push({
       type: "grass",
-      x: side * (ROAD_HALF + 0.4 + rand() * 4.5),
+      x: side * (ROAD_HALF + 0.6 + rand() * 4.2),
       z: -rand() * 58,
       s: 0.8 + rand() * 0.6,
       ry: rand() * Math.PI * 2,
@@ -67,7 +67,7 @@ function buildProps(n: number): PropItem[] {
     const side = rand() < 0.5 ? -1 : 1;
     items.push({
       type: "rock",
-      x: side * (ROAD_HALF + 1.2 + rand() * 12.0),
+      x: side * (ROAD_HALF + 2.2 + rand() * 14.0),
       z: -rand() * 58,
       s: 0.6 + rand() * 1.1,
       ry: rand() * Math.PI * 2,
@@ -81,7 +81,7 @@ function buildProps(n: number): PropItem[] {
     const side = i % 2 === 0 ? -1 : 1;
     items.push({
       type: "tree",
-      x: side * (ROAD_HALF + 3.2 + rand() * 14.0),
+      x: side * (ROAD_HALF + 4.5 + rand() * 18.0),
       z: -(i / treeCount) * 60 - rand() * 3,
       s: 0.85 + rand() * 0.65,
       ry: rand() * Math.PI * 2,
@@ -109,12 +109,12 @@ function buildProps(n: number): PropItem[] {
     });
   }
 
-  // 5. Roadside Dhaba / Abandoned Brick House
+  // 5. Roadside Dhaba / Abandoned Brick House (Well set back from highway)
   if (rand() < 0.38) {
     const side = rand() < 0.5 ? -1 : 1;
     items.push({
       type: "dhaba",
-      x: side * (ROAD_HALF + 6.5 + rand() * 3.5),
+      x: side * (ROAD_HALF + 7.5 + rand() * 4.0),
       z: -14 - rand() * 32,
       s: 0.95 + rand() * 0.25,
       ry: side > 0 ? -Math.PI / 2 : Math.PI / 2, // face the highway
@@ -122,12 +122,12 @@ function buildProps(n: number): PropItem[] {
     });
   }
 
-  // 6. Parked Truck on shoulder
+  // 6. Parked Truck on gravel shoulder
   if (rand() < 0.35) {
     const side = rand() < 0.5 ? -1 : 1;
     items.push({
       type: "truck",
-      x: side * (ROAD_HALF + 1.2),
+      x: side * (ROAD_HALF + 1.8),
       z: -8 - rand() * 44,
       s: 0.95 + rand() * 0.15,
       ry: (rand() - 0.5) * 0.1,

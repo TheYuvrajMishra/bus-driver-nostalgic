@@ -2,8 +2,166 @@
 
 import React, { useEffect, useRef, useCallback } from "react";
 import { useDriveStore } from "@/lib/drive-store";
+import { useWeatherStore } from "@/lib/weather-store";
 import { steeringInput } from "@/lib/steering-input";
 import { honk } from "./HornButton";
+
+function WindshieldRain() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rainIntensity = useWeatherStore((s) => s.rainIntensity);
+  const wipers = useWeatherStore((s) => s.wipers);
+  const isRain = rainIntensity > 0.1;
+
+  useEffect(() => {
+    if (!isRain) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let animId: number;
+    interface GlassDrop {
+      x: number;
+      y: number;
+      r: number;
+      trail: number;
+      opacity: number;
+      speed: number;
+      age: number;
+      maxAge: number;
+    }
+    const drops: GlassDrop[] = [];
+    const maxDrops = 40;
+
+    for (let i = 0; i < maxDrops; i++) {
+      drops.push({
+        x: Math.random() * 800,
+        y: Math.random() * 500,
+        r: 1.2 + Math.random() * 2.2,
+        trail: Math.random() * 8,
+        opacity: 0.2 + Math.random() * 0.35,
+        speed: 2 + Math.random() * 8,
+        age: Math.random() * 10,
+        maxAge: 6 + Math.random() * 12,
+      });
+    }
+
+    let lastTime = performance.now();
+
+    const render = (time: number) => {
+      const dt = Math.min((time - lastTime) / 1000, 0.05);
+      lastTime = time;
+
+      ctx.clearRect(0, 0, 800, 500);
+
+      const busSpeed = useDriveStore.getState().speed;
+      const jolt = Math.sin(time * 0.015) * 0.4;
+
+      // Draw each organic rain droplet
+      for (const d of drops) {
+        d.age += dt;
+        d.y += (d.speed + busSpeed * 0.4) * dt;
+        d.x += jolt * 0.2;
+
+        // If droplet lifespan ends or it trickles off bottom, respawn at a completely random spot on glass
+        if (d.age > d.maxAge || d.y > 510) {
+          d.x = Math.random() * 800;
+          d.y = Math.random() * 490; // Anywhere on windshield pane
+          d.r = 1.2 + Math.random() * 2.2;
+          d.trail = Math.random() * 8;
+          d.opacity = 0.2 + Math.random() * 0.35;
+          d.speed = 2 + Math.random() * 8;
+          d.age = 0;
+          d.maxAge = 6 + Math.random() * 12;
+        }
+
+        // Small water bead trail
+        if (d.trail > 2) {
+          ctx.strokeStyle = `rgba(200, 225, 250, ${d.opacity * 0.45})`;
+          ctx.lineWidth = d.r * 0.6;
+          ctx.beginPath();
+          ctx.moveTo(d.x, d.y - d.trail);
+          ctx.lineTo(d.x, d.y);
+          ctx.stroke();
+        }
+
+        // Water droplet bead
+        ctx.fillStyle = `rgba(230, 245, 255, ${d.opacity})`;
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Droplet specular glint
+        ctx.fillStyle = `rgba(255, 255, 255, ${d.opacity * 1.3})`;
+        ctx.beginPath();
+        ctx.arc(d.x - d.r * 0.3, d.y - d.r * 0.3, d.r * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      if (wipers) {
+        const wiperAngle = Math.sin(time * 0.005) * 0.72 + 0.18;
+        const len = 340;
+
+        // Left wiper
+        const pivotLX = 250;
+        const pivotLY = 490;
+        const wxL = pivotLX + Math.cos(wiperAngle - Math.PI / 2) * len;
+        const wyL = pivotLY + Math.sin(wiperAngle - Math.PI / 2) * len;
+
+        ctx.strokeStyle = "#161616";
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.moveTo(pivotLX, pivotLY);
+        ctx.lineTo(wxL, wyL);
+        ctx.stroke();
+
+        ctx.strokeStyle = "#2b2b2b";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(wxL - 25 * Math.sin(wiperAngle), wyL + 25 * Math.cos(wiperAngle));
+        ctx.lineTo(wxL + 80 * Math.sin(wiperAngle), wyL - 80 * Math.cos(wiperAngle));
+        ctx.stroke();
+
+        // Right wiper
+        const pivotRX = 570;
+        const pivotRY = 490;
+        const wxR = pivotRX + Math.cos(wiperAngle - Math.PI / 2) * len;
+        const wyR = pivotRY + Math.sin(wiperAngle - Math.PI / 2) * len;
+
+        ctx.strokeStyle = "#161616";
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.moveTo(pivotRX, pivotRY);
+        ctx.lineTo(wxR, wyR);
+        ctx.stroke();
+
+        ctx.strokeStyle = "#2b2b2b";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(wxR - 25 * Math.sin(wiperAngle), wyR + 25 * Math.cos(wiperAngle));
+        ctx.lineTo(wxR + 80 * Math.sin(wiperAngle), wyR - 80 * Math.cos(wiperAngle));
+        ctx.stroke();
+      }
+
+      animId = requestAnimationFrame(render);
+    };
+
+    animId = requestAnimationFrame(render);
+    return () => cancelAnimationFrame(animId);
+  }, [isRain, wipers]);
+
+  if (!isRain) return null;
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={800}
+      height={500}
+      className="pointer-events-none absolute inset-0 h-full w-full"
+      style={{ zIndex: 3 }}
+    />
+  );
+}
 
 /**
  * 2D/3D Hybrid Cockpit Overlay:
@@ -190,13 +348,13 @@ export default function CockpitOverlay() {
           >
             {/* 1. Windshield Glass Overlay — strictly UNDERNEATH the cockpit frame (zIndex: 2) */}
             <div
-              className="pointer-events-none absolute"
+              className="pointer-events-none absolute overflow-hidden"
               style={{
                 left: "24.5%",
                 top: "20.5%",
                 width: "51.0%",
                 height: "46.0%",
-                opacity: 0.75,
+                opacity: 0.85,
                 zIndex: 2,
                 mixBlendMode: "screen",
               }}
@@ -206,6 +364,7 @@ export default function CockpitOverlay() {
                 alt="Windshield Glass"
                 className="h-full w-full object-fill"
               />
+              <WindshieldRain />
             </div>
 
             {/* 2. High-Resolution Indian Bus Cockpit Frame (with integrated dashboard dials) (zIndex: 10) */}

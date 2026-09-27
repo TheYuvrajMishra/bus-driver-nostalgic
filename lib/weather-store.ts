@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type TimeOfDay = "morning" | "storm" | "sunset" | "night";
+export type TimeOfDay = "morning" | "noon";
 
 export interface WeatherLighting {
   skyTop: string;
@@ -21,7 +21,7 @@ export interface WeatherLighting {
 }
 
 export const TIME_LIGHTING_CONFIGS: Record<TimeOfDay, WeatherLighting> = {
-  // 1. Crisp Natural White Sunlight & Azure Blue Sky
+  // 1. Sunny Morning - Crisp Natural White Sunlight & Azure Blue Sky
   morning: {
     skyTop: "#1e6bb8",
     skyHorizon: "#90c8f0",
@@ -39,15 +39,15 @@ export const TIME_LIGHTING_CONFIGS: Record<TimeOfDay, WeatherLighting> = {
     isRain: false,
     isNight: false,
   },
-  // 2. Moody Slate Overcast & Rain
-  storm: {
+  // 2. Rainy Noon - Moody Overcast Sky & Rain
+  noon: {
     skyTop: "#1a212b",
     skyHorizon: "#48525e",
     skyCloud: "#2b3440",
     fogColor: "#3e4752",
     fogNear: 55,
     fogFar: 380,
-    ambientColor: "#ccd5de", // Neutral cool grey-white overcast
+    ambientColor: "#ccd5de", // Cool grey overcast
     ambientIntensity: 0.85,
     sunColor: "#dbe3eb",
     sunIntensity: 1.2,
@@ -56,42 +56,6 @@ export const TIME_LIGHTING_CONFIGS: Record<TimeOfDay, WeatherLighting> = {
     groundTint: "#767268",
     isRain: true,
     isNight: false,
-  },
-  // 3. Balanced Golden Hour Dusk
-  sunset: {
-    skyTop: "#25304e",
-    skyHorizon: "#ee8042",
-    skyCloud: "#ea6e36",
-    fogColor: "#d26f3e",
-    fogNear: 75,
-    fogFar: 440,
-    ambientColor: "#ffe6d6",
-    ambientIntensity: 0.85,
-    sunColor: "#ffa25b",
-    sunIntensity: 1.9,
-    sunPosition: [-16, 5, -12],
-    cloudColor: "#a85032",
-    groundTint: "#9c7050",
-    isRain: false,
-    isNight: false,
-  },
-  // 4. Midnight Starfield (User Approved)
-  night: {
-    skyTop: "#060a17",
-    skyHorizon: "#11182c",
-    skyCloud: "#0c1220",
-    fogColor: "#0d1324",
-    fogNear: 40,
-    fogFar: 280,
-    ambientColor: "#24335c",
-    ambientIntensity: 0.35,
-    sunColor: "#8fa8e0",
-    sunIntensity: 0.5,
-    sunPosition: [-6, 12, -4],
-    cloudColor: "#0f1524",
-    groundTint: "#2e2b26",
-    isRain: false,
-    isNight: true,
   },
 };
 
@@ -110,7 +74,7 @@ interface WeatherStoreState {
 }
 
 export const useWeatherStore = create<WeatherStoreState>((set) => ({
-  timeOfDay: "morning", // Default to natural crisp white daylight
+  timeOfDay: "morning", // Default to Sunny Morning
   autoCycle: false,
   rainIntensity: 0,
   headlights: false,
@@ -118,9 +82,8 @@ export const useWeatherStore = create<WeatherStoreState>((set) => ({
   setTimeOfDay: (timeOfDay) =>
     set({
       timeOfDay,
-      rainIntensity: timeOfDay === "storm" ? 0.9 : 0,
-      headlights: timeOfDay === "night",
-      wipers: timeOfDay === "storm",
+      rainIntensity: timeOfDay === "noon" ? 0.9 : 0,
+      wipers: timeOfDay === "noon",
     }),
   setAutoCycle: (autoCycle) => set({ autoCycle }),
   setHeadlights: (headlights) => set({ headlights }),

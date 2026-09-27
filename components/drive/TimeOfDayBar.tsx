@@ -82,10 +82,8 @@ function WiperIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
 }
 
 const MOODS: { id: TimeOfDay; label: string; hindi: string; icon: React.FC<{ className?: string }> }[] = [
-  { id: "morning", label: "Morning", hindi: "सुबह", icon: SunIcon },
-  { id: "storm", label: "Storm & Rain", hindi: "दोपहर / बारिश", icon: CloudRainIcon },
-  { id: "sunset", label: "Sunset", hindi: "शाम", icon: SunsetIcon },
-  { id: "night", label: "Night", hindi: "रात", icon: MoonIcon },
+  { id: "morning", label: "Sunny", hindi: "सुबह", icon: SunIcon },
+  { id: "noon", label: "Rainy", hindi: "दोपहर / बारिश", icon: CloudRainIcon },
 ];
 
 export default function TimeOfDayBar() {
@@ -101,12 +99,12 @@ export default function TimeOfDayBar() {
   // Auto cycle timer if enabled
   useEffect(() => {
     if (!autoCycle) return;
-    const moodOrder: TimeOfDay[] = ["morning", "storm", "sunset", "night"];
+    const moodOrder: TimeOfDay[] = ["morning", "noon"];
     const interval = setInterval(() => {
       const curIdx = moodOrder.indexOf(useWeatherStore.getState().timeOfDay);
       const nextIdx = (curIdx + 1) % moodOrder.length;
       setTimeOfDay(moodOrder[nextIdx]);
-    }, 24000); // cycle every 24s
+    }, 28000); // cycle every 28s
     return () => clearInterval(interval);
   }, [autoCycle, setTimeOfDay]);
 
@@ -146,7 +144,7 @@ export default function TimeOfDayBar() {
             ? "bg-emerald-500/20 border border-emerald-400 text-emerald-300"
             : "text-neutral-400 hover:text-neutral-200"
         }`}
-        title="Automatically cycles between Morning, Storm, Sunset, and Night"
+        title="Automatically cycles between Sunny Morning and Rainy Noon"
       >
         <SparklesIcon className="h-3 w-3" />
         <span className="text-[11px]">Auto</span>
@@ -156,7 +154,7 @@ export default function TimeOfDayBar() {
       <button
         onClick={toggleHeadlights}
         className={`flex items-center gap-1 rounded-full p-1.5 text-xs transition-all ${
-          headlights || timeOfDay === "night"
+          headlights
             ? "bg-yellow-400 text-neutral-950 shadow-sm shadow-yellow-400/30"
             : "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800"
         }`}
