@@ -115,9 +115,9 @@ export default function CockpitOverlay() {
         wheelRef.current.style.transform = `rotateZ(${spinDeg}deg)`;
       }
 
-      // 2. Nimbu-Mirchi Charm Inertia (Spring pendulum physics)
+      // 2. Nimbu-Mirchi Charm Inertia (Spring pendulum physics - inverted direction)
       if (nimbuRef.current) {
-        const targetAngle = -steeringAngle * 38;
+        const targetAngle = steeringAngle * 38;
         const springForce = (targetAngle - nimbuAngle.current) * 16.0;
         const damping = -nimbuVel.current * 4.8;
         const roadJolt = Math.sin(time * 0.014) * 2.2 * speedNorm;
