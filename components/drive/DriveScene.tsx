@@ -102,7 +102,6 @@ export default function DriveScene() {
       if (e.key === "1") setTimeOfDay("morning");
       if (e.key === "2") setTimeOfDay("noon");
       if (e.key === "l" || e.key === "L") useWeatherStore.getState().toggleHeadlights();
-      if (e.key === "w" || e.key === "W") useWeatherStore.getState().toggleWipers();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -143,7 +142,7 @@ export default function DriveScene() {
 
       {/* Subtle Controls Badge */}
       <div className="pointer-events-none fixed right-4 bottom-4 z-30 rounded-lg bg-black/60 px-3.5 py-1.5 text-xs font-mono text-amber-200/90 backdrop-blur-md border border-amber-800/40 shadow-xl">
-        A/D to Steer · H = Horn · 1-4 = Weather/Time · L = Lights · W = Wipers
+        A/D to Steer · H = Horn · 1-2 = Weather/Time · L = Lights
       </div>
     </div>
   );

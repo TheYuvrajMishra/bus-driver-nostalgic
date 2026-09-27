@@ -69,12 +69,9 @@ export interface WeatherStore {
   autoCycle: boolean;
   headlights: boolean;
   headlightsOn: boolean;
-  wipers: boolean;
-  wipersOn: boolean;
   setTimeOfDay: (t: TimeOfDay) => void;
   setAutoCycle: (on: boolean) => void;
   toggleHeadlights: () => void;
-  toggleWipers: () => void;
   cycleTimeOfDay: () => void;
 }
 
@@ -87,8 +84,6 @@ export const useWeatherStore = create<WeatherStore>((set) => ({
   autoCycle: false,
   headlights: false,
   headlightsOn: false,
-  wipers: false,
-  wipersOn: false,
   setTimeOfDay: (timeOfDay) =>
     set({
       timeOfDay,
@@ -100,11 +95,6 @@ export const useWeatherStore = create<WeatherStore>((set) => ({
     set((s) => ({
       headlights: !s.headlights,
       headlightsOn: !s.headlightsOn,
-    })),
-  toggleWipers: () =>
-    set((s) => ({
-      wipers: !s.wipers,
-      wipersOn: !s.wipersOn,
     })),
   cycleTimeOfDay: () =>
     set((s) => {

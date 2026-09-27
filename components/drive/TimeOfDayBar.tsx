@@ -72,15 +72,6 @@ function LightbulbIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
   );
 }
 
-function WiperIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 18a6 6 0 0 0-6-6H4a8 8 0 0 0 8 8Z" />
-      <line x1="12" y1="18" x2="19" y2="6" />
-    </svg>
-  );
-}
-
 const MOODS: { id: TimeOfDay; label: string; hindi: string; icon: React.FC<{ className?: string }> }[] = [
   { id: "morning", label: "Sunny", hindi: "सुबह", icon: SunIcon },
   { id: "noon", label: "Rainy", hindi: "दोपहर / बारिश", icon: CloudRainIcon },
@@ -90,11 +81,9 @@ export default function TimeOfDayBar() {
   const timeOfDay = useWeatherStore((s) => s.timeOfDay);
   const autoCycle = useWeatherStore((s) => s.autoCycle);
   const headlights = useWeatherStore((s) => s.headlights);
-  const wipers = useWeatherStore((s) => s.wipers);
   const setTimeOfDay = useWeatherStore((s) => s.setTimeOfDay);
   const setAutoCycle = useWeatherStore((s) => s.setAutoCycle);
   const toggleHeadlights = useWeatherStore((s) => s.toggleHeadlights);
-  const toggleWipers = useWeatherStore((s) => s.toggleWipers);
 
   // Auto cycle timer if enabled
   useEffect(() => {
@@ -161,19 +150,6 @@ export default function TimeOfDayBar() {
         title="Toggle Headlights (L)"
       >
         <LightbulbIcon className="h-3.5 w-3.5" />
-      </button>
-
-      {/* Wipers Toggle */}
-      <button
-        onClick={toggleWipers}
-        className={`flex items-center gap-1 rounded-full p-1.5 text-xs transition-all ${
-          wipers
-            ? "bg-cyan-500 text-neutral-950 shadow-sm shadow-cyan-500/30"
-            : "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800"
-        }`}
-        title="Toggle Windshield Wipers (W)"
-      >
-        <WiperIcon className="h-3.5 w-3.5" />
       </button>
     </div>
   );

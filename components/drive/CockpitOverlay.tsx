@@ -9,7 +9,6 @@ import { honk } from "./HornButton";
 function WindshieldRain() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rainIntensity = useWeatherStore((s) => s.rainIntensity);
-  const wipers = useWeatherStore((s) => s.wipers);
   const isRain = rainIntensity > 0.1;
 
   useEffect(() => {
@@ -98,57 +97,12 @@ function WindshieldRain() {
         ctx.fill();
       }
 
-      if (wipers) {
-        const wiperAngle = Math.sin(time * 0.005) * 0.72 + 0.18;
-        const len = 340;
-
-        // Left wiper
-        const pivotLX = 250;
-        const pivotLY = 490;
-        const wxL = pivotLX + Math.cos(wiperAngle - Math.PI / 2) * len;
-        const wyL = pivotLY + Math.sin(wiperAngle - Math.PI / 2) * len;
-
-        ctx.strokeStyle = "#161616";
-        ctx.lineWidth = 6;
-        ctx.beginPath();
-        ctx.moveTo(pivotLX, pivotLY);
-        ctx.lineTo(wxL, wyL);
-        ctx.stroke();
-
-        ctx.strokeStyle = "#2b2b2b";
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(wxL - 25 * Math.sin(wiperAngle), wyL + 25 * Math.cos(wiperAngle));
-        ctx.lineTo(wxL + 80 * Math.sin(wiperAngle), wyL - 80 * Math.cos(wiperAngle));
-        ctx.stroke();
-
-        // Right wiper
-        const pivotRX = 570;
-        const pivotRY = 490;
-        const wxR = pivotRX + Math.cos(wiperAngle - Math.PI / 2) * len;
-        const wyR = pivotRY + Math.sin(wiperAngle - Math.PI / 2) * len;
-
-        ctx.strokeStyle = "#161616";
-        ctx.lineWidth = 6;
-        ctx.beginPath();
-        ctx.moveTo(pivotRX, pivotRY);
-        ctx.lineTo(wxR, wyR);
-        ctx.stroke();
-
-        ctx.strokeStyle = "#2b2b2b";
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(wxR - 25 * Math.sin(wiperAngle), wyR + 25 * Math.cos(wiperAngle));
-        ctx.lineTo(wxR + 80 * Math.sin(wiperAngle), wyR - 80 * Math.cos(wiperAngle));
-        ctx.stroke();
-      }
-
       animId = requestAnimationFrame(render);
     };
 
     animId = requestAnimationFrame(render);
     return () => cancelAnimationFrame(animId);
-  }, [isRain, wipers]);
+  }, [isRain]);
 
   if (!isRain) return null;
 
