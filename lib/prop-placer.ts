@@ -5,7 +5,7 @@ import { ROAD_WIDTH } from "./road-constants";
  * Same chunk index → same prop list, always (seeded PRNG keyed by n).
  */
 
-export type PropType = "tree" | "dhaba" | "truck" | "milestone";
+export type PropType = "tree" | "rock" | "dhaba" | "truck" | "milestone";
 
 export interface PropItem {
   type: PropType;
@@ -39,17 +39,31 @@ function buildProps(n: number): PropItem[] {
   const rand = mulberry32((Math.imul(n, 2654435761) ^ 0x9e3779b9) >>> 0);
   const items: PropItem[] = [];
 
-  // Billboard trees lining both sides of the road.
-  const treeCount = 10 + Math.floor(rand() * 4);
+  // Low-poly Acacia trees lining both sides of the desert highway
+  const treeCount = 8 + Math.floor(rand() * 4);
   for (let i = 0; i < treeCount; i++) {
     const side = i % 2 === 0 ? -1 : 1;
     items.push({
       type: "tree",
-      x: side * (ROAD_HALF + 2.5 + rand() * 7),
-      z: -(i / treeCount) * 60 - rand() * 3,
-      s: 0.8 + rand() * 0.7,
-      ry: 0,
+      x: side * (ROAD_HALF + 3.0 + rand() * 9),
+      z: -(i / treeCount) * 60 - rand() * 4,
+      s: 0.85 + rand() * 0.65,
+      ry: rand() * Math.PI * 2,
       v: Math.floor(rand() * 2),
+    });
+  }
+
+  // Low-poly desert rocks / boulders scattered along shoulders
+  const rockCount = 6 + Math.floor(rand() * 4);
+  for (let i = 0; i < rockCount; i++) {
+    const side = rand() < 0.5 ? -1 : 1;
+    items.push({
+      type: "rock",
+      x: side * (ROAD_HALF + 1.2 + rand() * 5),
+      z: -rand() * 58,
+      s: 0.6 + rand() * 0.7,
+      ry: rand() * Math.PI * 2,
+      v: Math.floor(rand() * 3),
     });
   }
 
@@ -110,7 +124,7 @@ function fullProps(n: number): PropItem[] {
 export function propsForChunk(n: number, lod: Lod): PropItem[] {
   const full = fullProps(n);
   if (lod === "full") return full;
-  return full.filter((p) => p.type !== "tree");
+  return full.filter((p) => p.type !== "tree" && p.type !== "rock");
 }
 
 /** Drop cached prop lists that left the live window. */

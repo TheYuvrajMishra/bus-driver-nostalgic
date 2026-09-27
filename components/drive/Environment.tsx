@@ -7,18 +7,6 @@ import { useAudioStore } from "@/lib/audio-store";
 import { skyPaletteFor } from "@/lib/sky-colors";
 import { getSandTexture, mergeGeos, xform } from "@/lib/cockpit-assets";
 
-/**
- * Environment dressing — architecture.md §7 perf rules (no shadows,
- * dpr=1, no postprocessing). Three draw calls total:
- *   1. gradient sky dome (overcast shader, tinted by IST rotation)
- *   2. desert ground plane (sand speckle texture)
- *   3. one InstancedMesh of faceted mountain silhouettes on the horizon
- *
- * The ground + mountains are static in car-space: the chunk system
- * re-places the road around the camera, and distant scenery barely
- * parallaxes, so static placement reads correctly.
- */
-
 const SKY_VERT = /* glsl */ `
   varying vec3 vDir;
   void main() {
@@ -35,13 +23,14 @@ const SKY_FRAG = /* glsl */ `
   void main() {
     vec3 d = normalize(vDir);
     float h = d.y;
-    vec3 col = mix(uHorizon, uTop, smoothstep(0.02, 0.55, h));
-    col = mix(uHorizon * 0.92, col, smoothstep(-0.1, 0.02, h));
-    // soft overcast cloud bands
-    float cl = sin(d.x * 9.0 + 1.7) * sin(d.z * 11.0 + 0.4)
-             + 0.6 * sin((d.x + d.z) * 5.0 + 2.2);
-    cl = smoothstep(0.35, 1.15, cl) * smoothstep(0.03, 0.3, h);
-    col = mix(col, uCloud, cl * 0.5);
+    vec3 col = mix(uHorizon, uTop, smoothstep(0.01, 0.45, h));
+    col = mix(uHorizon * 0.95, col, smoothstep(-0.08, 0.01, h));
+    // warm desert cloud formations
+    float cl = sin(d.x * 7.0 + 1.2) * sin(d.z * 8.5 + 0.3)
+             + 0.5 * sin((d.x + d.z) * 4.2 + 1.8)
+             + 0.25 * sin(d.x * 15.0 - d.z * 12.0);
+    cl = smoothstep(0.2, 0.95, cl) * smoothstep(0.02, 0.35, h);
+    col = mix(col, uCloud, cl * 0.45);
     gl_FragColor = vec4(col, 1.0);
   }
 `;
@@ -65,7 +54,6 @@ function SkyDome() {
         depthWrite: false,
         fog: false,
       }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [pal.top, pal.horizon, pal.cloud]
   );
 
@@ -73,7 +61,7 @@ function SkyDome() {
 
   return (
     <mesh material={material} renderOrder={-10} frustumCulled={false}>
-      <sphereGeometry args={[620, 24, 16]} />
+      <sphereGeometry args={[750, 32, 20]} />
     </mesh>
   );
 }
@@ -81,14 +69,14 @@ function SkyDome() {
 function DesertGround() {
   const map = getSandTexture();
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.06, -120]}>
-      <planeGeometry args={[1100, 1100]} />
-      <meshLambertMaterial map={map ?? undefined} color="#c4a06c" />
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.06, -150]}>
+      <planeGeometry args={[1400, 1400]} />
+      <meshLambertMaterial map={map ?? undefined} color="#c9955c" />
     </mesh>
   );
 }
 
-/** One faceted peak cluster, jittered for a natural silhouette. */
+/** Faceted mountain peak cluster with natural ridges */
 function makePeakGeometry(): THREE.BufferGeometry {
   let seed = 424242;
   const rand = () => {
@@ -98,7 +86,6 @@ function makePeakGeometry(): THREE.BufferGeometry {
   const jitter = (geo: THREE.BufferGeometry, amt: number) => {
     const p = geo.getAttribute("position") as THREE.BufferAttribute;
     for (let i = 0; i < p.count; i++) {
-      // don't move the base ring (y ~= -0.5) so peaks sit flat
       if (p.getY(i) > -0.4) {
         p.setX(i, p.getX(i) + (rand() - 0.5) * amt);
         p.setZ(i, p.getZ(i) + (rand() - 0.5) * amt);
@@ -109,15 +96,15 @@ function makePeakGeometry(): THREE.BufferGeometry {
     return geo;
   };
   const parts = [
-    xform(jitter(new THREE.ConeGeometry(1, 1, 6, 1), 0.22), 0, 0.5, 0),
-    xform(jitter(new THREE.ConeGeometry(0.62, 0.7, 5, 1), 0.18), 0.85, 0.35, 0.3),
-    xform(jitter(new THREE.ConeGeometry(0.55, 0.55, 5, 1), 0.2), -0.8, 0.27, -0.25),
+    xform(jitter(new THREE.ConeGeometry(1, 1, 7, 1), 0.25), 0, 0.5, 0),
+    xform(jitter(new THREE.ConeGeometry(0.7, 0.8, 6, 1), 0.2), 0.9, 0.4, 0.35),
+    xform(jitter(new THREE.ConeGeometry(0.65, 0.65, 6, 1), 0.22), -0.85, 0.32, -0.3),
+    xform(jitter(new THREE.ConeGeometry(0.5, 0.5, 5, 1), 0.18), 0.2, 0.25, 0.7),
   ];
-  const merged = mergeGeos(parts);
-  return merged;
+  return mergeGeos(parts);
 }
 
-const MOUNTAIN_COUNT = 14;
+const MOUNTAIN_COUNT = 24;
 
 function Mountains() {
   const meshRef = useRef<THREE.InstancedMesh>(null);
@@ -130,18 +117,22 @@ function Mountains() {
     };
     const geometry = makePeakGeometry();
     const placements: { x: number; z: number; w: number; h: number; ry: number; tint: string }[] = [];
-    const tints = ["#8a7358", "#7a654e", "#93795c", "#6e5c46"];
+    const tints = [
+      "#b87f4c", // warm terracotta / golden sand
+      "#a46e3e", // rich desert brown
+      "#8e5b30", // deep earthy ridge
+      "#c68d58", // bright desert sunlit crest
+      "#7a4b24", // shadow ridge
+    ];
     for (let i = 0; i < MOUNTAIN_COUNT; i++) {
-      // arc across the horizon ahead; denser toward the edges so the
-      // road's vanishing point stays readable in the middle
       const t = i / (MOUNTAIN_COUNT - 1); // 0..1
-      const ang = (t - 0.5) * Math.PI * 0.9; // -81°..81°
-      const dist = 300 + rand() * 90;
+      const ang = (t - 0.5) * Math.PI * 1.05; // -95°..95°
+      const dist = 280 + rand() * 140;
       placements.push({
         x: Math.sin(ang) * dist,
         z: -Math.cos(ang) * dist,
-        w: 90 + rand() * 90,
-        h: 42 + rand() * 55,
+        w: 110 + rand() * 110,
+        h: 48 + rand() * 65,
         ry: rand() * Math.PI * 2,
         tint: tints[i % tints.length],
       });
@@ -161,8 +152,8 @@ function Mountains() {
     placements.forEach((p, i) => {
       e.set(0, p.ry, 0);
       q.setFromEuler(e);
-      v.set(p.x, -3, p.z);
-      s.set(p.w, p.h, p.w * 0.7);
+      v.set(p.x, -4, p.z);
+      s.set(p.w, p.h, p.w * 0.75);
       m.compose(v, q, s);
       mesh.setMatrixAt(i, m);
       mesh.setColorAt(i, c.set(p.tint));

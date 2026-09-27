@@ -6,55 +6,44 @@ import * as THREE from "three";
 import { driveWorld } from "@/lib/drive-world";
 import { propsForChunk, type PropItem } from "@/lib/prop-placer";
 import {
-  getTreeTexture,
+  getTreeGeometry,
+  getRockGeometry,
   getBlobShadowTexture,
   getDhabaGeometry,
   getTruckGeometry,
   getMilestoneGeometry,
 } from "@/lib/prop-assets";
 import { getToonGradient } from "@/lib/toon-material";
-import { useDriveStore, EYE_HEIGHT } from "@/lib/drive-store";
+import { useDriveStore } from "@/lib/drive-store";
 
-const MAX_TREE = 40;
+const MAX_TREE = 50;
+const MAX_ROCK = 40;
 const MAX_DHABA = 6;
 const MAX_TRUCK = 10;
 const MAX_MILESTONE = 6;
-const MAX_SHADOW = 60;
+const MAX_SHADOW = 80;
 
-const TREE_TINTS = ["#ffffff", "#d9eccf"];
+const TREE_TINTS = ["#ffffff", "#e8f4dd", "#d6ecc8"];
+const ROCK_TINTS = ["#ffffff", "#ebd4b8", "#d9be9e"];
 const TRUCK_TINTS = ["#ffffff", "#ffe9c4", "#d9e6ff"];
 const SHADOW_SIZE: Record<PropItem["type"], [number, number]> = {
-  tree: [5.2, 5.2],
+  tree: [4.8, 4.8],
+  rock: [2.2, 2.2],
   dhaba: [7.0, 6.0],
   truck: [4.2, 9.0],
   milestone: [0, 0], // no shadow
 };
 
-/**
- * All roadside props as ONE InstancedMesh per prop type (architecture.md §3):
- * trees (billboard impostors), dhabas, trucks, milestones + blob shadows.
- *
- * Placement is deterministic per chunk seed (lib/prop-placer.ts). Every frame,
- * instance matrices are recomputed in car-space from the chunk transforms
- * published by RoadChunkManager — no React re-renders, ~70 matrix composes.
- */
 export default function PropInstances() {
   const treeRef = useRef<THREE.InstancedMesh>(null);
+  const rockRef = useRef<THREE.InstancedMesh>(null);
   const dhabaRef = useRef<THREE.InstancedMesh>(null);
   const truckRef = useRef<THREE.InstancedMesh>(null);
   const milestoneRef = useRef<THREE.InstancedMesh>(null);
   const shadowRef = useRef<THREE.InstancedMesh>(null);
 
   const assets = useMemo(() => {
-    const treeGeo = new THREE.PlaneGeometry(3.6, 5.2);
-    treeGeo.translate(0, 2.6, 0); // base at ground
     const gradientMap = getToonGradient();
-    const treeMat = new THREE.MeshToonMaterial({
-      map: getTreeTexture() ?? undefined,
-      alphaTest: 0.45,
-      side: THREE.DoubleSide,
-      gradientMap,
-    });
     const propMat = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap });
     const shadowGeo = new THREE.PlaneGeometry(1, 1);
     const shadowMat = new THREE.MeshBasicMaterial({
@@ -63,8 +52,8 @@ export default function PropInstances() {
       depthWrite: false,
     });
     return {
-      treeGeo,
-      treeMat,
+      treeGeo: getTreeGeometry(),
+      rockGeo: getRockGeometry(),
       dhabaGeo: getDhabaGeometry(),
       truckGeo: getTruckGeometry(),
       milestoneGeo: getMilestoneGeometry(),
@@ -74,7 +63,6 @@ export default function PropInstances() {
     };
   }, []);
 
-  // Static per-instance color tints (set once).
   const tinted = useRef(false);
 
   const scratch = useMemo(
@@ -91,11 +79,12 @@ export default function PropInstances() {
 
   useFrame(() => {
     const tree = treeRef.current;
+    const rock = rockRef.current;
     const dhaba = dhabaRef.current;
     const truck = truckRef.current;
     const milestone = milestoneRef.current;
     const shadow = shadowRef.current;
-    if (!tree || !dhaba || !truck || !milestone || !shadow) return;
+    if (!tree || !rock || !dhaba || !truck || !milestone || !shadow) return;
     const { m, q, e, v, s, c } = scratch;
 
     if (!tinted.current) {
@@ -103,21 +92,24 @@ export default function PropInstances() {
       for (let i = 0; i < MAX_TREE; i++) {
         tree.setColorAt(i, c.set(TREE_TINTS[i % TREE_TINTS.length]));
       }
+      for (let i = 0; i < MAX_ROCK; i++) {
+        rock.setColorAt(i, c.set(ROCK_TINTS[i % ROCK_TINTS.length]));
+      }
       for (let i = 0; i < MAX_TRUCK; i++) {
         truck.setColorAt(i, c.set(TRUCK_TINTS[i % TRUCK_TINTS.length]));
       }
-      tree.instanceColor!.needsUpdate = true;
-      truck.instanceColor!.needsUpdate = true;
+      if (tree.instanceColor) tree.instanceColor.needsUpdate = true;
+      if (rock.instanceColor) rock.instanceColor.needsUpdate = true;
+      if (truck.instanceColor) truck.instanceColor.needsUpdate = true;
     }
 
-    const camX = useDriveStore.getState().lateralOffset;
     let ti = 0;
+    let ri = 0;
     let di = 0;
     let ki = 0;
     let mi = 0;
     let si = 0;
 
-    /** Car-space placement of one prop instance. Returns [wx, wz]. */
     const place = (
       mesh: THREE.InstancedMesh,
       i: number,
@@ -169,38 +161,34 @@ export default function PropInstances() {
       const lod = n - driveWorld.cur <= 1 ? "full" : "sparse";
       for (const p of propsForChunk(n, lod)) {
         if (p.type === "tree" && ti < MAX_TREE) {
-          const [wx, wz] = place(tree, ti, T.px, T.pz, T.ry, p.x, p.z, 0, p.s);
-          // Y-locked billboard: face the camera, ignore chunk yaw.
-          const facing = Math.atan2(wx - camX, wz - 0);
-          e.set(0, facing, 0);
-          q.setFromEuler(e);
-          v.set(wx, 0, wz);
-          s.set(p.s, p.s, p.s);
-          m.compose(v, q, s);
-          tree.setMatrixAt(ti, m);
-          ti++;
+          place(tree, ti++, T.px, T.pz, T.ry, p.x, p.z, p.ry, p.s, 0);
           const [sw, sd] = SHADOW_SIZE.tree;
           placeShadow(T.px, T.pz, T.ry, p.x, p.z, sw * p.s, sd * p.s);
+        } else if (p.type === "rock" && ri < MAX_ROCK) {
+          place(rock, ri++, T.px, T.pz, T.ry, p.x, p.z, p.ry, p.s, 0);
+          const [sw, sd] = SHADOW_SIZE.rock;
+          placeShadow(T.px, T.pz, T.ry, p.x, p.z, sw * p.s, sd * p.s);
         } else if (p.type === "dhaba" && di < MAX_DHABA) {
-          place(dhaba, di++, T.px, T.pz, T.ry, p.x, p.z, p.ry, p.s);
+          place(dhaba, di++, T.px, T.pz, T.ry, p.x, p.z, p.ry, p.s, 0);
           const [sw, sd] = SHADOW_SIZE.dhaba;
           placeShadow(T.px, T.pz, T.ry, p.x, p.z, sw * p.s, sd * p.s);
         } else if (p.type === "truck" && ki < MAX_TRUCK) {
-          place(truck, ki++, T.px, T.pz, T.ry, p.x, p.z, p.ry, p.s);
+          place(truck, ki++, T.px, T.pz, T.ry, p.x, p.z, p.ry, p.s, 0);
           const [sw, sd] = SHADOW_SIZE.truck;
           placeShadow(T.px, T.pz, T.ry, p.x, p.z, sw * p.s, sd * p.s);
         } else if (p.type === "milestone" && mi < MAX_MILESTONE) {
-          place(milestone, mi++, T.px, T.pz, T.ry, p.x, p.z, p.ry, p.s);
+          place(milestone, mi++, T.px, T.pz, T.ry, p.x, p.z, p.ry, p.s, 0);
         }
       }
     }
 
     tree.count = ti;
+    rock.count = ri;
     dhaba.count = di;
     truck.count = ki;
     milestone.count = mi;
     shadow.count = si;
-    for (const mesh of [tree, dhaba, truck, milestone, shadow]) {
+    for (const mesh of [tree, rock, dhaba, truck, milestone, shadow]) {
       mesh.instanceMatrix.needsUpdate = true;
     }
   });
@@ -215,7 +203,8 @@ export default function PropInstances() {
 
   return (
     <group>
-      <instancedMesh args={[assets.treeGeo, assets.treeMat, MAX_TREE]} {...dynamic(treeRef)} />
+      <instancedMesh args={[assets.treeGeo, assets.propMat, MAX_TREE]} {...dynamic(treeRef)} />
+      <instancedMesh args={[assets.rockGeo, assets.propMat, MAX_ROCK]} {...dynamic(rockRef)} />
       <instancedMesh args={[assets.dhabaGeo, assets.propMat, MAX_DHABA]} {...dynamic(dhabaRef)} />
       <instancedMesh args={[assets.truckGeo, assets.propMat, MAX_TRUCK]} {...dynamic(truckRef)} />
       <instancedMesh args={[assets.milestoneGeo, assets.propMat, MAX_MILESTONE]} {...dynamic(milestoneRef)} />

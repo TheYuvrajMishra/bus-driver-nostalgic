@@ -10,13 +10,12 @@ import RoadChunkManager from "./RoadChunkManager";
 import PropInstances from "./props/PropInstances";
 import Environment from "./Environment";
 import SteeringKeys from "./SteeringKeys";
-import SteeringWheel from "./SteeringWheel";
+import CockpitOverlay from "./CockpitOverlay";
 import HornButton from "./HornButton";
 
 /**
- * One ambient + one directional light, no shadow maps (architecture.md §7).
- * Colors/intensity follow the active IST rotation's mood (rotations.ts).
- * Fog is matched to the sky-dome horizon so the desert melts into the sky.
+ * Lighting matched to IST rotation (morning, afternoon, golden hour, dusk, midnight).
+ * Fog matches the desert horizon sky color for infinite landscape blending.
  */
 function SceneLighting() {
   const rotationId = useAudioStore((s) => s.rotationId);
@@ -37,21 +36,16 @@ function SceneLighting() {
   );
 }
 
-/**
- * DriveScene — the R3F canvas. Step 6: cartoon toon shading, rotation-driven
- * day/night mood, camera bob/sway, horn easter egg.
- *
- * Perf: dpr locked to 1 (Vega 8 floor), no shadows, no postprocessing,
- * 4 road draws + 5 prop draws.
- */
 export default function DriveScene() {
   return (
-    <div className="relative h-[62vh] min-h-[380px] w-full overflow-hidden rounded-xl border border-amber-900/50">
+    <div className="fixed inset-0 h-full w-full overflow-hidden bg-black select-none">
+      {/* 3D Desert World Canvas */}
       <Canvas
         dpr={1}
         gl={{ antialias: true, powerPreference: "high-performance" }}
-        camera={{ fov: 55, near: 0.1, far: 900, position: [0, 1.9, 0] }}
+        camera={{ fov: 50, near: 0.1, far: 950, position: [0, 1.85, 0] }}
         shadows={false}
+        className="h-full w-full"
       >
         <SceneLighting />
         <Environment />
@@ -60,11 +54,17 @@ export default function DriveScene() {
         <DriverRig />
         <DriveController />
       </Canvas>
+
+      {/* Layered Indian Bus Cockpit HUD */}
+      <CockpitOverlay />
+
+      {/* Input Handlers */}
       <SteeringKeys />
-      <SteeringWheel />
       <HornButton />
-      <div className="pointer-events-none absolute left-3 top-3 rounded-md bg-black/50 px-2 py-1 text-[11px] text-amber-200/80">
-        ←/→ or A/D to steer · drag the wheel · Space = radio · H = horn
+
+      {/* Subtle Retro Controls Badge */}
+      <div className="pointer-events-none absolute right-4 top-4 z-30 rounded-lg bg-black/60 px-3.5 py-1.5 text-xs font-mono text-amber-200/90 backdrop-blur-md border border-amber-800/40 shadow-xl">
+        A/D or ←/→ to steer · Drag wheel · H = Horn · Space = Radio
       </div>
     </div>
   );

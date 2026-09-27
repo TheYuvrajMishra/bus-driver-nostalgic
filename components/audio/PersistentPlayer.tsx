@@ -53,13 +53,13 @@ export default function PersistentPlayer() {
   return (
     <div
       data-mount-id={mountId}
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-amber-900/60 bg-[#1a0f0c]/95 backdrop-blur"
+      className="fixed bottom-4 left-4 z-40 max-w-[calc(100vw-6.5rem)] sm:max-w-md rounded-2xl border border-amber-900/50 bg-[#1a0f0c]/80 px-3.5 py-2 backdrop-blur-md shadow-2xl"
     >
-      <div className="mx-auto flex h-16 max-w-5xl items-center gap-3 px-4">
+      <div className="flex items-center gap-3">
         <button
           onClick={toggle}
           aria-label={isPlaying ? "Pause radio" : "Play radio"}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-500 text-[#1a0f0c] transition hover:bg-amber-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500 text-[#1a0f0c] transition hover:bg-amber-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
         >
           {isPlaying ? (
             <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden>
@@ -97,12 +97,9 @@ export default function PersistentPlayer() {
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-amber-100">{title}</p>
-          <p className="truncate text-xs text-amber-200/60">{subtitle}</p>
+          <p className="truncate text-xs sm:text-sm font-semibold text-amber-100">{title}</p>
+          <p className="truncate text-[10px] sm:text-xs text-amber-200/60">{subtitle}</p>
         </div>
-        <p className="hidden shrink-0 text-[11px] text-amber-200/50 sm:block">
-          Space = play/pause
-        </p>
       </div>
     </div>
   );
