@@ -2,8 +2,8 @@ import { create } from "zustand";
 
 /** Half of the drivable road width (m). lateralOffset is clamped to this. */
 export const ROAD_HALF_WIDTH = 3.2;
-/** Driver's eye height above the road surface (m) — architecture.md §6. */
-export const EYE_HEIGHT = 1.45;
+/** Driver's eye height above the road surface (m) — bus driver sits high. */
+export const EYE_HEIGHT = 1.9;
 /** Chunk length in metres (architecture.md §3). */
 export const CHUNK_LENGTH = 60;
 

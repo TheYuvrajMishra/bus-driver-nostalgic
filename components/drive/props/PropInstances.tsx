@@ -24,7 +24,7 @@ const MAX_SHADOW = 60;
 const TREE_TINTS = ["#ffffff", "#d9eccf"];
 const TRUCK_TINTS = ["#ffffff", "#ffe9c4", "#d9e6ff"];
 const SHADOW_SIZE: Record<PropItem["type"], [number, number]> = {
-  tree: [4.6, 4.6],
+  tree: [5.2, 5.2],
   dhaba: [7.0, 6.0],
   truck: [4.2, 9.0],
   milestone: [0, 0], // no shadow
@@ -46,8 +46,8 @@ export default function PropInstances() {
   const shadowRef = useRef<THREE.InstancedMesh>(null);
 
   const assets = useMemo(() => {
-    const treeGeo = new THREE.PlaneGeometry(3.2, 4.6);
-    treeGeo.translate(0, 2.3, 0); // base at ground
+    const treeGeo = new THREE.PlaneGeometry(3.6, 5.2);
+    treeGeo.translate(0, 2.6, 0); // base at ground
     const gradientMap = getToonGradient();
     const treeMat = new THREE.MeshToonMaterial({
       map: getTreeTexture() ?? undefined,

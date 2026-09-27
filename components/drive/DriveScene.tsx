@@ -2,29 +2,31 @@
 
 import { Canvas } from "@react-three/fiber";
 import { ROTATIONS } from "@/lib/rotations";
+import { skyPaletteFor } from "@/lib/sky-colors";
 import { useAudioStore } from "@/lib/audio-store";
 import DriverRig from "./DriverRig";
 import DriveController from "./DriveController";
 import RoadChunkManager from "./RoadChunkManager";
 import PropInstances from "./props/PropInstances";
+import Environment from "./Environment";
 import SteeringKeys from "./SteeringKeys";
 import SteeringWheel from "./SteeringWheel";
 import HornButton from "./HornButton";
 
 /**
  * One ambient + one directional light, no shadow maps (architecture.md §7).
- * Colors/intensity follow the active IST rotation's mood (rotations.ts) —
- * the drive looks like the "Highway Raat" / "Subah Nikaas" mood the
- * currently-playing rotation implies (prd.md Phase 2).
+ * Colors/intensity follow the active IST rotation's mood (rotations.ts).
+ * Fog is matched to the sky-dome horizon so the desert melts into the sky.
  */
 function SceneLighting() {
   const rotationId = useAudioStore((s) => s.rotationId);
   const rotation = ROTATIONS.find((r) => r.id === rotationId) ?? ROTATIONS[2];
   const L = rotation.lighting;
+  const pal = skyPaletteFor(L.sky);
   return (
     <>
-      <color attach="background" args={[L.sky]} />
-      <fog attach="fog" args={[L.sky, L.fogNear, L.fogFar]} />
+      <color attach="background" args={[pal.top]} />
+      <fog attach="fog" args={[pal.fog, L.fogNear, L.fogFar]} />
       <ambientLight color={L.ambientColor} intensity={L.ambientIntensity} />
       <directionalLight
         color={L.sunColor}
@@ -48,10 +50,11 @@ export default function DriveScene() {
       <Canvas
         dpr={1}
         gl={{ antialias: true, powerPreference: "high-performance" }}
-        camera={{ fov: 62, near: 0.1, far: 900, position: [0, 1.45, 0] }}
+        camera={{ fov: 55, near: 0.1, far: 900, position: [0, 1.9, 0] }}
         shadows={false}
       >
         <SceneLighting />
+        <Environment />
         <RoadChunkManager />
         <PropInstances />
         <DriverRig />

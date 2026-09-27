@@ -6,15 +6,17 @@ import { steeringInput } from "@/lib/steering-input";
 
 /** Pointer angle (from straight-up) that maps to full lock. */
 const FULL_LOCK_RAD = (75 * Math.PI) / 180;
-/** Visual rotation of the wheel graphic at full lock. */
-const VISUAL_DEG = 135;
 
 /**
- * On-screen steering wheel — architecture.md §5, design.md §3.
+ * Steering drag zone — architecture.md §5, design.md §3.
  *
- * Pointer-down + drag around the wheel's centre writes to the same
- * steeringAngle store value as the keyboard. The graphic always renders
- * from the store value, so keyboard and drag are visually indistinguishable.
+ * The visible wheel is now the 3D cockpit wheel (DriverRig), which renders
+ * from the same steeringAngle store value. This component keeps the proven
+ * pointer-drag math as an INVISIBLE touch zone at the bottom of the drive
+ * view so mobile drag-to-steer keeps working exactly as before.
+ *
+ * Pointer-down + drag around the zone's centre writes to the same
+ * steeringAngle store value as the keyboard.
  */
 export default function SteeringWheel() {
   const steeringAngle = useDriveStore((s) => s.steeringAngle);
@@ -34,10 +36,10 @@ export default function SteeringWheel() {
   return (
     <div
       ref={boxRef}
-      className="absolute bottom-4 left-1/2 z-10 h-28 w-28 -translate-x-1/2 cursor-grab touch-none select-none rounded-full opacity-70 transition-opacity hover:opacity-100 active:cursor-grabbing"
+      className="absolute bottom-2 left-1/2 z-10 h-32 w-64 -translate-x-1/2 cursor-grab touch-none select-none opacity-0 active:cursor-grabbing"
       style={{ touchAction: "none" }}
       role="slider"
-      aria-label="Steering wheel"
+      aria-label="Steering drag zone"
       aria-valuemin={-1}
       aria-valuemax={1}
       aria-valuenow={Number(steeringAngle.toFixed(2))}
@@ -57,29 +59,6 @@ export default function SteeringWheel() {
         dragging.current = false;
         steeringInput.wheel = null;
       }}
-    >
-      <svg
-        viewBox="0 0 100 100"
-        className="h-full w-full drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]"
-        style={{ transform: `rotate(${steeringAngle * VISUAL_DEG}deg)` }}
-      >
-        <circle cx="50" cy="50" r="46" fill="none" stroke="#b45309" strokeWidth="7" />
-        <circle cx="50" cy="50" r="46" fill="none" stroke="#f59e0b" strokeWidth="2" opacity="0.6" />
-        {[0, 120, 240].map((deg) => (
-          <line
-            key={deg}
-            x1="50"
-            y1="50"
-            x2={50 + 40 * Math.cos(((deg - 90) * Math.PI) / 180)}
-            y2={50 + 40 * Math.sin(((deg - 90) * Math.PI) / 180)}
-            stroke="#b45309"
-            strokeWidth="6"
-            strokeLinecap="round"
-          />
-        ))}
-        <circle cx="50" cy="50" r="12" fill="#92400e" />
-        <circle cx="50" cy="50" r="5" fill="#f59e0b" />
-      </svg>
-    </div>
+    />
   );
 }
