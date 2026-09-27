@@ -18,6 +18,7 @@ export type PropType =
   | "tree"
   | "tree_banyan"
   | "tree_gulmohar"
+  | "tree_ashoka"
   | "bush"
   | "rock"
   | "cliff"
@@ -75,7 +76,7 @@ function buildProps(n: number): PropItem[] {
   }
 
   // ---------------------------------------------------------------------------
-  // 2. Rich Varied Roadside Trees (Flat Acacia, Dense Banyan/Neem, Flowering Gulmohar)
+  // 2. Rich Varied 100% Volumetric Roadside Trees (Neem, Banyan, Gulmohar, Ashoka)
   // ---------------------------------------------------------------------------
   const treeCount = 10 + Math.floor(rand() * 4);
   for (let i = 0; i < treeCount; i++) {
@@ -84,15 +85,17 @@ function buildProps(n: number): PropItem[] {
       ? ROAD_HALF + 5.8 + rand() * 18.0
       : ROAD_HALF + 5.2 + rand() * 24.0;
 
-    // Weighted species selection: 55% Umbrella Acacia, 28% Dense Banyan/Neem, 17% Flowering Gulmohar
+    // Weighted 4-species selection: 38% Volumetric Neem, 26% Banyan, 20% Gulmohar, 16% Ashoka
     const rType = rand();
     let type: PropType = "tree";
-    if (rType < 0.55) {
+    if (rType < 0.38) {
       type = "tree";
-    } else if (rType < 0.83) {
+    } else if (rType < 0.64) {
       type = "tree_banyan";
-    } else {
+    } else if (rType < 0.84) {
       type = "tree_gulmohar";
+    } else {
+      type = "tree_ashoka";
     }
 
     items.push({
