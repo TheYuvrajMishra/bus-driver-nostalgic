@@ -16,6 +16,8 @@ import { ROAD_WIDTH } from "./road-constants";
 export type PropType =
   | "grass"
   | "tree"
+  | "tree_banyan"
+  | "tree_gulmohar"
   | "bush"
   | "rock"
   | "cliff"
@@ -73,19 +75,31 @@ function buildProps(n: number): PropItem[] {
   }
 
   // ---------------------------------------------------------------------------
-  // 2. Dominant Large Flat-Canopy Acacia / Afromontane Trees
+  // 2. Rich Varied Roadside Trees (Flat Acacia, Dense Banyan/Neem, Flowering Gulmohar)
   // ---------------------------------------------------------------------------
-  const treeCount = 9 + Math.floor(rand() * 4);
+  const treeCount = 10 + Math.floor(rand() * 4);
   for (let i = 0; i < treeCount; i++) {
     const side = i % 2 === 0 ? -1 : 1;
     const offset = side < 0
-      ? ROAD_HALF + 6.0 + rand() * 16.0
-      : ROAD_HALF + 5.5 + rand() * 22.0;
+      ? ROAD_HALF + 5.8 + rand() * 18.0
+      : ROAD_HALF + 5.2 + rand() * 24.0;
+
+    // Weighted species selection: 55% Umbrella Acacia, 28% Dense Banyan/Neem, 17% Flowering Gulmohar
+    const rType = rand();
+    let type: PropType = "tree";
+    if (rType < 0.55) {
+      type = "tree";
+    } else if (rType < 0.83) {
+      type = "tree_banyan";
+    } else {
+      type = "tree_gulmohar";
+    }
+
     items.push({
-      type: "tree",
+      type,
       x: side * offset,
       z: -(i / treeCount) * 58 - rand() * 2,
-      s: 0.95 + rand() * 0.45,
+      s: 0.9 + rand() * 0.45,
       ry: rand() * Math.PI * 2,
       v: Math.floor(rand() * 3),
     });

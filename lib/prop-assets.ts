@@ -48,7 +48,7 @@ function paint(
 }
 
 // -----------------------------------------------------------------------------
-// 1. Dominant Large Flat-Canopy Acacia / Afromontane Tree
+// 1. Dominant Large Flat-Canopy Acacia / Babul Tree
 // -----------------------------------------------------------------------------
 let dominantTreeGeo: THREE.BufferGeometry | null = null;
 
@@ -56,110 +56,563 @@ export function getDominantTreeGeometry(): THREE.BufferGeometry {
   if (!dominantTreeGeo) {
     const parts: THREE.BufferGeometry[] = [];
 
-    // Sturdy woody trunk with stylized bark facets
+    // Gnarled weathered trunk base & root flares
     const trunkMain = paint(
-      new THREE.CylinderGeometry(0.38, 0.58, 2.8, 6),
-      "#482e1b",
+      new THREE.CylinderGeometry(0.35, 0.65, 3.2, 7),
+      "#482b17",
       0,
-      1.4,
-      0
-    );
-    // Spreading branch arms
-    const branchR = paint(
-      new THREE.CylinderGeometry(0.24, 0.35, 2.5, 5),
-      "#422816",
-      0.9,
-      3.2,
-      0.35,
-      0.35,
-      0.2,
-      0.55
-    );
-    const branchL = paint(
-      new THREE.CylinderGeometry(0.22, 0.32, 2.3, 5),
-      "#422816",
-      -0.95,
-      3.1,
-      -0.3,
-      -0.3,
-      -0.35,
-      -0.5
-    );
-    const branchC = paint(
-      new THREE.CylinderGeometry(0.2, 0.28, 1.9, 5),
-      "#482e1b",
-      0.1,
-      3.6,
-      0.1,
-      0.1,
-      0.15,
+      1.6,
+      0,
+      0.05,
+      0,
       0.08
     );
-    parts.push(trunkMain, branchR, branchL, branchC);
+    const root1 = paint(
+      new THREE.CylinderGeometry(0.18, 0.35, 1.4, 5),
+      "#3b2210",
+      0.45,
+      0.5,
+      0.3,
+      -0.4,
+      0.2,
+      -0.6
+    );
+    const root2 = paint(
+      new THREE.CylinderGeometry(0.16, 0.32, 1.3, 5),
+      "#3b2210",
+      -0.48,
+      0.45,
+      -0.25,
+      0.3,
+      -0.4,
+      0.55
+    );
+    const root3 = paint(
+      new THREE.CylinderGeometry(0.14, 0.28, 1.2, 5),
+      "#3b2210",
+      -0.2,
+      0.45,
+      0.5,
+      -0.55,
+      0,
+      0.2
+    );
 
-    // Wide flat umbrella canopy (multi-tiered low-poly pancake discs)
-    // Central primary umbrella canopy
-    const canopyMainBody = paint(
-      new THREE.CylinderGeometry(4.2, 4.6, 0.65, 8),
-      "#428e26", // rich leaf green
+    // Spreading branch armature
+    const branchR = paint(
+      new THREE.CylinderGeometry(0.24, 0.36, 3.0, 6),
+      "#3e2513",
+      1.1,
+      3.4,
+      0.35,
+      0.45,
+      0.3,
+      0.62
+    );
+    const branchR2 = paint(
+      new THREE.CylinderGeometry(0.14, 0.22, 2.2, 5),
+      "#3e2513",
+      2.4,
+      4.3,
+      0.7,
+      0.2,
+      0.1,
+      0.45
+    );
+    const branchL = paint(
+      new THREE.CylinderGeometry(0.22, 0.34, 2.8, 6),
+      "#3e2513",
+      -1.05,
+      3.3,
+      -0.4,
+      -0.38,
+      -0.3,
+      -0.58
+    );
+    const branchL2 = paint(
+      new THREE.CylinderGeometry(0.13, 0.2, 2.0, 5),
+      "#3e2513",
+      -2.2,
+      4.1,
+      -0.8,
+      -0.2,
+      -0.15,
+      -0.42
+    );
+    const branchC = paint(
+      new THREE.CylinderGeometry(0.2, 0.3, 2.4, 6),
+      "#482e1b",
+      0.12,
+      3.8,
       0.15,
-      4.65,
+      0.12,
+      0.25,
       0.1
     );
-    const canopyMainTop = paint(
-      new THREE.ConeGeometry(3.8, 0.45, 8),
-      "#63b834", // sunny yellow-green highlight
-      0.15,
-      5.1,
-      0.1
+    parts.push(trunkMain, root1, root2, root3, branchR, branchR2, branchL, branchL2, branchC);
+
+    // Multi-tiered stepped parasol umbrella canopy foliage
+    // Central Main Umbrella
+    const canopyMainCap = paint(
+      new THREE.ConeGeometry(3.6, 0.5, 9),
+      "#6dc93a", // sunlit golden-green highlight
+      0.2,
+      5.35,
+      0.2
+    );
+    const canopyMainBody = paint(
+      new THREE.CylinderGeometry(4.4, 4.8, 0.6, 9),
+      "#449226", // rich leaf green
+      0.2,
+      4.9,
+      0.2
+    );
+    const canopyMainRim = paint(
+      new THREE.CylinderGeometry(4.7, 4.4, 0.35, 9),
+      "#367d1d", // mid forest tone
+      0.2,
+      4.55,
+      0.2
     );
     const canopyMainUnderside = paint(
-      new THREE.CylinderGeometry(4.4, 3.8, 0.3, 8),
-      "#225413", // shaded forest green underside
-      0.15,
+      new THREE.CylinderGeometry(4.3, 3.4, 0.3, 9),
+      "#1e4c10", // deep shaded underside
+      0.2,
       4.3,
-      0.1
+      0.2
     );
-    parts.push(canopyMainBody, canopyMainTop, canopyMainUnderside);
+    parts.push(canopyMainCap, canopyMainBody, canopyMainRim, canopyMainUnderside);
 
-    // Right branch secondary canopy disc
+    // Right elevated branch canopy
+    const canopyRightCap = paint(
+      new THREE.ConeGeometry(2.3, 0.45, 8),
+      "#75d642",
+      2.6,
+      4.95,
+      0.8
+    );
     const canopyRightBody = paint(
-      new THREE.CylinderGeometry(2.4, 2.8, 0.5, 7),
-      "#4a9b2b",
-      2.1,
-      4.1,
-      0.65
+      new THREE.CylinderGeometry(2.7, 3.0, 0.5, 8),
+      "#4ca32c",
+      2.6,
+      4.55,
+      0.8
     );
-    const canopyRightTop = paint(
-      new THREE.ConeGeometry(2.1, 0.38, 7),
-      "#67be36",
-      2.1,
-      4.45,
-      0.65
-    );
-    parts.push(canopyRightBody, canopyRightTop);
-
-    // Left branch secondary canopy disc
-    const canopyLeftBody = paint(
-      new THREE.CylinderGeometry(2.2, 2.6, 0.45, 7),
-      "#3b8523",
-      -2.0,
-      3.95,
-      -0.55
-    );
-    const canopyLeftTop = paint(
-      new THREE.ConeGeometry(1.9, 0.35, 7),
-      "#5bb02e",
-      -2.0,
+    const canopyRightUnderside = paint(
+      new THREE.CylinderGeometry(2.8, 2.1, 0.28, 8),
+      "#225612",
+      2.6,
       4.25,
-      -0.55
+      0.8
     );
-    parts.push(canopyLeftBody, canopyLeftTop);
+    parts.push(canopyRightCap, canopyRightBody, canopyRightUnderside);
+
+    // Left drooping branch canopy
+    const canopyLeftCap = paint(
+      new THREE.ConeGeometry(2.1, 0.42, 8),
+      "#65bf35",
+      -2.4,
+      4.65,
+      -0.9
+    );
+    const canopyLeftBody = paint(
+      new THREE.CylinderGeometry(2.5, 2.8, 0.48, 8),
+      "#3f8e23",
+      -2.4,
+      4.3,
+      -0.9
+    );
+    const canopyLeftUnderside = paint(
+      new THREE.CylinderGeometry(2.6, 1.9, 0.25, 8),
+      "#1b460e",
+      -2.4,
+      4.0,
+      -0.9
+    );
+    parts.push(canopyLeftCap, canopyLeftBody, canopyLeftUnderside);
+
+    // Rear accent canopy
+    const canopyRearCap = paint(
+      new THREE.ConeGeometry(1.6, 0.35, 7),
+      "#6ac638",
+      -0.5,
+      5.0,
+      1.9
+    );
+    const canopyRearBody = paint(
+      new THREE.CylinderGeometry(1.9, 2.2, 0.4, 7),
+      "#429025",
+      -0.5,
+      4.7,
+      1.9
+    );
+    parts.push(canopyRearCap, canopyRearBody);
 
     dominantTreeGeo = mergeGeometries(parts)!;
     parts.forEach((p) => p.dispose());
   }
   return dominantTreeGeo;
+}
+
+// -----------------------------------------------------------------------------
+// 1B. Dense Cloud-Canopy Banyan / Neem Tree
+// -----------------------------------------------------------------------------
+let banyanTreeGeo: THREE.BufferGeometry | null = null;
+
+export function getBanyanTreeGeometry(): THREE.BufferGeometry {
+  if (!banyanTreeGeo) {
+    const parts: THREE.BufferGeometry[] = [];
+
+    // Massive gnarled main trunk & 4 descending pillar roots
+    const trunk = paint(
+      new THREE.CylinderGeometry(0.55, 0.85, 3.0, 8),
+      "#422818",
+      0,
+      1.5,
+      0
+    );
+    const root1 = paint(
+      new THREE.CylinderGeometry(0.18, 0.26, 2.6, 5),
+      "#382012",
+      0.75,
+      1.3,
+      0.4,
+      0.1,
+      0,
+      -0.15
+    );
+    const root2 = paint(
+      new THREE.CylinderGeometry(0.16, 0.24, 2.5, 5),
+      "#382012",
+      -0.7,
+      1.25,
+      0.35,
+      -0.1,
+      0.1,
+      0.18
+    );
+    const root3 = paint(
+      new THREE.CylinderGeometry(0.17, 0.25, 2.7, 5),
+      "#382012",
+      0.2,
+      1.35,
+      -0.75,
+      0.15,
+      -0.1,
+      0
+    );
+    const root4 = paint(
+      new THREE.CylinderGeometry(0.15, 0.22, 2.4, 5),
+      "#382012",
+      -0.65,
+      1.2,
+      -0.55,
+      -0.12,
+      0,
+      -0.1
+    );
+
+    // Spreading crown boughs
+    const bough1 = paint(
+      new THREE.CylinderGeometry(0.28, 0.42, 2.5, 6),
+      "#3d2414",
+      0.9,
+      3.2,
+      0.5,
+      0.35,
+      0.2,
+      0.45
+    );
+    const bough2 = paint(
+      new THREE.CylinderGeometry(0.26, 0.38, 2.4, 6),
+      "#3d2414",
+      -0.85,
+      3.1,
+      -0.45,
+      -0.3,
+      -0.2,
+      -0.42
+    );
+    const bough3 = paint(
+      new THREE.CylinderGeometry(0.25, 0.36, 2.6, 6),
+      "#3d2414",
+      -0.3,
+      3.3,
+      0.8,
+      0.4,
+      -0.1,
+      -0.2
+    );
+    parts.push(trunk, root1, root2, root3, root4, bough1, bough2, bough3);
+
+    // Organic leafy cloud puffs (faceted dodecahedra volumes)
+    const domeCenter = paint(
+      new THREE.DodecahedronGeometry(2.4, 1),
+      "#4fa62d",
+      0,
+      5.2,
+      0,
+      0.2,
+      0.5,
+      0.1
+    );
+    const crownTop = paint(
+      new THREE.DodecahedronGeometry(1.7, 1),
+      "#6ecf3e", // sunny crown highlight
+      0.2,
+      6.2,
+      -0.1,
+      0.4,
+      0.1,
+      -0.2
+    );
+    const cloudRight = paint(
+      new THREE.DodecahedronGeometry(2.1, 1),
+      "#429324",
+      1.8,
+      4.4,
+      0.9,
+      -0.2,
+      0.3,
+      0.4
+    );
+    const cloudRightTop = paint(
+      new THREE.DodecahedronGeometry(1.4, 1),
+      "#63c435",
+      2.2,
+      5.1,
+      0.8,
+      0.1,
+      -0.3,
+      0.2
+    );
+    const cloudLeft = paint(
+      new THREE.DodecahedronGeometry(2.0, 1),
+      "#3b8720",
+      -1.7,
+      4.3,
+      -0.8,
+      0.3,
+      -0.4,
+      0.1
+    );
+    const cloudLeftTop = paint(
+      new THREE.DodecahedronGeometry(1.3, 1),
+      "#5aba30",
+      -2.0,
+      4.9,
+      -0.7,
+      -0.2,
+      0.2,
+      0.3
+    );
+    const cloudFront = paint(
+      new THREE.DodecahedronGeometry(1.8, 1),
+      "#357b1c",
+      -0.4,
+      4.1,
+      1.6,
+      0.1,
+      0.4,
+      -0.3
+    );
+    const cloudBack = paint(
+      new THREE.DodecahedronGeometry(1.7, 1),
+      "#2e6f18",
+      0.5,
+      4.2,
+      -1.5,
+      -0.3,
+      0.1,
+      0.4
+    );
+    const understoryShadow = paint(
+      new THREE.DodecahedronGeometry(2.2, 0),
+      "#1c4a0d",
+      0,
+      3.8,
+      0,
+      0.5,
+      0.2,
+      -0.3
+    );
+    parts.push(
+      domeCenter,
+      crownTop,
+      cloudRight,
+      cloudRightTop,
+      cloudLeft,
+      cloudLeftTop,
+      cloudFront,
+      cloudBack,
+      understoryShadow
+    );
+
+    banyanTreeGeo = mergeGeometries(parts)!;
+    parts.forEach((p) => p.dispose());
+  }
+  return banyanTreeGeo;
+}
+
+// -----------------------------------------------------------------------------
+// 1C. Flowering Gulmohar (Flame Tree) with Scarlet & Orange Blossom Canopy
+// -----------------------------------------------------------------------------
+let gulmoharTreeGeo: THREE.BufferGeometry | null = null;
+
+export function getGulmoharTreeGeometry(): THREE.BufferGeometry {
+  if (!gulmoharTreeGeo) {
+    const parts: THREE.BufferGeometry[] = [];
+
+    // Sweeping curved trunk & broad spreading boughs
+    const trunk = paint(
+      new THREE.CylinderGeometry(0.32, 0.55, 3.0, 7),
+      "#442b1a",
+      0,
+      1.5,
+      0,
+      0.08,
+      0,
+      0.05
+    );
+    const bough1 = paint(
+      new THREE.CylinderGeometry(0.2, 0.32, 3.2, 5),
+      "#3d2414",
+      1.4,
+      3.2,
+      0.2,
+      0.2,
+      0.1,
+      0.75
+    );
+    const bough2 = paint(
+      new THREE.CylinderGeometry(0.2, 0.32, 3.0, 5),
+      "#3d2414",
+      -1.3,
+      3.1,
+      -0.3,
+      -0.25,
+      -0.2,
+      -0.7
+    );
+    const bough3 = paint(
+      new THREE.CylinderGeometry(0.18, 0.28, 2.8, 5),
+      "#3d2414",
+      -0.2,
+      3.3,
+      1.3,
+      0.65,
+      0,
+      -0.15
+    );
+    parts.push(trunk, bough1, bough2, bough3);
+
+    // Spreading Scarlet & Orange Blossom Canopy Discs with Emerald Base
+    // Central Canopy
+    const centerBlossomCap = paint(
+      new THREE.ConeGeometry(3.5, 0.6, 8),
+      "#e63c1e", // fiery scarlet blossom crown
+      0,
+      5.2,
+      0.1
+    );
+    const centerBlossomBody = paint(
+      new THREE.CylinderGeometry(4.2, 4.5, 0.55, 8),
+      "#f4511e", // bright vermilion blossom tier
+      0,
+      4.75,
+      0.1
+    );
+    const centerLeafBase = paint(
+      new THREE.CylinderGeometry(4.4, 3.8, 0.4, 8),
+      "#2e7d32", // lush emerald leaf layer
+      0,
+      4.35,
+      0.1
+    );
+    const centerUnderside = paint(
+      new THREE.CylinderGeometry(3.6, 2.8, 0.25, 8),
+      "#1b5e20",
+      0,
+      4.1,
+      0.1
+    );
+    parts.push(centerBlossomCap, centerBlossomBody, centerLeafBase, centerUnderside);
+
+    // Right Canopy Wing
+    const rightBlossomCap = paint(
+      new THREE.ConeGeometry(2.4, 0.5, 7),
+      "#e53935",
+      2.5,
+      4.75,
+      0.5
+    );
+    const rightBlossomBody = paint(
+      new THREE.CylinderGeometry(2.8, 3.1, 0.45, 7),
+      "#ff7043",
+      2.5,
+      4.35,
+      0.5
+    );
+    const rightLeafBase = paint(
+      new THREE.CylinderGeometry(3.0, 2.2, 0.35, 7),
+      "#388e3c",
+      2.5,
+      4.0,
+      0.5
+    );
+    parts.push(rightBlossomCap, rightBlossomBody, rightLeafBase);
+
+    // Left Canopy Wing
+    const leftBlossomCap = paint(
+      new THREE.ConeGeometry(2.2, 0.45, 7),
+      "#d32f2f",
+      -2.3,
+      4.6,
+      -0.6
+    );
+    const leftBlossomBody = paint(
+      new THREE.CylinderGeometry(2.6, 2.9, 0.42, 7),
+      "#ff5722",
+      -2.3,
+      4.22,
+      -0.6
+    );
+    const leftLeafBase = paint(
+      new THREE.CylinderGeometry(2.7, 2.0, 0.3, 7),
+      "#2e7d32",
+      -2.3,
+      3.9,
+      -0.6
+    );
+    parts.push(leftBlossomCap, leftBlossomBody, leftLeafBase);
+
+    // Blossom accent puffs
+    const frontBlossomPuff = paint(
+      new THREE.DodecahedronGeometry(1.2, 0),
+      "#ff3d00",
+      -0.4,
+      4.6,
+      2.2,
+      0.2,
+      0.4,
+      -0.1
+    );
+    const backBlossomPuff = paint(
+      new THREE.DodecahedronGeometry(1.1, 0),
+      "#e64a19",
+      0.6,
+      4.7,
+      -1.8,
+      -0.3,
+      0.2,
+      0.3
+    );
+    parts.push(frontBlossomPuff, backBlossomPuff);
+
+    gulmoharTreeGeo = mergeGeometries(parts)!;
+    parts.forEach((p) => p.dispose());
+  }
+  return gulmoharTreeGeo;
 }
 
 // -----------------------------------------------------------------------------
