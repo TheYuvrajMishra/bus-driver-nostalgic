@@ -17,13 +17,21 @@ import { evictProps } from "@/lib/prop-placer";
 import RoadChunk from "./RoadChunk";
 
 const CHUNKS_BEHIND = 1;
-const CHUNKS_AHEAD = 2;
+const CHUNKS_AHEAD = 5;
+
+function getChunkList(cur: number): number[] {
+  const list: number[] = [];
+  for (let i = cur - CHUNKS_BEHIND; i <= cur + CHUNKS_AHEAD; i++) {
+    list.push(i);
+  }
+  return list;
+}
 
 /**
  * Spawn/despawn ring buffer with 3D elevation & heading.
  *
- * Live window: current chunk + 2 ahead + 1 behind (4 chunks). The camera
- * rig stays near the origin; each frame, chunks are re-placed in car-space
+ * Extended live window: current chunk + 5 ahead + 1 behind (7 chunks total = 360m).
+ * The camera rig stays near the origin; each frame, chunks are placed in car-space
  * so the route point at distance `d` sits at the origin with heading 0:
  *   group.position = [cx, cy, cz]
  *   group.rotation.y = h(d) - h[n]
@@ -32,8 +40,8 @@ const CHUNKS_AHEAD = 2;
  * are no visible seams in horizontal curvature or vertical elevation.
  */
 export default function RoadChunkManager() {
-  const [live, setLive] = useState<number[]>(() => [-CHUNKS_BEHIND, 0, 1, CHUNKS_AHEAD]);
-  const liveRef = useRef<number[]>([-CHUNKS_BEHIND, 0, 1, CHUNKS_AHEAD]);
+  const [live, setLive] = useState<number[]>(() => getChunkList(0));
+  const liveRef = useRef<number[]>(getChunkList(0));
   // Anchor: route position/heading at boundary `n`, walked forward as the car advances.
   const anchor = useRef({
     n: 0,
@@ -101,8 +109,9 @@ export default function RoadChunkManager() {
     const hd = hc + lh;
 
     // Spawn/despawn at chunk boundaries only (no per-frame React churn).
-    const next = [cur - CHUNKS_BEHIND, cur, cur + 1, cur + CHUNKS_AHEAD];
-    if (next[0] !== liveRef.current[0]) {
+    const targetFirst = cur - CHUNKS_BEHIND;
+    if (liveRef.current[0] !== targetFirst) {
+      const next = getChunkList(cur);
       liveRef.current = next;
       setLive(next);
       evictChunkGeometry(new Set(next));

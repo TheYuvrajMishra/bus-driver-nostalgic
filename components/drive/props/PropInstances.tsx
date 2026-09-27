@@ -23,18 +23,18 @@ import {
 } from "@/lib/prop-assets";
 import { getToonGradient } from "@/lib/toon-material";
 
-const MAX_GRASS = 120;
-const MAX_TREE = 48;
-const MAX_TREE_BANYAN = 36;
-const MAX_TREE_GULMOHAR = 24;
-const MAX_BUSH = 96;
-const MAX_ROCK = 64;
-const MAX_CLIFF = 16;
-const MAX_POLE = 24;
-const MAX_DHABA = 8;
-const MAX_TRUCK = 12;
-const MAX_MILESTONE = 8;
-const MAX_REFLECTOR = 60;
+const MAX_GRASS = 220;
+const MAX_TREE = 64;
+const MAX_TREE_BANYAN = 48;
+const MAX_TREE_GULMOHAR = 32;
+const MAX_BUSH = 200;
+const MAX_ROCK = 120;
+const MAX_CLIFF = 20;
+const MAX_POLE = 48;
+const MAX_DHABA = 12;
+const MAX_TRUCK = 18;
+const MAX_MILESTONE = 12;
+const MAX_REFLECTOR = 150;
 
 const TREE_TINTS = ["#ffffff", "#f2f8eb", "#e4f2da"];
 const BANYAN_TINTS = ["#ffffff", "#eef7e8", "#e2f2da"];
