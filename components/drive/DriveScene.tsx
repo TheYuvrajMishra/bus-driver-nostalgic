@@ -43,7 +43,7 @@ export default function DriveScene() {
       <Canvas
         dpr={1}
         gl={{ antialias: true, powerPreference: "high-performance" }}
-        camera={{ fov: 50, near: 0.1, far: 950, position: [0, 1.85, 0] }}
+        camera={{ fov: 58, near: 0.1, far: 950, position: [0, 1.85, 0] }}
         shadows={false}
         className="h-full w-full"
       >

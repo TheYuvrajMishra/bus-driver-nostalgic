@@ -7,11 +7,29 @@ import { steeringInput } from "@/lib/steering-input";
 /**
  * 2D/3D Hybrid Cockpit Overlay:
  * 1. High-resolution Indian bus cabin frame with authentic painted dashboard dials.
- * 2. Interactive 3D Perspective Steering Wheel on tilted gimbal with pointer drag & musical horn.
+ * 2. Interactive 3D Perspective Volumetric Steering Wheel with calibrated driver POV geometry.
  * 3. Hanging Nimbu-Mirchi charm with inertia pendulum physics.
  * 4. Windshield glass with sun flare and wiper blades.
  * 5. Cockpit camera shake & road vibration.
  */
+
+// Calibrated 3D Volumetric Extrusion Slices (15 depth layers, depth=38px, minBrightness=0.50)
+const DEPTH_LAYERS = [
+  { z: -38.0, b: 0.50, s: 0.9750 },
+  { z: -35.3, b: 0.53, s: 0.9768 },
+  { z: -32.6, b: 0.56, s: 0.9785 },
+  { z: -29.9, b: 0.59, s: 0.9803 },
+  { z: -27.1, b: 0.62, s: 0.9820 },
+  { z: -24.4, b: 0.65, s: 0.9838 },
+  { z: -21.7, b: 0.68, s: 0.9855 },
+  { z: -19.0, b: 0.71, s: 0.9873 },
+  { z: -16.3, b: 0.74, s: 0.9890 },
+  { z: -13.6, b: 0.77, s: 0.9908 },
+  { z: -10.9, b: 0.80, s: 0.9925 },
+  { z: -8.1,  b: 0.83, s: 0.9943 },
+  { z: -5.4,  b: 0.86, s: 0.9960 },
+  { z: -2.7,  b: 0.89, s: 0.9978 },
+];
 
 export default function CockpitOverlay() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -98,8 +116,6 @@ export default function CockpitOverlay() {
       }
 
       // 3. Nimbu-Mirchi Pendulum Physics
-      // Target angle based on lateral centrifugal force:
-      // When turning right (steeringAngle > 0), centrifugal force swings the talisman to the left (positive CSS rotation)
       const targetNimbuAngle = steeringAngle * 28 * (0.4 + speedNorm * 0.6);
       const k = 14.0; // spring constant
       const damping = 3.5; // damping
@@ -154,17 +170,19 @@ export default function CockpitOverlay() {
               height: "calc(100vw * (724 / 2172))",
               minHeight: "100vh",
               minWidth: "calc(100vh * (2172 / 724))",
+              transform: "scale(1.16) translateY(1.5%)",
+              transformOrigin: "center 42%",
             }}
           >
             {/* 1. Windshield Glass Overlay (Sun flare, wiper blades, vintage dust) */}
             <div
               className="pointer-events-none absolute"
               style={{
-                left: "25.8%",
-                top: "23.5%",
-                width: "48.2%",
-                height: "40.5%",
-                opacity: 0.82,
+                left: "24.5%",
+                top: "20.5%",
+                width: "51.0%",
+                height: "46.0%",
+                opacity: 0.85,
                 mixBlendMode: "screen",
               }}
             >
@@ -195,7 +213,7 @@ export default function CockpitOverlay() {
               />
             </div>
 
-            {/* 3. High-Resolution Indian Bus Cockpit Frame (with integrated dashboard gauges) */}
+            {/* 3. High-Resolution Indian Bus Cockpit Frame (with integrated dashboard dials) */}
             <div
               className="pointer-events-none absolute inset-0 h-full w-full"
               style={{ zIndex: 10 }}
@@ -207,27 +225,26 @@ export default function CockpitOverlay() {
               />
             </div>
 
-            {/* 4. Interactive 3D Volumetric Steering Wheel */}
-            {/* 3D Perspective Gimbal Container matching driver POV slant */}
+            {/* 4. Interactive 3D Volumetric Steering Wheel with Calibrated Driver Perspective */}
             <div
               className="pointer-events-none absolute"
               style={{
-                left: "32.2%",
-                top: "78.0%",
-                width: "36%",
+                left: "30.8%",
+                top: "80%",
+                width: "28.5%",
                 aspectRatio: "1 / 1",
                 transform: "translate(-50%, -50%)",
-                perspective: "580px",
-                perspectiveOrigin: "50% 35%",
+                perspective: "1600px",
+                perspectiveOrigin: "50% 9%",
                 zIndex: 20,
               }}
             >
-              {/* Tilted Steering Column Plane (Bus Flat Wheel Slant) */}
+              {/* Tilted Steering Column Plane (Calibrated Bus Wheel Slant) */}
               <div
                 className="pointer-events-auto h-full w-full cursor-grab active:cursor-grabbing will-change-transform"
                 style={{
                   transformStyle: "preserve-3d",
-                  transform: "rotateX(62deg) rotateY(4deg) rotateZ(-3deg)",
+                  transform: "rotateX(57.5deg) rotateY(-10.5deg) rotateZ(14deg)",
                   transformOrigin: "50% 50%",
                   touchAction: "none",
                 }}
@@ -246,24 +263,8 @@ export default function CockpitOverlay() {
                     transform: "rotateZ(0deg)",
                   }}
                 >
-                  {/* Dense Volumetric Extrusion Depth Slices (Creates solid heavy 3D thickness) */}
-                  {[
-                    { z: -56, b: 0.15, s: 0.970 },
-                    { z: -52, b: 0.18, s: 0.973 },
-                    { z: -48, b: 0.22, s: 0.976 },
-                    { z: -44, b: 0.26, s: 0.979 },
-                    { z: -40, b: 0.30, s: 0.982 },
-                    { z: -36, b: 0.35, s: 0.985 },
-                    { z: -32, b: 0.40, s: 0.988 },
-                    { z: -28, b: 0.46, s: 0.990 },
-                    { z: -24, b: 0.52, s: 0.992 },
-                    { z: -20, b: 0.58, s: 0.994 },
-                    { z: -16, b: 0.65, s: 0.996 },
-                    { z: -12, b: 0.72, s: 0.997 },
-                    { z: -8,  b: 0.80, s: 0.998 },
-                    { z: -5,  b: 0.86, s: 0.999 },
-                    { z: -2,  b: 0.92, s: 0.9995 },
-                  ].map((layer, i) => (
+                  {/* Volumetric Extrusion Depth Slices */}
+                  {DEPTH_LAYERS.map((layer, i) => (
                     <img
                       key={i}
                       src="/assets/cockpit_processed/steering_wheel.webp"
@@ -283,7 +284,7 @@ export default function CockpitOverlay() {
                   <img
                     src="/assets/cockpit_processed/steering_wheel.webp"
                     alt="Steering Wheel"
-                    className="relative h-full w-full object-contain pointer-events-none drop-shadow-[0_30px_35px_rgba(0,0,0,0.95)]"
+                    className="relative h-full w-full object-contain pointer-events-none drop-shadow-[0_22px_28px_rgba(0,0,0,0.9)]"
                     style={{
                       transform: "translateZ(0px)",
                       transformStyle: "preserve-3d",
