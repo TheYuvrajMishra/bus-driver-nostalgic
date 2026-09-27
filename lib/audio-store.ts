@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { ROTATIONS, getCurrentRotation } from "./rotations";
+import { ytNext, ytPrev } from "./yt-engine";
 
 export interface Track {
   id: string;
@@ -11,11 +12,15 @@ export interface Track {
 /**
  * Audio playback state.
  *
- * The actual <audio> element lives in <PersistentPlayer/>, mounted exactly
- * once in the root layout. Pages only read/dispatch this store — they never
- * own the audio element (see documentation/architecture.md §8).
+ * The actual playback engines live in <RadioEngine/>, mounted exactly once
+ * in the root layout. Pages only read/dispatch this store — they never own
+ * playback (see documentation/architecture.md §8).
  *
- * The current IST rotation picks the track AND the scene's lighting mood
+ * Primary engine: hidden YouTube playlist (lib/radio-config.ts). The store's
+ * `radioTitle` carries the live video title; `track` is the legacy fallback
+ * (local placeholder loop) used only if YouTube can't load.
+ *
+ * The current IST rotation still picks the drive's lighting mood
  * (rotations.ts). Rotations auto-switch with the clock unless the user
  * picks one manually.
  */
@@ -24,9 +29,17 @@ interface AudioState {
   autoFollow: boolean;
   track: Track;
   isPlaying: boolean;
+  /** Which engine is actually producing sound. */
+  engine: "youtube" | "legacy";
+  /** Live YouTube video title (null when the legacy engine is active). */
+  radioTitle: string | null;
   play: () => void;
   pause: () => void;
   toggle: () => void;
+  next: () => void;
+  prev: () => void;
+  setEngine: (e: "youtube" | "legacy") => void;
+  setRadioTitle: (t: string | null) => void;
   /** Manually select a rotation (disables auto-follow unless asked). */
   setRotation: (id: string, auto?: boolean) => void;
   /** Re-enable clock-driven rotation switching. */
@@ -40,9 +53,15 @@ export const useAudioStore = create<AudioState>((set) => ({
   autoFollow: true,
   track: initial.track,
   isPlaying: false,
+  engine: "youtube",
+  radioTitle: null,
   play: () => set({ isPlaying: true }),
   pause: () => set({ isPlaying: false }),
   toggle: () => set((s) => ({ isPlaying: !s.isPlaying })),
+  next: () => ytNext(),
+  prev: () => ytPrev(),
+  setEngine: (engine) => set({ engine }),
+  setRadioTitle: (radioTitle) => set({ radioTitle }),
   setRotation: (id, auto = false) => {
     const r = ROTATIONS.find((x) => x.id === id);
     if (!r) return;

@@ -2,6 +2,10 @@
 
 import { ROTATIONS } from "@/lib/rotations";
 import { useAudioStore } from "@/lib/audio-store";
+import {
+  YOUTUBE_PLAYLIST_TITLE,
+  YOUTUBE_PLAYLIST_URL,
+} from "@/lib/radio-config";
 
 const fmtHour = (h: number) => {
   const hh = h % 24;
@@ -11,21 +15,47 @@ const fmtHour = (h: number) => {
 };
 
 /**
- * The four IST rotations as "playlists". Tuning into one switches the radio
- * AND the drive's lighting mood (rotations.ts). The player keeps running
- * while you browse — architecture.md §8.
+ * The four IST rotations as "stations". Tuning into one switches the drive's
+ * day/night lighting mood (rotations.ts). The music itself is one embedded
+ * YouTube playlist — 90s Bollywood hits — running through the persistent
+ * radio bar below; it keeps playing while you browse (architecture.md §8).
  */
 export default function PlaylistsPage() {
   const rotationId = useAudioStore((s) => s.rotationId);
   const setRotation = useAudioStore((s) => s.setRotation);
+  const radioTitle = useAudioStore((s) => s.radioTitle);
 
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-amber-100">Playlists</h1>
+
+      <div className="rounded-xl border border-amber-400/60 bg-amber-500/10 p-5">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-xl font-semibold text-amber-100">
+            📻 Bus Radio — {YOUTUBE_PLAYLIST_TITLE}
+          </h2>
+          <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-[#1a0f0c]">
+            ON AIR
+          </span>
+        </div>
+        <p className="mt-1 text-sm text-amber-200/60">
+          {radioTitle
+            ? `Abhi baj raha hai: ${radioTitle}`
+            : "Yahi YouTube playlist game ke andar bajti hai — neeche player se play karo."}
+        </p>
+        <a
+          href={YOUTUBE_PLAYLIST_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 inline-block rounded-full bg-amber-500 px-4 py-1.5 text-sm font-semibold text-[#1a0f0c] transition hover:bg-amber-400"
+        >
+          ▶ Open on YouTube
+        </a>
+      </div>
+
       <p className="max-w-2xl text-amber-200/70">
-        Four IST rotations, radio-station style. Tuning in switches the track
-        and the drive&apos;s day/night mood — the player below keeps running
-        while you browse.
+        Four IST stations, radio-station style. Tuning in switches the
+        drive&apos;s mood — the radio below keeps running while you browse.
       </p>
       <div className="grid gap-4 sm:grid-cols-2">
         {ROTATIONS.map((r) => {
@@ -45,15 +75,12 @@ export default function PlaylistsPage() {
                 </h2>
                 {active && (
                   <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-[#1a0f0c]">
-                    ON AIR
+                    TUNED IN
                   </span>
                 )}
               </div>
               <p className="mt-1 text-sm text-amber-200/60">
                 {fmtHour(r.start)} – {fmtHour(r.end)} IST
-              </p>
-              <p className="mt-2 text-sm text-amber-200/50">
-                🎵 {r.track.title} — {r.track.artist}
               </p>
               <button
                 onClick={() => setRotation(r.id)}
