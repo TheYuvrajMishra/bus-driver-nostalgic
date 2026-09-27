@@ -65,9 +65,14 @@ export const TIME_LIGHTING_CONFIGS: Record<TimeOfDay, WeatherLighting> = {
 export interface WeatherStore {
   timeOfDay: TimeOfDay;
   isRaining: boolean;
+  rainIntensity: number;
+  autoCycle: boolean;
+  headlights: boolean;
   headlightsOn: boolean;
+  wipers: boolean;
   wipersOn: boolean;
   setTimeOfDay: (t: TimeOfDay) => void;
+  setAutoCycle: (on: boolean) => void;
   toggleHeadlights: () => void;
   toggleWipers: () => void;
   cycleTimeOfDay: () => void;
@@ -78,15 +83,29 @@ const ORDER: TimeOfDay[] = ["morning", "noon"];
 export const useWeatherStore = create<WeatherStore>((set) => ({
   timeOfDay: "morning",
   isRaining: false,
+  rainIntensity: 0,
+  autoCycle: false,
+  headlights: false,
   headlightsOn: false,
+  wipers: false,
   wipersOn: false,
   setTimeOfDay: (timeOfDay) =>
     set({
       timeOfDay,
       isRaining: TIME_LIGHTING_CONFIGS[timeOfDay].isRain,
+      rainIntensity: TIME_LIGHTING_CONFIGS[timeOfDay].isRain ? 1.0 : 0.0,
     }),
-  toggleHeadlights: () => set((s) => ({ headlightsOn: !s.headlightsOn })),
-  toggleWipers: () => set((s) => ({ wipersOn: !s.wipersOn })),
+  setAutoCycle: (autoCycle) => set({ autoCycle }),
+  toggleHeadlights: () =>
+    set((s) => ({
+      headlights: !s.headlights,
+      headlightsOn: !s.headlightsOn,
+    })),
+  toggleWipers: () =>
+    set((s) => ({
+      wipers: !s.wipers,
+      wipersOn: !s.wipersOn,
+    })),
   cycleTimeOfDay: () =>
     set((s) => {
       const idx = ORDER.indexOf(s.timeOfDay);
@@ -94,6 +113,7 @@ export const useWeatherStore = create<WeatherStore>((set) => ({
       return {
         timeOfDay: next,
         isRaining: TIME_LIGHTING_CONFIGS[next].isRain,
+        rainIntensity: TIME_LIGHTING_CONFIGS[next].isRain ? 1.0 : 0.0,
       };
     }),
 }));
