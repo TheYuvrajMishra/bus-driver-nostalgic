@@ -1,32 +1,22 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
-import Image from "next/image";
+import React, { useEffect, useRef, useCallback } from "react";
 import { useDriveStore } from "@/lib/drive-store";
 import { steeringInput } from "@/lib/steering-input";
 
 /**
  * 2D/3D Hybrid Cockpit Overlay:
- * 1. High-resolution Indian bus cabin frame with cutouts.
- * 2. Active vintage TATA cluster (Speedometer, Tachometer, Fuel, Temp with animated needles).
- * 3. Interactive rotating Steering Wheel with driver hands on the steering column.
- * 4. Hanging Nimbu-Mirchi charm with inertia pendulum physics.
- * 5. Windshield glass with sun flare and wiper blades.
- * 6. Cockpit camera shake & road vibration.
+ * 1. High-resolution Indian bus cabin frame with authentic painted dashboard dials.
+ * 2. Interactive 3D Perspective Steering Wheel on tilted gimbal with pointer drag & musical horn.
+ * 3. Hanging Nimbu-Mirchi charm with inertia pendulum physics.
+ * 4. Windshield glass with sun flare and wiper blades.
+ * 5. Cockpit camera shake & road vibration.
  */
-
-// Native aspect ratio of the cockpit frame (2171 x 724)
-const FRAME_W = 2171;
-const FRAME_H = 724;
 
 export default function CockpitOverlay() {
   const containerRef = useRef<HTMLDivElement>(null);
   const wheelRef = useRef<HTMLDivElement>(null);
   const nimbuRef = useRef<HTMLDivElement>(null);
-  const speedoNeedleRef = useRef<HTMLDivElement>(null);
-  const rpmNeedleRef = useRef<HTMLDivElement>(null);
-  const fuelNeedleRef = useRef<HTMLDivElement>(null);
-  const tempNeedleRef = useRef<HTMLDivElement>(null);
   const cockpitWrapRef = useRef<HTMLDivElement>(null);
 
   // Pendulum state for Nimbu-Mirchi charm
@@ -73,7 +63,7 @@ export default function CockpitOverlay() {
     steeringInput.wheel = normalized;
   };
 
-  const handlePointerUp = (e: React.PointerEvent) => {
+  const handlePointerUp = () => {
     isDragging.current = false;
     steeringInput.wheel = null;
   };
@@ -101,42 +91,13 @@ export default function CockpitOverlay() {
         cockpitWrapRef.current.style.transform = `translate3d(${turnSway.toFixed(2)}px, ${(idleVibe + roadBob).toFixed(2)}px, 0px) rotate(${turnRoll.toFixed(2)}deg)`;
       }
 
-      // 2. Steering Wheel Rotation (smooth lock ~ 135 deg, clockwise when steering right)
+      // 2. Steering Wheel Rotation (smooth lock ~ 135 deg on its 3D plane)
       if (wheelRef.current) {
         const wheelDeg = steeringAngle * 135;
-        wheelRef.current.style.transform = `translate(-50%, -50%) rotate(${wheelDeg.toFixed(2)}deg)`;
+        wheelRef.current.style.transform = `rotateZ(${wheelDeg.toFixed(2)}deg)`;
       }
 
-      // 3. Gauge Needles
-      // Speedometer: 0 to 120 km/h -> -135 deg to +135 deg
-      // Let's scale speed (0..16 m/s -> 0..60 km/h in simulation, multiplier ~ 3.6)
-      const kmh = Math.min(speed * 3.6, 120);
-      const speedDeg = -135 + (kmh / 120) * 270 + (Math.sin(t * 30) * speedNorm * 0.8);
-      if (speedoNeedleRef.current) {
-        speedoNeedleRef.current.style.transform = `translate(-50%, -50%) rotate(${speedDeg.toFixed(2)}deg)`;
-      }
-
-      // Tachometer (RPM): 0 to 40 (x100) -> -135 deg to +135 deg
-      // Idle at 800 RPM (-80 deg), revs up to 2800 RPM with speed
-      const rpm = 8 + speedNorm * 22 + (Math.sin(t * 22) * speedNorm * 0.5);
-      const rpmDeg = -135 + (rpm / 40) * 270;
-      if (rpmNeedleRef.current) {
-        rpmNeedleRef.current.style.transform = `translate(-50%, -50%) rotate(${rpmDeg.toFixed(2)}deg)`;
-      }
-
-      // Fuel Needle: points to ~ 70% full with subtle vibration
-      const fuelDeg = -15 + Math.sin(t * 2) * 1.5;
-      if (fuelNeedleRef.current) {
-        fuelNeedleRef.current.style.transform = `translate(-50%, -50%) rotate(${fuelDeg.toFixed(2)}deg)`;
-      }
-
-      // Temp Needle: sits at optimal operating zone (40% mark)
-      const tempDeg = -30 + Math.sin(t * 1.2) * 0.8;
-      if (tempNeedleRef.current) {
-        tempNeedleRef.current.style.transform = `translate(-50%, -50%) rotate(${tempDeg.toFixed(2)}deg)`;
-      }
-
-      // 4. Nimbu-Mirchi Pendulum Physics
+      // 3. Nimbu-Mirchi Pendulum Physics
       // Target angle based on lateral centrifugal force:
       // When turning right (steeringAngle > 0), centrifugal force swings the talisman to the left (positive CSS rotation)
       const targetNimbuAngle = steeringAngle * 28 * (0.4 + speedNorm * 0.6);
@@ -168,7 +129,7 @@ export default function CockpitOverlay() {
     >
       {/* 
         Responsive Cockpit Container:
-        Using aspect-ratio scaling to match 2171x724 native resolution 
+        Using aspect-ratio scaling to match 2172x724 native resolution 
         while filling the viewport comfortably.
       */}
       <div
@@ -181,7 +142,7 @@ export default function CockpitOverlay() {
           minHeight: "100vh",
         }}
       >
-        {/* Scaling SVG / Absolute canvas space matching 2171 x 724 */}
+        {/* Scaling SVG / Absolute canvas space matching 2172 x 724 */}
         <div
           className="absolute inset-0 flex items-center justify-center"
           style={{ width: "100%", height: "100%" }}
@@ -190,9 +151,9 @@ export default function CockpitOverlay() {
             className="relative"
             style={{
               width: "100vw",
-              height: "calc(100vw * (724 / 2171))",
+              height: "calc(100vw * (724 / 2172))",
               minHeight: "100vh",
-              minWidth: "calc(100vh * (2171 / 724))",
+              minWidth: "calc(100vh * (2172 / 724))",
             }}
           >
             {/* 1. Windshield Glass Overlay (Sun flare, wiper blades, vintage dust) */}
@@ -234,124 +195,7 @@ export default function CockpitOverlay() {
               />
             </div>
 
-            {/* 3. Dashboard Instrument Cluster (Mounted on the binnacle bezels) */}
-            {/* Speedometer (Dial 1) */}
-            <div
-              className="pointer-events-none absolute aspect-square rounded-full overflow-hidden shadow-2xl"
-              style={{
-                left: "27.38%",
-                top: "75.21%",
-                width: "5.80%",
-                transform: "translate(-50%, -50%)",
-                zIndex: 12,
-              }}
-            >
-              <img
-                src="/assets/cockpit_processed/gauge_speedo.png"
-                alt="Speedometer"
-                className="absolute inset-0 h-full w-full object-contain"
-              />
-              <div
-                ref={speedoNeedleRef}
-                className="absolute left-1/2 top-1/2 h-full w-full will-change-transform"
-                style={{ transform: "translate(-50%, -50%) rotate(-135deg)" }}
-              >
-                <img
-                  src="/assets/cockpit_processed/needle_up.png"
-                  alt="Speed Needle"
-                  className="h-full w-full object-contain"
-                />
-              </div>
-            </div>
-
-            {/* Tachometer / RPM (Dial 2) */}
-            <div
-              className="pointer-events-none absolute aspect-square rounded-full overflow-hidden shadow-2xl"
-              style={{
-                left: "32.22%",
-                top: "74.80%",
-                width: "5.53%",
-                transform: "translate(-50%, -50%)",
-                zIndex: 12,
-              }}
-            >
-              <img
-                src="/assets/cockpit_processed/gauge_rpm.png"
-                alt="RPM Gauge"
-                className="absolute inset-0 h-full w-full object-contain"
-              />
-              <div
-                ref={rpmNeedleRef}
-                className="absolute left-1/2 top-1/2 h-full w-full will-change-transform"
-                style={{ transform: "translate(-50%, -50%) rotate(-135deg)" }}
-              >
-                <img
-                  src="/assets/cockpit_processed/needle_up.png"
-                  alt="RPM Needle"
-                  className="h-full w-full object-contain"
-                />
-              </div>
-            </div>
-
-            {/* Fuel Gauge (Dial 3) */}
-            <div
-              className="pointer-events-none absolute aspect-square rounded-full overflow-hidden shadow-2xl"
-              style={{
-                left: "37.29%",
-                top: "75.14%",
-                width: "5.71%",
-                transform: "translate(-50%, -50%)",
-                zIndex: 12,
-              }}
-            >
-              <img
-                src="/assets/cockpit_processed/gauge_fuel.png"
-                alt="Fuel Gauge"
-                className="absolute inset-0 h-full w-full object-contain"
-              />
-              <div
-                ref={fuelNeedleRef}
-                className="absolute left-1/2 top-1/2 h-full w-full will-change-transform"
-                style={{ transform: "translate(-50%, -50%) rotate(0deg)" }}
-              >
-                <img
-                  src="/assets/cockpit_processed/needle_up.png"
-                  alt="Fuel Needle"
-                  className="h-full w-full object-contain"
-                />
-              </div>
-            </div>
-
-            {/* Temperature Gauge (Dial 4) */}
-            <div
-              className="pointer-events-none absolute aspect-square rounded-full overflow-hidden shadow-2xl"
-              style={{
-                left: "42.12%",
-                top: "75.21%",
-                width: "5.71%",
-                transform: "translate(-50%, -50%)",
-                zIndex: 12,
-              }}
-            >
-              <img
-                src="/assets/cockpit_processed/gauge_temp.png"
-                alt="Temp Gauge"
-                className="absolute inset-0 h-full w-full object-contain"
-              />
-              <div
-                ref={tempNeedleRef}
-                className="absolute left-1/2 top-1/2 h-full w-full will-change-transform"
-                style={{ transform: "translate(-50%, -50%) rotate(0deg)" }}
-              >
-                <img
-                  src="/assets/cockpit_processed/needle_up.png"
-                  alt="Temp Needle"
-                  className="h-full w-full object-contain"
-                />
-              </div>
-            </div>
-
-            {/* 4. High-Resolution Indian Bus Cockpit Frame */}
+            {/* 3. High-Resolution Indian Bus Cockpit Frame (with integrated dashboard gauges) */}
             <div
               className="pointer-events-none absolute inset-0 h-full w-full"
               style={{ zIndex: 10 }}
@@ -363,40 +207,62 @@ export default function CockpitOverlay() {
               />
             </div>
 
-            {/* 5. Interactive Steering Wheel */}
-            {/* Mounted on the steering column at cx=32.2%, cy=77.3% */}
+            {/* 4. Interactive 3D Perspective Steering Wheel */}
+            {/* 3D Perspective Gimbal Container matching driver POV slant */}
             <div
-              ref={wheelRef}
-              className="pointer-events-auto absolute aspect-square cursor-grab active:cursor-grabbing will-change-transform"
+              className="pointer-events-none absolute"
               style={{
                 left: "32.2%",
-                top: "77.3%",
-                width: "27.5%",
-                transform: "translate(-50%, -50%) rotate(0deg)",
-                transformOrigin: "50% 50%",
+                top: "78.0%",
+                width: "36%",
+                aspectRatio: "1 / 1",
+                transform: "translate(-50%, -50%)",
+                perspective: "700px",
+                perspectiveOrigin: "50% 35%",
                 zIndex: 20,
-                touchAction: "none",
               }}
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
-              onPointerCancel={handlePointerUp}
             >
-              <img
-                src="/assets/cockpit_processed/steering_wheel.webp"
-                alt="Steering Wheel"
-                className="h-full w-full object-contain pointer-events-none"
-                draggable={false}
-              />
+              {/* Tilted Steering Column Plane (Bus Flat Wheel Slant) */}
+              <div
+                className="pointer-events-auto h-full w-full cursor-grab active:cursor-grabbing will-change-transform"
+                style={{
+                  transformStyle: "preserve-3d",
+                  transform: "rotateX(58deg) rotateY(4deg) rotateZ(-3deg)",
+                  transformOrigin: "50% 50%",
+                  touchAction: "none",
+                }}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerUp}
+              >
+                {/* Rotating Wheel Disk on 3D Plane */}
+                <div
+                  ref={wheelRef}
+                  className="relative h-full w-full will-change-transform"
+                  style={{
+                    transformOrigin: "50% 50%",
+                    transformStyle: "preserve-3d",
+                    transform: "rotateZ(0deg)",
+                  }}
+                >
+                  <img
+                    src="/assets/cockpit_processed/steering_wheel.webp"
+                    alt="Steering Wheel"
+                    className="h-full w-full object-contain pointer-events-none drop-shadow-[0_25px_30px_rgba(0,0,0,0.9)]"
+                    draggable={false}
+                  />
 
-              {/* Center Horn Clickable Area */}
-              <button
-                type="button"
-                className="absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-full cursor-pointer opacity-0 hover:opacity-10 active:opacity-25 bg-amber-400"
-                onClick={playHorn}
-                aria-label="Honk Horn"
-                title="Click to Honk Musical Horn!"
-              />
+                  {/* Center Horn Clickable Area */}
+                  <button
+                    type="button"
+                    className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full cursor-pointer opacity-0 hover:opacity-10 active:opacity-25 bg-amber-400"
+                    onClick={playHorn}
+                    aria-label="Honk Horn"
+                    title="Click to Honk Musical Horn!"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
