@@ -544,6 +544,7 @@ function BusHeadlights() {
         intensity={7.5}
         color="#fff5d8"
         distance={95}
+        castShadow={false}
       />
       <spotLight
         position={[1.1, 0, 0]}
@@ -553,8 +554,9 @@ function BusHeadlights() {
         intensity={7.5}
         color="#fff5d8"
         distance={95}
+        castShadow={false}
       />
-      <pointLight position={[0, 0.4, -14]} intensity={2.8} distance={28} color="#ffe8b8" />
+      <pointLight position={[0, 0.4, -14]} intensity={2.8} distance={28} color="#ffe8b8" castShadow={false} />
     </group>
   );
 }

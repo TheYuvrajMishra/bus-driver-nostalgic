@@ -43,9 +43,9 @@ export default function RoadChunk({
 
   return (
     <group ref={groupRef}>
-      <mesh geometry={roadGeometry} material={roadMaterial} />
-      <mesh geometry={terrainGeometry} material={terrainMaterial} />
-      <mesh geometry={guardrailGeometry} material={guardrailMaterial} />
+      <mesh geometry={roadGeometry} material={roadMaterial} receiveShadow />
+      <mesh geometry={terrainGeometry} material={terrainMaterial} receiveShadow />
+      <mesh geometry={guardrailGeometry} material={guardrailMaterial} castShadow receiveShadow={false} />
       <mesh geometry={wireGeometry} material={wireMaterial} />
     </group>
   );

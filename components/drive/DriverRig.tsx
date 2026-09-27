@@ -1,13 +1,12 @@
 "use client";
 
 import { useFrame, useThree } from "@react-three/fiber";
-import * as THREE from "three";
 import { useDriveStore, EYE_HEIGHT } from "@/lib/drive-store";
 import { roadSlopeAtDistance, roadElevationAtDistance } from "@/lib/road-generator";
 
 /**
  * DriverRig — Camera motion controller:
- * Controls the first-person bus driver view through the 3D world.
+ * Controls first-person driver camera through the 3D world.
  * Smoothly interpolates lateral steering offset, camera roll into turns,
  * 3D road slope/pitch when climbing uphill or descending downhill,
  * and high-speed road shock bobbing.
