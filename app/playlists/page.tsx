@@ -1,11 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { ROTATIONS } from "@/lib/rotations";
 import { useAudioStore } from "@/lib/audio-store";
-import {
-  YOUTUBE_PLAYLIST_TITLE,
-  YOUTUBE_PLAYLIST_URL,
-} from "@/lib/radio-config";
 
 const fmtHour = (h: number) => {
   const hh = h % 24;
@@ -14,49 +11,55 @@ const fmtHour = (h: number) => {
   return `${h12} ${ampm}`;
 };
 
-/**
- * The four IST rotations as "stations". Tuning into one switches the drive's
- * day/night lighting mood (rotations.ts). The music itself is one embedded
- * YouTube playlist — 90s Bollywood hits — running through the persistent
- * radio bar below; it keeps playing while you browse (architecture.md §8).
- */
 export default function PlaylistsPage() {
   const rotationId = useAudioStore((s) => s.rotationId);
   const setRotation = useAudioStore((s) => s.setRotation);
-  const radioTitle = useAudioStore((s) => s.radioTitle);
+  const currentSong = useAudioStore((s) => s.currentSong);
+  const isPlaying = useAudioStore((s) => s.isPlaying);
+  const playRandomSong = useAudioStore((s) => s.playRandomSong);
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-amber-100">Playlists</h1>
+    <div className="space-y-6 max-w-4xl pb-16">
+      <h1 className="text-3xl font-bold text-amber-100">Playlists & Stations</h1>
 
-      <div className="rounded-xl border border-amber-400/60 bg-amber-500/10 p-5">
+      {/* 100 Gaane Jukebox Card */}
+      <div className="rounded-xl border border-amber-400/60 bg-amber-500/10 p-5 shadow-lg">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="text-xl font-semibold text-amber-100">
-            📻 Bus Radio — {YOUTUBE_PLAYLIST_TITLE}
+            📻 100 Gaane Bus-Driver Jukebox (80s-90s Classics)
           </h2>
-          <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-[#1a0f0c]">
-            ON AIR
+          <span className="rounded-full bg-amber-500 px-2.5 py-0.5 text-[10px] font-bold text-[#1a0f0c]">
+            {isPlaying ? "ON AIR" : "READY"}
           </span>
         </div>
-        <p className="mt-1 text-sm text-amber-200/60">
-          {radioTitle
-            ? `Abhi baj raha hai: ${radioTitle}`
-            : "Yahi YouTube playlist game ke andar bajti hai — neeche player se play karo."}
+        <p className="mt-1 text-sm text-amber-200/80">
+          Abhi baj raha hai:{" "}
+          <strong className="text-amber-300">
+            #{currentSong?.id} {currentSong?.title}
+          </strong>
         </p>
-        <a
-          href={YOUTUBE_PLAYLIST_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-4 inline-block rounded-full bg-amber-500 px-4 py-1.5 text-sm font-semibold text-[#1a0f0c] transition hover:bg-amber-400"
-        >
-          ▶ Open on YouTube
-        </a>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <button
+            onClick={playRandomSong}
+            className="flex items-center gap-2 rounded-full bg-amber-500 px-4 py-1.5 text-sm font-bold text-[#1a0f0c] shadow transition hover:bg-amber-400 cursor-pointer"
+          >
+            <span>🎲</span>
+            <span>Play Random Track</span>
+          </button>
+          <Link
+            href="/songs"
+            className="inline-block rounded-full border border-amber-500/40 bg-amber-500/10 px-4 py-1.5 text-sm font-semibold text-amber-200 transition hover:bg-amber-500/20"
+          >
+            View All 100 Songs →
+          </Link>
+        </div>
       </div>
 
       <p className="max-w-2xl text-amber-200/70">
         Four IST stations, radio-station style. Tuning in switches the
-        drive&apos;s mood — the radio below keeps running while you browse.
+        drive&apos;s lighting mood — the radio below keeps running while you browse.
       </p>
+
       <div className="grid gap-4 sm:grid-cols-2">
         {ROTATIONS.map((r) => {
           const active = r.id === rotationId;
@@ -85,7 +88,7 @@ export default function PlaylistsPage() {
               <button
                 onClick={() => setRotation(r.id)}
                 disabled={active}
-                className={`mt-4 rounded-full px-4 py-1.5 text-sm transition ${
+                className={`mt-4 rounded-full px-4 py-1.5 text-sm transition cursor-pointer ${
                   active
                     ? "cursor-default bg-amber-500/20 text-amber-200/50"
                     : "bg-amber-500 text-[#1a0f0c] hover:bg-amber-400"

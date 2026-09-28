@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import PersistentPlayer from "@/components/audio/PersistentPlayer";
 import RadioEngine from "@/components/audio/RadioEngine";
-
+import ScreenGrainOverlay from "@/components/effects/ScreenGrainOverlay";
 
 export const metadata: Metadata = {
   title: "bus-driver-nostalgic",
@@ -19,6 +19,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <main className="h-full w-full">{children}</main>
         <RadioEngine />
         <PersistentPlayer />
+        <ScreenGrainOverlay opacity={0.24} blendMode="overlay" animated={true} grainScale="medium" />
       </body>
     </html>
   );
