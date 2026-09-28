@@ -5,6 +5,7 @@
 export interface ChunkTransform {
   /** Car-space position of the chunk group's origin. */
   px: number;
+  py: number;
   pz: number;
   /** Car-space yaw of the chunk group (rotation.y). */
   ry: number;

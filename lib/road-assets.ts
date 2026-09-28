@@ -1,17 +1,9 @@
 import * as THREE from "three";
-import { ROAD_TILE_LENGTH } from "./road-constants";
 import { getToonGradient } from "./toon-material";
 
-const TEX_W = 128;
-const TEX_H = 256;
+const TEX_W = 512;
+const TEX_H = 1024;
 
-/**
- * Shared road assets — one texture + one material for ALL chunks
- * (architecture.md §7: shared materials, minimal shader switches).
- *
- * The texture is created lazily on first client-side use because it needs
- * `document` (R3F scene children only render in the browser).
- */
 let texture: THREE.CanvasTexture | null = null;
 let material: THREE.MeshToonMaterial | null = null;
 
@@ -21,35 +13,51 @@ function makeRoadTexture(): THREE.CanvasTexture {
   c.height = TEX_H;
   const g = c.getContext("2d")!;
 
-  g.fillStyle = "#3d3d3f";
+  // 1. Warm sandy shoulder base
+  g.fillStyle = "#a87a4a";
   g.fillRect(0, 0, TEX_W, TEX_H);
 
-  // worn patches / repair marks
-  let seed = 1234567;
+  // 2. High-quality dark tarmac asphalt
+  const roadMargin = 32;
+  const roadWidth = TEX_W - roadMargin * 2;
+  g.fillStyle = "#1e2024";
+  g.fillRect(roadMargin, 0, roadWidth, TEX_H);
+
+  // Subtle aggregate grain & asphalt tire wear
+  let seed = 456789;
   const rand = () => {
     seed = (seed * 1664525 + 1013904223) >>> 0;
     return seed / 0xffffffff;
   };
-  for (let i = 0; i < 26; i++) {
-    const shade = 52 + Math.floor(rand() * 22);
-    g.fillStyle = `rgb(${shade},${shade},${shade + 3})`;
-    g.fillRect(rand() * TEX_W, rand() * TEX_H, 12 + rand() * 40, 8 + rand() * 26);
+
+  // Fine speckle grain
+  for (let i = 0; i < 300; i++) {
+    const shade = 28 + Math.floor(rand() * 22);
+    g.fillStyle = `rgb(${shade},${shade + 1},${shade + 3})`;
+    g.fillRect(
+      roadMargin + rand() * (roadWidth - 8),
+      rand() * TEX_H,
+      4 + rand() * 12,
+      3 + rand() * 8
+    );
   }
 
-  // edge lines
-  g.fillStyle = "#cfcfcf";
-  g.fillRect(4, 0, 5, TEX_H);
-  g.fillRect(TEX_W - 9, 0, 5, TEX_H);
+  // 3. Crisp solid white edge lines with soft outer border
+  g.fillStyle = "#e8e8e8";
+  g.fillRect(roadMargin + 8, 0, 14, TEX_H);
+  g.fillRect(TEX_W - roadMargin - 22, 0, 14, TEX_H);
 
-  // dashed centre line (one dash per 24 m tile)
-  g.fillStyle = "#d8b93a";
-  g.fillRect(TEX_W / 2 - 3, TEX_H * 0.15, 6, TEX_H * 0.35);
+  // 4. Clean white dashed centerline
+  g.fillStyle = "#ffffff";
+  const dashH = TEX_H * 0.38;
+  const dashY = TEX_H * 0.12;
+  g.fillRect(TEX_W / 2 - 7, dashY, 14, dashH);
 
   const tex = new THREE.CanvasTexture(c);
   tex.wrapS = THREE.ClampToEdgeWrapping;
   tex.wrapT = THREE.RepeatWrapping;
   tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 4;
+  tex.anisotropy = 8;
   return tex;
 }
 
@@ -65,3 +73,39 @@ export function getRoadMaterial(): THREE.MeshToonMaterial {
   }
   return material;
 }
+
+let terrainMaterial: THREE.MeshLambertMaterial | null = null;
+
+export function getTerrainMaterial(): THREE.MeshLambertMaterial {
+  if (!terrainMaterial) {
+    terrainMaterial = new THREE.MeshLambertMaterial({
+      vertexColors: true,
+      flatShading: true,
+    });
+  }
+  return terrainMaterial;
+}
+
+let guardrailMaterial: THREE.MeshLambertMaterial | null = null;
+
+export function getGuardrailMaterial(): THREE.MeshLambertMaterial {
+  if (!guardrailMaterial) {
+    guardrailMaterial = new THREE.MeshLambertMaterial({
+      vertexColors: true,
+      flatShading: true,
+    });
+  }
+  return guardrailMaterial;
+}
+
+let wireMaterial: THREE.MeshBasicMaterial | null = null;
+
+export function getWireMaterial(): THREE.MeshBasicMaterial {
+  if (!wireMaterial) {
+    wireMaterial = new THREE.MeshBasicMaterial({
+      color: "#181b1e",
+    });
+  }
+  return wireMaterial;
+}
+

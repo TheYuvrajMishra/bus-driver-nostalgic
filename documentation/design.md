@@ -39,3 +39,10 @@
 - Music is the star — no aggressive engine SFX competing with it. If any ambient engine hum is added, keep it very low and optional.
 - A horn button/easter egg (busdriver.wtf-style playfulness) is a nice Phase 3 touch, not core.
 - Camera bob/sway (Phase 3) should be subtle — this is a relaxing ambient toy, not an intense racer; motion should never fight the listening experience.
+
+## 5. Traffic & Driving Dynamics (Spec Extension)
+- **Visual Feel**: Heavy Indian truck chassis spring motion (pitch under braking/acceleration, roll on turns, idle rumble, micro-roughness).
+- **Secondary Details**: Hanging nimbu-mirchi (chilli-lemon) charm pendulum physics, functional speedometer & tachometer needles calibrated to real speed/RPM.
+- **Traffic Variety & Aesthetics**: Low-poly decorated Indian trucks with iconic rear art ("Horn OK Please", "Buri Nazar Wale Tera Munh Kaala"), colorful buses, yellow-green auto-rickshaws, and cars. Emissive brake and turn indicators for overtaking choreography.
+- **Audio Mix**: Mild music ducking (20-30%) on horn blasts / close vehicle passes, 4-voice spatial sound manager for traffic horns.
+

@@ -1,9 +1,8 @@
 /**
- * Raw steering inputs — a module-level singleton (not React state) so the
+ * Raw driving and steering inputs — a module-level singleton (not React state) so the
  * per-frame controller can read it with zero re-render cost.
  *
- * Both input methods ultimately drive ONE shared value: `steeringAngle` in
- * the zustand drive store (lib/drive-store.ts, architecture.md §5).
+ * Both keyboard and on-screen touch hooks write to this singleton.
  */
 export const steeringInput = {
   /** Keyboard held state. */
@@ -14,4 +13,9 @@ export const steeringInput = {
    * being dragged. When non-null it wins over keyboard input.
    */
   wheel: null as number | null,
+
+  /** Throttle pedal input in [0, 1] (ArrowUp or future touch pedal) */
+  throttle: 0,
+  /** Brake pedal input in [0, 1] (ArrowDown or future touch pedal) */
+  brake: 0,
 };

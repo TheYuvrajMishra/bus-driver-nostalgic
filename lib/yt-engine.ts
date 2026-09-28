@@ -1,16 +1,23 @@
 /**
- * Module-scope holder for the YouTube IFrame player instance.
- *
- * The player is created once by <RadioEngine/>; these helpers let the audio
- * store and UI drive it without prop-drilling the instance. Every helper is
- * a no-op until the player is ready (and guarded against YT API throws).
+ * Module-scope holder for YouTube IFrame player instance and Audio helpers.
  */
 
-interface YtPlayerLike {
+export interface YtPlayerLike {
   playVideo(): void;
   pauseVideo(): void;
   nextVideo(): void;
   previousVideo(): void;
+  loadVideoById(args: { videoId: string; startSeconds?: number } | string): void;
+  cueVideoById(args: { videoId: string; startSeconds?: number } | string): void;
+  seekTo(seconds: number, allowSeekAhead?: boolean): void;
+  unMute(): void;
+  mute(): void;
+  isMuted(): boolean;
+  setVolume(volume: number): void;
+  getVolume(): number;
+  getPlayerState(): number;
+  getCurrentTime(): number;
+  getDuration(): number;
   getVideoData(): { title?: string };
 }
 
@@ -24,11 +31,69 @@ export function isYtReady(): boolean {
   return player !== null;
 }
 
+export function getYtPlayer(): YtPlayerLike | null {
+  return player;
+}
+
+export function ytUnmute() {
+  try {
+    player?.unMute();
+  } catch {
+    /* ignore */
+  }
+}
+
+export function ytMute() {
+  try {
+    player?.mute();
+  } catch {
+    /* ignore */
+  }
+}
+
+export function ytSetVolume(volumePercent: number) {
+  try {
+    const vol = Math.max(0, Math.min(100, Math.round(volumePercent)));
+    player?.setVolume(vol);
+    if (vol > 0) {
+      player?.unMute();
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+export function ytLoadVideo(videoId: string, startSeconds?: number) {
+  try {
+    ytUnmute();
+    if (typeof startSeconds === "number" && startSeconds > 0) {
+      player?.loadVideoById({ videoId, startSeconds });
+    } else {
+      player?.loadVideoById(videoId);
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+export function ytCueVideo(videoId: string, startSeconds?: number) {
+  try {
+    if (typeof startSeconds === "number" && startSeconds > 0) {
+      player?.cueVideoById({ videoId, startSeconds });
+    } else {
+      player?.cueVideoById(videoId);
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
 export function ytPlay() {
   try {
+    ytUnmute();
     player?.playVideo();
   } catch {
-    /* not ready / blocked — store stays source of truth */
+    /* ignore */
   }
 }
 
@@ -42,6 +107,7 @@ export function ytPause() {
 
 export function ytNext() {
   try {
+    ytUnmute();
     player?.nextVideo();
   } catch {
     /* ignore */
@@ -50,7 +116,32 @@ export function ytNext() {
 
 export function ytPrev() {
   try {
+    ytUnmute();
     player?.previousVideo();
+  } catch {
+    /* ignore */
+  }
+}
+
+export function ytGetCurrentTime(): number {
+  try {
+    return player?.getCurrentTime() ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+export function ytGetDuration(): number {
+  try {
+    return player?.getDuration() ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+export function ytSeekTo(seconds: number) {
+  try {
+    player?.seekTo(seconds, true);
   } catch {
     /* ignore */
   }
