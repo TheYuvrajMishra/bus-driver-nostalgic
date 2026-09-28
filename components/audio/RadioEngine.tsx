@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { useAudioStore } from "@/lib/audio-store";
 import { ambientAudio } from "@/lib/ambient-audio";
 import { initLightningScheduler } from "@/lib/lightning-system";
-import { cabinReverb } from "@/lib/reverb-processor";
+import { getSharedAudioContext } from "@/lib/audio-context";
 
 /**
  * RadioEngine — mounted ONCE in RootLayout (app/layout.tsx).
@@ -13,7 +13,6 @@ import { cabinReverb } from "@/lib/reverb-processor";
  * 1. Web Audio unlock & persistent audio subsystem.
  * 2. Looping rain ambient audio manager with smooth fade-in/fade-out.
  * 3. Atmospheric lightning & delayed thunder strike scheduler.
- * 4. Bus cabin acoustic reverb processor & vintage filter network.
  */
 export default function RadioEngine() {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -25,15 +24,13 @@ export default function RadioEngine() {
     volume,
     isMuted,
     audioSource,
-    reverbEnabled,
     pause,
   } = useAudioStore();
 
-  // Initialize ambient rain, lightning scheduler, and cabin reverb on mount
+  // Initialize ambient rain and lightning scheduler on mount
   useEffect(() => {
     ambientAudio.init();
     initLightningScheduler();
-    cabinReverb.init();
 
     return () => {
       ambientAudio.cleanup();
@@ -44,23 +41,18 @@ export default function RadioEngine() {
   useEffect(() => {
     const unlock = () => {
       try {
-        const ctx = cabinReverb.getAudioContext();
+        const ctx = getSharedAudioContext();
         if (ctx) {
           if (ctx.state === "suspended") {
             ctx.resume();
           }
 
-          cabinReverb.init();
-
-          // Connect local audio element through the master input if present
+          // Connect local audio element directly to output on first unlock
           if (audioRef.current && !sourceNodeRef.current) {
             try {
               const source = ctx.createMediaElementSource(audioRef.current);
               sourceNodeRef.current = source;
-              const masterIn = cabinReverb.getMasterInput();
-              if (masterIn) {
-                source.connect(masterIn);
-              }
+              source.connect(ctx.destination);
             } catch {
               // ignore
             }
@@ -78,11 +70,6 @@ export default function RadioEngine() {
       window.removeEventListener("keydown", unlock);
     };
   }, []);
-
-  // Sync reverb state changes
-  useEffect(() => {
-    cabinReverb.setReverbEnabled(reverbEnabled);
-  }, [reverbEnabled]);
 
   // Sync volume & mute for local audio
   useEffect(() => {

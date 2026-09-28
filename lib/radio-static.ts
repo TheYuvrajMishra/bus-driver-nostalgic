@@ -1,4 +1,4 @@
-import { cabinReverb } from "./reverb-processor";
+import { getSharedAudioContext } from "./audio-context";
 
 /**
  * Radio Static Sound Synthesizer (Web Audio API)
@@ -10,7 +10,7 @@ import { cabinReverb } from "./reverb-processor";
 
 export function playRadioStatic(duration = 0.38, volume = 0.32): void {
   try {
-    const ctx = cabinReverb.getAudioContext();
+    const ctx = getSharedAudioContext();
     if (!ctx) return;
 
     const sampleRate = ctx.sampleRate;
@@ -60,12 +60,7 @@ export function playRadioStatic(duration = 0.38, volume = 0.32): void {
     filter.connect(highpass);
     highpass.connect(gainNode);
 
-    const masterIn = cabinReverb.getMasterInput();
-    if (masterIn) {
-      gainNode.connect(masterIn);
-    } else {
-      gainNode.connect(ctx.destination);
-    }
+    gainNode.connect(ctx.destination);
 
     noiseSource.start(now);
     noiseSource.stop(now + duration);

@@ -7,7 +7,6 @@ import {
   type JukeboxSong,
 } from "./songs-catalog";
 import { playRadioStatic } from "./radio-static";
-import { cabinReverb } from "./reverb-processor";
 
 export interface Track {
   id: string;
@@ -34,11 +33,10 @@ interface AudioState {
   hasRandomizedOnMount: boolean;
   isTuning: boolean;
 
-  // Volume, Reverb & Screen state
+  // Volume & Screen state
   volume: number; // 0.0 to 1.0
   duckRatio: number; // 0.0 to 1.0 multiplier during horns/passes
   isMuted: boolean;
-  reverbEnabled: boolean; // Cozy Bus Cabin Acoustic Reverb Filter
   showVideoScreen: boolean;
 
   play: () => void;
@@ -53,8 +51,6 @@ interface AudioState {
   setVolume: (volume: number) => void;
   duckVolume: (ratio?: number, durationMs?: number) => void;
   toggleMute: () => void;
-  toggleReverb: () => void;
-  setReverbEnabled: (enabled: boolean) => void;
   toggleVideoScreen: () => void;
   setVideoScreenVisible: (visible: boolean) => void;
   setAudioSource: (source: "youtube" | "local") => void;
@@ -97,7 +93,6 @@ export const useAudioStore = create<AudioState>((set, get) => {
     volume: 0.9,
     duckRatio: 1.0,
     isMuted: false,
-    reverbEnabled: true, // Enabled by default for cozy bus interior acoustics
     showVideoScreen: true,
 
     play: () => set({ isPlaying: true }),
@@ -184,18 +179,6 @@ export const useAudioStore = create<AudioState>((set, get) => {
 
     toggleMute: () => {
       set((s) => ({ isMuted: !s.isMuted }));
-    },
-
-    toggleReverb: () => {
-      const nextVal = !get().reverbEnabled;
-      cabinReverb.playAcousticFeedback(nextVal);
-      cabinReverb.setReverbEnabled(nextVal);
-      set({ reverbEnabled: nextVal });
-    },
-
-    setReverbEnabled: (enabled: boolean) => {
-      cabinReverb.setReverbEnabled(enabled);
-      set({ reverbEnabled: enabled });
     },
 
     toggleVideoScreen: () => set((s) => ({ showVideoScreen: !s.showVideoScreen })),

@@ -93,18 +93,6 @@ function IconSpeakerHigh({ className = "h-3.5 w-3.5" }: { className?: string }) 
   );
 }
 
-function IconReverb({ className = "h-3.5 w-3.5" }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className={`${className} fill-none stroke-current stroke-2 stroke-linecap-round stroke-linejoin-round`}
-      aria-hidden
-    >
-      <path d="M2 10v4M6 7v10M10 4v16M14 7v10M18 10v4M22 12v0" />
-    </svg>
-  );
-}
-
 function IconPhone({ className = "h-3.5 w-3.5" }: { className?: string }) {
   return (
     <svg
@@ -183,8 +171,6 @@ export default function PersistentPlayer() {
     volume,
     isMuted,
     isTuning,
-    reverbEnabled,
-    toggleReverb,
     setVolume,
     toggleMute,
     showVideoScreen,
@@ -496,19 +482,8 @@ export default function PersistentPlayer() {
                 </span>
               </div>
 
-              {/* Action Buttons: Reverb, Shuffle & Minimize */}
+              {/* Action Buttons: Shuffle & Minimize */}
               <div className="flex items-center gap-1">
-                <button
-                  onClick={toggleReverb}
-                  title={reverbEnabled ? "Cabin Reverb: ON" : "Cabin Reverb: OFF"}
-                  className={`rounded-full p-1 transition cursor-pointer ${
-                    reverbEnabled
-                      ? "bg-white/15 text-amber-200 ring-1 ring-white/20"
-                      : "text-neutral-400 hover:text-white hover:bg-white/10"
-                  }`}
-                >
-                  <IconReverb className="h-3 w-3" />
-                </button>
                 <button
                   onClick={playRandomSong}
                   title="Random Song"
@@ -714,23 +689,6 @@ export default function PersistentPlayer() {
                 </span>
               </div>
             </div>
-
-            {/* Cabin Reverb Acoustic Filter Toggle */}
-            <button
-              onClick={toggleReverb}
-              title={
-                reverbEnabled
-                  ? "Cabin Reverb: ON (Warm bus interior acoustic echo)"
-                  : "Cabin Reverb: OFF (Click to enable cozy cabin echo)"
-              }
-              className={`flex h-8 w-8 items-center justify-center rounded-full transition-all cursor-pointer ${
-                reverbEnabled
-                  ? "bg-white/15 text-amber-200 ring-1 ring-white/25 shadow-[0_0_12px_rgba(255,200,100,0.15)]"
-                  : "text-neutral-400 hover:bg-white/10 hover:text-white"
-              }`}
-            >
-              <IconReverb className="h-3.5 w-3.5" />
-            </button>
 
             {/* 3D Phone Mockup Dashboard Toggle */}
             <button

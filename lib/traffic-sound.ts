@@ -1,4 +1,4 @@
-import { cabinReverb } from "./reverb-processor";
+import { getSharedAudioContext } from "./audio-context";
 import { useAudioStore } from "./audio-store";
 
 /**
@@ -34,7 +34,7 @@ export async function preloadTrafficAudio(): Promise<void> {
   isPreloading = true;
 
   try {
-    const ctx = cabinReverb.getAudioContext();
+    const ctx = getSharedAudioContext();
     if (!ctx) return;
 
     for (const url of TRUCK_HORN_FILES) {
@@ -168,7 +168,7 @@ function playSpatial(
   muffled = false
 ): void {
   try {
-    const ctx = cabinReverb.getAudioContext();
+    const ctx = getSharedAudioContext();
     if (!ctx) return;
 
     // Trigger preloading in background if not loaded yet
@@ -179,7 +179,7 @@ function playSpatial(
     acquireVoiceSlot();
 
     const now = ctx.currentTime;
-    const masterIn = cabinReverb.getMasterInput() || ctx.destination;
+    const masterIn = ctx.destination;
 
     // 1. Distance Attenuation (Inverse-power curve: loud up close, smooth low falloff far away)
     const dist3D = Math.sqrt(distanceZ * distanceZ + lateralDelta * lateralDelta);
