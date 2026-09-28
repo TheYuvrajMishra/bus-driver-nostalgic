@@ -140,163 +140,68 @@ function makeCloudSubMesh(
   return g;
 }
 
-/** Construct a massive voluminous low-poly cumulus cloud cluster */
-function makeLargeCumulusCloud(seedOffset = 0): THREE.BufferGeometry {
-  const parts: THREE.BufferGeometry[] = [];
-  let seed = 91823 + seedOffset;
-  const rand = () => {
-    seed = (seed * 1664525 + 1013904223) >>> 0;
-    return seed / 0xffffffff;
-  };
+import { useTexture } from "@react-three/drei";
 
-  const topColor = "#ffffff";
-  const botColor = "#9ebbd9"; // soft sky ambient blue-grey
-
-  // Core base layer: wide flat puffs
-  for (let i = 0; i < 7; i++) {
-    const r = 14 + rand() * 10;
-    const geo = new THREE.DodecahedronGeometry(r, 0);
-    const px = (rand() - 0.5) * 58;
-    const py = -2 + (rand() - 0.5) * 4;
-    const pz = (rand() - 0.5) * 44;
-    parts.push(
-      makeCloudSubMesh(
-        geo,
-        topColor,
-        botColor,
-        px,
-        py,
-        pz,
-        rand() * Math.PI,
-        rand() * Math.PI,
-        0,
-        1.1,
-        0.75,
-        1.1
-      )
-    );
-    geo.dispose();
-  }
-
-  // Mid tier: puffy billowing mounds
-  for (let i = 0; i < 9; i++) {
-    const r = 16 + rand() * 14;
-    const geo = new THREE.IcosahedronGeometry(r, 0);
-    const px = (rand() - 0.5) * 42;
-    const py = 6 + rand() * 10;
-    const pz = (rand() - 0.5) * 32;
-    parts.push(
-      makeCloudSubMesh(
-        geo,
-        topColor,
-        botColor,
-        px,
-        py,
-        pz,
-        rand() * Math.PI,
-        rand() * Math.PI,
-        0,
-        1.0,
-        0.9,
-        1.0
-      )
-    );
-    geo.dispose();
-  }
-
-  // Towering cumulus crests
-  for (let i = 0; i < 4; i++) {
-    const r = 12 + rand() * 9;
-    const geo = new THREE.DodecahedronGeometry(r, 0);
-    const px = (rand() - 0.5) * 22;
-    const py = 16 + rand() * 8;
-    const pz = (rand() - 0.5) * 20;
-    parts.push(
-      makeCloudSubMesh(
-        geo,
-        topColor,
-        botColor,
-        px,
-        py,
-        pz,
-        rand() * Math.PI,
-        rand() * Math.PI,
-        0,
-        1.0,
-        1.1,
-        1.0
-      )
-    );
-    geo.dispose();
-  }
-
-  const merged = mergeGeometries(parts)!;
-  parts.forEach((p) => p.dispose());
-  return merged;
-}
-
-const CLOUD_POSITIONS = [
-  // Dominant large cloud on the left sky (matching reference)
-  { x: -160, y: 130, z: -280, s: 2.1, ry: 0.3 },
-  // Towering center-left cloud
-  { x: -45, y: 105, z: -380, s: 1.8, ry: 1.1 },
-  // Far right high cumulus bank
-  { x: 190, y: 140, z: -320, s: 2.3, ry: -0.4 },
-  // Midground center-right puffy cloud
-  { x: 110, y: 95, z: -240, s: 1.5, ry: 2.2 },
-  // Distant horizon cloud layers
-  { x: -280, y: 80, z: -460, s: 2.6, ry: 0.8 },
-  { x: 300, y: 85, z: -490, s: 2.8, ry: -1.2 },
-  { x: 10, y: 75, z: -520, s: 2.4, ry: 1.7 },
-  // Overhead forward clouds
-  { x: -90, y: 150, z: -160, s: 1.6, ry: -0.8 },
-  { x: 140, y: 160, z: -170, s: 1.7, ry: 0.5 },
+// ----------------------------------------------------------------------------
+// Anime-style cloud billboards (PNG sprites scattered across the sky)
+// ----------------------------------------------------------------------------
+const ANIME_CLOUDS = [
+  // Near-mid sky — large hero clouds
+  { tex: 0, x: -180, y: 135, z: -280, w: 170, o: 1.0 },
+  { tex: 1, x: -40, y: 120, z: -350, w: 90, o: 1.0 },
+  { tex: 0, x: 200, y: 150, z: -300, w: 190, o: 1.0 },
+  { tex: 2, x: 120, y: 100, z: -240, w: 220, o: 0.98 },
+  { tex: 1, x: -120, y: 170, z: -200, w: 75, o: 1.0 },
+  // Distant horizon layer — smaller, softer
+  { tex: 0, x: -320, y: 90, z: -480, w: 150, o: 0.9 },
+  { tex: 2, x: 330, y: 95, z: -520, w: 200, o: 0.88 },
+  { tex: 0, x: 0, y: 85, z: -560, w: 160, o: 0.85 },
+  { tex: 1, x: 250, y: 110, z: -450, w: 80, o: 0.9 },
+  { tex: 2, x: -250, y: 105, z: -420, w: 180, o: 0.88 },
+  // High overhead clouds
+  { tex: 0, x: -100, y: 200, z: -180, w: 140, o: 1.0 },
+  { tex: 2, x: 150, y: 210, z: -190, w: 170, o: 0.95 },
+  { tex: 1, x: 40, y: 190, z: -160, w: 70, o: 1.0 },
+  { tex: 0, x: -300, y: 180, z: -250, w: 120, o: 0.95 },
 ];
 
-function LowPolyClouds() {
-  const meshRef = useRef<THREE.InstancedMesh>(null);
-  const timeOfDay = useWeatherStore((s) => s.timeOfDay);
-  const cfg = TIME_LIGHTING_CONFIGS[timeOfDay];
+// Texture aspect ratios (width / height)
+const CLOUD_ASPECTS = [1920 / 1280, 1120 / 2240, 2736 / 912];
 
-  const cloudGeo = useMemo(() => makeLargeCumulusCloud(0), []);
-
-  useLayoutEffect(() => {
-    const mesh = meshRef.current;
-    if (!mesh) return;
-    const m = new THREE.Matrix4();
-    const q = new THREE.Quaternion();
-    const e = new THREE.Euler();
-    const v = new THREE.Vector3();
-    const s = new THREE.Vector3();
-    const c = new THREE.Color(cfg.cloudColor);
-
-    CLOUD_POSITIONS.forEach((p, i) => {
-      e.set(0, p.ry, 0);
-      q.setFromEuler(e);
-      v.set(p.x, p.y, p.z);
-      s.set(p.s, p.s * 0.85, p.s);
-      m.compose(v, q, s);
-      mesh.setMatrixAt(i, m);
-      mesh.setColorAt(i, c);
-    });
-    mesh.instanceMatrix.needsUpdate = true;
-    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-  }, [cloudGeo, cfg]);
+function AnimeClouds() {
+  const groupRef = useRef<THREE.Group>(null);
+  const textures = useTexture([
+    "/assets/clouds/cloud-fluffy.png",
+    "/assets/clouds/cloud-puffy.png",
+    "/assets/clouds/cloud-wispy.png",
+  ]);
 
   useFrame((state) => {
-    const mesh = meshRef.current;
-    if (!mesh) return;
-    mesh.position.z = (state.clock.elapsedTime * 1.6) % 80;
+    const g = groupRef.current;
+    if (!g) return;
+    // Slow dreamy drift
+    const t = state.clock.elapsedTime;
+    g.position.x = Math.sin(t * 0.02) * 12;
+    g.position.z = (t * 1.2) % 60;
   });
 
   return (
-    <instancedMesh
-      ref={meshRef}
-      args={[cloudGeo, undefined, CLOUD_POSITIONS.length]}
-      frustumCulled={false}
-    >
-      <meshLambertMaterial vertexColors flatShading />
-    </instancedMesh>
+    <group ref={groupRef}>
+      {ANIME_CLOUDS.map((c, i) => {
+        const h = c.w / CLOUD_ASPECTS[c.tex];
+        return (
+          <sprite key={i} position={[c.x, c.y, c.z]} scale={[c.w, h, 1]}>
+            <spriteMaterial
+              map={textures[c.tex]}
+              transparent
+              depthWrite={false}
+              opacity={c.o}
+              fog={false}
+            />
+          </sprite>
+        );
+      })}
+    </group>
   );
 }
 
@@ -586,7 +491,7 @@ export default function Environment() {
     <group>
       <SkyDome />
       <HorizonMountains />
-      <LowPolyClouds />
+      <AnimeClouds />
       <LineRain />
       <BusHeadlights />
     </group>
