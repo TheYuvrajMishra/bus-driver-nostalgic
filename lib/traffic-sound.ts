@@ -150,7 +150,8 @@ export function playOvertakeHorn(
     const any = Array.from(audioBufferCache.values());
     if (any.length > 0) buffer = any[Math.floor(Math.random() * any.length)];
   }
-  playSpatial(buffer, false, lateralDelta, distanceZ, relativeSpeed);
+  // Muffled: heard from inside a closed cockpit, windows up.
+  playSpatial(buffer, false, lateralDelta, distanceZ, relativeSpeed, true);
 }
 
 /**
@@ -163,7 +164,8 @@ function playSpatial(
   isBump: boolean,
   lateralDelta = 0,
   distanceZ = 15,
-  relativeSpeed = 0
+  relativeSpeed = 0,
+  muffled = false
 ): void {
   try {
     const ctx = cabinReverb.getAudioContext();
@@ -197,13 +199,29 @@ function playSpatial(
     const cutoffHz = Math.max(750, 16000 - clampedDist * 95);
     airFilter.frequency.setValueAtTime(cutoffHz, now);
 
-    // 4. Master Volume Gain
+    // 3b. Closed-cockpit muffle (AI horns only): windows-up glass + seals
+    // kill the harsh highs so it feels heard from inside the cabin.
+    let cabinFilter: BiquadFilterNode | null = null;
+    if (muffled) {
+      cabinFilter = ctx.createBiquadFilter();
+      cabinFilter.type = "lowpass";
+      cabinFilter.frequency.setValueAtTime(520, now);
+      cabinFilter.Q.setValueAtTime(0.4, now);
+    }
+
+    // 4. Master Volume Gain (muffled horns sit much lower in the mix)
     const gainNode = ctx.createGain();
-    const masterVolume = volumeGain * 0.85;
+    const masterVolume = volumeGain * 0.85 * (muffled ? 0.32 : 1);
     gainNode.gain.setValueAtTime(masterVolume, now);
 
-    // Connect node chain: [Source] -> [airFilter] -> [gainNode] -> [panner] -> [masterIn]
-    airFilter.connect(gainNode);
+    // Connect node chain: [Source] -> [airFilter] -> ([cabinFilter]) ->
+    //                      [gainNode] -> [panner] -> [masterIn]
+    if (cabinFilter) {
+      airFilter.connect(cabinFilter);
+      cabinFilter.connect(gainNode);
+    } else {
+      airFilter.connect(gainNode);
+    }
     if (panner) {
       gainNode.connect(panner);
       panner.connect(masterIn);
@@ -212,8 +230,9 @@ function playSpatial(
     }
 
     // 5. Duck radio music volume if horn is nearby (< 50m)
+    // (muffled horns duck less — they're background, not startling)
     if (clampedDist < 50) {
-      useAudioStore.getState().duckVolume?.(0.72, 750);
+      useAudioStore.getState().duckVolume?.(muffled ? 0.88 : 0.72, 750);
     }
 
     // 6. Doppler Pitch Shift Factor
