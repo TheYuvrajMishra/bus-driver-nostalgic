@@ -22,22 +22,22 @@ export interface WeatherLighting {
 }
 
 export const TIME_LIGHTING_CONFIGS: Record<TimeOfDay, WeatherLighting> = {
-  // 1. Natural White Sunny Day - Clean Crisp 6500K Daylight, Balanced Sky Ambient & Natural Earth
+  // 1. Rich Golden Sunny Day - warm elegant daylight, saturated azure sky
   morning: {
-    skyTop: "#1c6ab6",
-    skyHorizon: "#8ec2eb",
-    skyBottom: "#add7f8", // Below horizon sky continuation
+    skyTop: "#1663c2",
+    skyHorizon: "#6fb5f0",
+    skyBottom: "#a9d3f6", // Below horizon sky continuation
     skyCloud: "#ffffff",
-    fogColor: "#8ec2eb",
-    fogNear: 180,
-    fogFar: 880,
-    ambientColor: "#dbe8f5", // Soft natural daylight sky ambient
-    ambientIntensity: 1.15,
-    sunColor: "#ffffff", // Pure crisp natural white sunlight (no yellow/orange cast)
-    sunIntensity: 3.0,
+    fogColor: "#8fc0ee",
+    fogNear: 260,
+    fogFar: 1050,
+    ambientColor: "#ffe9cf", // Warm golden sky ambient
+    ambientIntensity: 1.0,
+    sunColor: "#fff0d2", // Warm golden sunlight
+    sunIntensity: 3.2,
     sunPosition: [-32, 48, 14],
     cloudColor: "#ffffff",
-    groundTint: "#c89d68",
+    groundTint: "#d9a45b",
     isRain: false,
     isNight: false,
   },

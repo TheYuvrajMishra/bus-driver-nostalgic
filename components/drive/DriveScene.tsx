@@ -107,18 +107,18 @@ function SceneLighting() {
         shadow-camera-bottom={-80}
       />
 
-      {/* 2. Secondary Soft Natural Sky Bounce Fill Light (NO shadows) */}
+      {/* 2. Secondary Soft Warm Sky Bounce Fill Light (NO shadows) */}
       <directionalLight
-        color={timeOfDay === "morning" ? "#e2edfa" : "#8a9ab0"}
-        intensity={timeOfDay === "morning" ? 0.75 : 0.6}
+        color={timeOfDay === "morning" ? "#f6e7cd" : "#8a9ab0"}
+        intensity={timeOfDay === "morning" ? 0.6 : 0.6}
         position={[35, 30, -40]}
         castShadow={false}
       />
 
       {/* 3. Zenith Daylight Downward Fill for crisp facet contrast (NO shadows) */}
       <directionalLight
-        color="#ffffff"
-        intensity={timeOfDay === "morning" ? 0.55 : 0.35}
+        color={timeOfDay === "morning" ? "#fff6e6" : "#ffffff"}
+        intensity={timeOfDay === "morning" ? 0.45 : 0.35}
         position={[0, 60, 0]}
         castShadow={false}
       />
