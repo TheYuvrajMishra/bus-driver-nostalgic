@@ -1,474 +1,308 @@
-import { DRIVING_CONFIG } from "./driving-config";
 import { useDriveStore, ROAD_HALF_WIDTH } from "./drive-store";
-import { playTrafficSound, type HornType } from "./traffic-sound";
+import { playOvertakeHorn, playTrafficSound } from "./traffic-sound";
 
-export type TrafficVehicleType =
-  | "truck"
-  | "bus"
-  | "rickshaw"
-  | "car"
-  | "scooter";
-
-export type AIState =
-  | "CRUISE"
-  | "FOLLOW"
-  | "OVERTAKE_OUT"
-  | "OVERTAKE_PASS"
-  | "OVERTAKE_RETURN";
+export type TrafficVehicleType = "car" | "bus" | "truck";
 
 export interface TrafficVehicle {
   id: number;
   type: TrafficVehicleType;
-  lane: number; // +1 right lane (same direction), -1 left lane (oncoming)
-  s: number; // longitudinal position along highway (m)
-  lateralOffset: number; // lateral position (m), -1.4m left, +1.4m right
-  targetLateral: number;
-  speed: number; // current speed in m/s
-  desiredSpeed: number; // target cruise speed in m/s
-  state: AIState;
-  stateTimer: number; // time in current state (s)
-  leadVehicleId: number | null;
-  overtakenVehicleId: number | null;
-  length: number; // meters
-  width: number; // meters
-  colorVariant: number; // 0, 1, 2
+  /** +1 same direction as player, -1 oncoming */
+  lane: 1 | -1;
+  /** longitudinal position along highway (m) */
+  s: number;
+  /** current lateral position (m) */
+  lateralOffset: number;
+  /** lane center x */
+  laneX: number;
+  /** per-driver lateral personality within lane (m) */
+  personalOffset: number;
+  /** current speed m/s, always >= 0 */
+  speed: number;
+  /** last computed acceleration m/s^2 (drives brake lights) */
+  accel: number;
+  /** IDM desired speed m/s */
+  v0: number;
+  length: number;
+  width: number;
+  wheelRadius: number;
+  /** 0..2 livery tint variant */
+  colorVariant: number;
   brakeLight: boolean;
-  blinkerLeft: boolean;
-  blinkerRight: boolean;
-  honkCooldown: number; // seconds
+  /** seconds until this vehicle may honk again */
+  honkCooldown: number;
+  /** overtake-detection latch: was the player behind this vehicle? */
+  wasPlayerBehind: boolean;
+  /** accumulated wheel rotation angle (radians) */
+  wheelSpin: number;
 }
 
+/** Intelligent Driver Model parameters per vehicle type */
+interface IdmParams {
+  /** max acceleration m/s^2 */
+  a: number;
+  /** comfortable deceleration m/s^2 */
+  b: number;
+  /** minimum stopped gap m */
+  s0: number;
+  /** desired time headway s */
+  T: number;
+}
+
+const IDM: Record<TrafficVehicleType, IdmParams> = {
+  car: { a: 2.4, b: 2.8, s0: 3.0, T: 1.0 },
+  bus: { a: 1.7, b: 2.4, s0: 4.0, T: 1.3 },
+  truck: { a: 1.3, b: 2.1, s0: 5.0, T: 1.6 },
+};
+
+const TYPE_SPECS: Record<
+  TrafficVehicleType,
+  { length: number; width: number; wheelRadius: number; v0: number }
+> = {
+  car: { length: 4.2, width: 1.8, wheelRadius: 0.32, v0: 22.0 }, // ~79 km/h
+  bus: { length: 9.5, width: 2.5, wheelRadius: 0.48, v0: 16.5 }, // ~59 km/h
+  truck: { length: 8.0, width: 2.5, wheelRadius: 0.48, v0: 13.0 }, // ~47 km/h
+};
+
 export const TRAFFIC_CONFIG = {
-  MAX_ACTIVE_VEHICLES: 14,
-  SIM_WINDOW_AHEAD: 380, // meters ahead of player
-  SIM_WINDOW_BEHIND: 130, // meters behind player
-  LANE_RIGHT_X: 1.45,
-  LANE_LEFT_X: -1.45,
-  SAFE_OVERTAKE_DISTANCE: 70, // meters of clear oncoming road needed
-  COLLISION_COOLDOWN: 1.2, // seconds between collision impulses
+  MAX_ACTIVE_VEHICLES: 12,
+  SPAWN_AHEAD_MIN: 150,
+  SPAWN_AHEAD_MAX: 380,
+  DESPAWN_BEHIND: 130,
+  DESPAWN_AHEAD: 450,
+  SPAWN_CLEARANCE: 30, // min gap to existing vehicle in same lane at spawn
+  LANE_SAME_X: 1.45,
+  LANE_ONCOMING_X: -1.45,
+  COLLISION_COOLDOWN: 1.2,
+  OVERTAKE_LATERAL_RANGE: 3.4,
+  HONK_COOLDOWN: 25,
+  FIXED_DT: 1 / 120,
 } as const;
 
 class TrafficSimulationEngine {
   private vehicles: TrafficVehicle[] = [];
   private nextId = 1;
   private collisionTimer = 0;
-  private ambientHonkTimer = 18.0;
-
-  // PRNG helper
-  private mulberry32(seed: number): () => number {
-    let a = seed >>> 0;
-    return () => {
-      a |= 0;
-      a = (a + 0x6d2b79f5) | 0;
-      let t = Math.imul(a ^ (a >>> 15), 1 | a);
-      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-  }
+  private spawnTimer = 0;
+  private accumulator = 0;
 
   getVehicles(): TrafficVehicle[] {
     return this.vehicles;
   }
 
-  /**
-   * Spawns an archetype with authentic Indian highway dimensions and speed characteristics
-   */
+  private pickType(rand: number): TrafficVehicleType {
+    if (rand < 0.4) return "car";
+    if (rand < 0.7) return "bus";
+    return "truck";
+  }
+
   private createVehicle(
     s: number,
-    lane: number,
-    rand: () => number
+    lane: 1 | -1,
+    playerS: number
   ): TrafficVehicle {
-    const id = this.nextId++;
-    const rType = rand();
-    let type: TrafficVehicleType = "truck";
-    let length = 7.6;
-    let width = 2.4;
-    let desiredSpeed = 13.5;
-
-    if (rType < 0.32) {
-      type = "truck";
-      length = 7.6;
-      width = 2.4;
-      desiredSpeed = 11.5 + rand() * 3.5; // 40-54 km/h
-    } else if (rType < 0.54) {
-      type = "bus";
-      length = 9.2;
-      width = 2.4;
-      desiredSpeed = 15.0 + rand() * 4.0; // 54-68 km/h
-    } else if (rType < 0.72) {
-      type = "rickshaw";
-      length = 2.5;
-      width = 1.35;
-      desiredSpeed = 9.5 + rand() * 3.0; // 34-45 km/h
-    } else if (rType < 0.9) {
-      type = "car";
-      length = 4.2;
-      width = 1.75;
-      desiredSpeed = 20.0 + rand() * 6.5; // 72-95 km/h
-    } else {
-      type = "scooter";
-      length = 1.9;
-      width = 0.8;
-      desiredSpeed = 14.0 + rand() * 4.0; // 50-65 km/h
-    }
-
-    const startLateral =
-      lane > 0
-        ? TRAFFIC_CONFIG.LANE_RIGHT_X + (rand() * 0.2 - 0.1)
-        : TRAFFIC_CONFIG.LANE_LEFT_X + (rand() * 0.2 - 0.1);
+    const type = this.pickType(Math.random());
+    const spec = TYPE_SPECS[type];
+    const laneX =
+      lane === 1 ? TRAFFIC_CONFIG.LANE_SAME_X : TRAFFIC_CONFIG.LANE_ONCOMING_X;
+    const personalOffset =
+      lane === 1 ? (Math.random() * 2 - 1) * 0.28 : 0;
+    const v0 = spec.v0 * (0.92 + Math.random() * 0.16);
 
     return {
-      id,
+      id: this.nextId++,
       type,
       lane,
       s,
-      lateralOffset: startLateral,
-      targetLateral: startLateral,
-      speed: desiredSpeed,
-      desiredSpeed,
-      state: "CRUISE",
-      stateTimer: 0,
-      leadVehicleId: null,
-      overtakenVehicleId: null,
-      length,
-      width,
-      colorVariant: Math.floor(rand() * 3),
+      lateralOffset: laneX + personalOffset,
+      laneX,
+      personalOffset,
+      speed: v0 * (0.85 + Math.random() * 0.15),
+      accel: 0,
+      v0,
+      length: spec.length,
+      width: spec.width,
+      wheelRadius: spec.wheelRadius,
+      colorVariant: Math.floor(Math.random() * 3),
       brakeLight: false,
-      blinkerLeft: false,
-      blinkerRight: false,
-      honkCooldown: 4.0 + rand() * 12.0,
+      honkCooldown: 0,
+      wasPlayerBehind: playerS < s - spec.length / 2,
+      wheelSpin: Math.random() * Math.PI * 2,
     };
   }
 
   /**
-   * Triggers horn for a vehicle
+   * IDM acceleration. gap = bumper-to-bumper distance (m),
+   * dv = own speed - leader speed (m/s, positive = closing in).
+   * gap = Infinity when road ahead is clear.
    */
-  private honkVehicle(v: TrafficVehicle, playerS: number, playerLat: number): void {
-    if (v.honkCooldown > 0) return;
-    v.honkCooldown = 8.0 + Math.random() * 10.0;
-
-    let soundType: HornType = "truck";
-    if (v.type === "truck") {
-      soundType = Math.random() > 0.4 ? "truck" : "musical";
-    } else if (v.type === "bus") {
-      soundType = "musical";
-    } else if (v.type === "rickshaw") {
-      soundType = "rickshaw";
-    } else if (v.type === "car") {
-      soundType = "car";
-    } else {
-      soundType = "car";
-    }
-
-    const distZ = Math.abs(v.s - playerS);
-    const deltaX = v.lateralOffset - playerLat;
-    playTrafficSound(soundType, deltaX, distZ, v.speed);
+  private idmAccel(
+    v: number,
+    v0: number,
+    gap: number,
+    dv: number,
+    p: IdmParams
+  ): number {
+    const sStar =
+      p.s0 + Math.max(0, v * p.T + (v * dv) / (2 * Math.sqrt(p.a * p.b)));
+    const freeTerm = Math.pow(v / Math.max(v0, 0.5), 4);
+    const interactTerm = Math.pow(sStar / Math.max(gap, 0.4), 2);
+    const acc = p.a * (1 - freeTerm - interactTerm);
+    return Math.max(-7.5, Math.min(p.a, acc));
   }
 
-  /**
-   * Main per-frame simulation update
-   */
+  /** Public frame update: fixed-timestep substeps for frame-rate independence. */
   update(dt: number): void {
-    const { speed: playerSpeed, lateralOffset: playerLat, distanceTraveled: playerS } =
-      useDriveStore.getState();
+    this.accumulator += Math.min(dt, 0.1);
+    const h = TRAFFIC_CONFIG.FIXED_DT;
+    let n = 0;
+    while (this.accumulator >= h && n < 24) {
+      this.step(h);
+      this.accumulator -= h;
+      n++;
+    }
+  }
 
-    this.collisionTimer = Math.max(0, this.collisionTimer - dt);
-    this.ambientHonkTimer -= dt;
+  private step(h: number): void {
+    const {
+      speed: playerSpeed,
+      lateralOffset: playerLat,
+      distanceTraveled: playerS,
+    } = useDriveStore.getState();
 
-    // 1. Cull vehicles outside active window
-    const minS = playerS - TRAFFIC_CONFIG.SIM_WINDOW_BEHIND;
-    const maxS = playerS + TRAFFIC_CONFIG.SIM_WINDOW_AHEAD;
+    this.collisionTimer = Math.max(0, this.collisionTimer - h);
+    this.spawnTimer = Math.max(0, this.spawnTimer - h);
 
+    // 1. Cull outside active window
+    const minS = playerS - TRAFFIC_CONFIG.DESPAWN_BEHIND;
+    const maxS = playerS + TRAFFIC_CONFIG.DESPAWN_AHEAD;
     this.vehicles = this.vehicles.filter((v) => v.s >= minS && v.s <= maxS);
 
-    // 2. Deterministic Spawning if under vehicle cap
-    if (this.vehicles.length < TRAFFIC_CONFIG.MAX_ACTIVE_VEHICLES) {
-      const chunkIdx = Math.floor(playerS / 60);
-      const rand = this.mulberry32(chunkIdx * 1000 + this.vehicles.length * 17);
-
-      // Spawn either ahead or behind
-      const spawnAhead = rand() > 0.35;
-      const spawnDist = spawnAhead
-        ? playerS + 180 + rand() * (TRAFFIC_CONFIG.SIM_WINDOW_AHEAD - 190)
-        : playerS - 40 - rand() * (TRAFFIC_CONFIG.SIM_WINDOW_BEHIND - 45);
-
-      // 60% Same-direction (right lane), 40% Oncoming (left lane)
-      const lane = rand() > 0.4 ? 1 : -1;
-
-      // Check distance from existing vehicles
-      const tooClose = this.vehicles.some(
-        (v) => Math.abs(v.s - spawnDist) < 26 && v.lane === lane
+    // 2. Spawn (rate-limited, one at a time, far ahead, random)
+    if (
+      this.spawnTimer <= 0 &&
+      this.vehicles.length < TRAFFIC_CONFIG.MAX_ACTIVE_VEHICLES
+    ) {
+      this.spawnTimer = 0.6;
+      const lane: 1 | -1 = Math.random() < 0.5 ? 1 : -1;
+      const s =
+        playerS +
+        TRAFFIC_CONFIG.SPAWN_AHEAD_MIN +
+        Math.random() *
+          (TRAFFIC_CONFIG.SPAWN_AHEAD_MAX - TRAFFIC_CONFIG.SPAWN_AHEAD_MIN);
+      const clear = !this.vehicles.some(
+        (u) => u.lane === lane && Math.abs(u.s - s) < TRAFFIC_CONFIG.SPAWN_CLEARANCE
       );
-
-      if (!tooClose) {
-        this.vehicles.push(this.createVehicle(spawnDist, lane, rand));
-      }
+      if (clear) this.vehicles.push(this.createVehicle(s, lane, playerS));
     }
 
-    // 3. Ambient Highway Honk
-    if (this.ambientHonkTimer <= 0 && this.vehicles.length > 0) {
-      this.ambientHonkTimer = 16.0 + Math.random() * 22.0;
-      const candidates = this.vehicles.filter(
-        (v) => Math.abs(v.s - playerS) < 140
-      );
-      if (candidates.length > 0) {
-        const pick = candidates[Math.floor(Math.random() * candidates.length)];
-        this.honkVehicle(pick, playerS, playerLat);
+    // 3. Per-vehicle kinematics
+    for (const v of this.vehicles) {
+      const p = IDM[v.type];
+      v.honkCooldown = Math.max(0, v.honkCooldown - h);
+
+      // --- find leader (nearest obstacle ahead in this lane) ---
+      let gap = Infinity;
+      let dv = 0; // own speed - leader speed
+
+      for (const u of this.vehicles) {
+        if (u === v || u.lane !== v.lane) continue;
+        const ahead = v.lane === 1 ? u.s > v.s : u.s < v.s;
+        if (!ahead) continue;
+        const g = Math.abs(u.s - v.s) - (v.length + u.length) / 2;
+        if (g < gap) {
+          gap = g;
+          dv = v.speed - u.speed;
+        }
       }
-    }
 
-    // 4. Update each vehicle state & kinematics
-    for (let i = 0; i < this.vehicles.length; i++) {
-      const v = this.vehicles[i];
-      v.stateTimer += dt;
-      v.honkCooldown = Math.max(0, v.honkCooldown - dt);
-
-      if (v.lane === -1) {
-        // ONCOMING LANE VEHICLE:
-        // Drives toward player with negative s velocity
-        v.s -= v.speed * dt;
-        v.lateralOffset = TRAFFIC_CONFIG.LANE_LEFT_X;
-        v.targetLateral = TRAFFIC_CONFIG.LANE_LEFT_X;
-        v.brakeLight = false;
-        v.blinkerLeft = false;
-        v.blinkerRight = false;
-
-        // Honk if player or an overtaking car is in oncoming lane ahead
-        if (
-          v.s > playerS &&
-          v.s - playerS < 45 &&
-          playerLat < -0.4 &&
-          v.honkCooldown <= 0
-        ) {
-          this.honkVehicle(v, playerS, playerLat);
+      // --- player as leader ---
+      const latOverlap =
+        Math.abs(playerLat - v.lateralOffset) < (v.width + 2.2) / 2 + 0.25;
+      if (v.lane === 1) {
+        // player ahead of a same-direction vehicle
+        if (latOverlap && playerS > v.s) {
+          const g = playerS - v.s - (v.length + 6.5) / 2;
+          if (g < gap) {
+            gap = g;
+            dv = v.speed - playerSpeed;
+          }
         }
       } else {
-        // SAME-DIRECTION VEHICLE:
-        // Advances with positive s velocity
-        v.s += v.speed * dt;
-
-        // Find nearest lead vehicle ahead in same direction
-        let leadDist = 999;
-        let leadSpeed = v.desiredSpeed;
-        let leadId: number | null = null;
-
-        for (let j = 0; j < this.vehicles.length; j++) {
-          if (i === j) continue;
-          const other = this.vehicles[j];
-          if (other.lane === 1 && other.s > v.s) {
-            const dist = other.s - v.s - (v.length + other.length) / 2;
-            if (dist < leadDist) {
-              leadDist = dist;
-              leadSpeed = other.speed;
-              leadId = other.id;
-            }
+        // player blocking an oncoming vehicle's lane
+        if (latOverlap && playerS < v.s && v.s - playerS < 90) {
+          const g = v.s - playerS - (v.length + 6.5) / 2;
+          if (g < gap) {
+            gap = g;
+            dv = v.speed; // treat player as stopped obstacle head-on
           }
         }
-
-        // Also check if player is ahead in front of this AI
-        if (playerS > v.s && Math.abs(playerLat - v.lateralOffset) < 1.4) {
-          const pDist = playerS - v.s - (v.length + 6.5) / 2;
-          if (pDist > 0 && pDist < leadDist) {
-            leadDist = pDist;
-            leadSpeed = playerSpeed;
-            leadId = -999; // player
-          }
-        }
-
-        // AI State Machine
-        switch (v.state) {
-          case "CRUISE": {
-            v.brakeLight = false;
-            v.blinkerLeft = false;
-            v.blinkerRight = false;
-            v.targetLateral = TRAFFIC_CONFIG.LANE_RIGHT_X;
-
-            // Accelerate to desired speed
-            if (v.speed < v.desiredSpeed) {
-              v.speed = Math.min(v.desiredSpeed, v.speed + 3.2 * dt);
-            }
-
-            // Check if approaching slow vehicle
-            if (leadDist < 24.0) {
-              v.state = "FOLLOW";
-              v.stateTimer = 0;
-              v.leadVehicleId = leadId;
-            }
-            break;
-          }
-
-          case "FOLLOW": {
-            v.targetLateral = TRAFFIC_CONFIG.LANE_RIGHT_X;
-
-            // Decelerate smoothly to follow lead vehicle
-            if (leadDist < 20.0) {
-              const targetFollowSpeed = Math.max(0, leadSpeed * 0.96);
-              v.speed = Math.max(
-                targetFollowSpeed,
-                v.speed - 5.5 * dt * ((22.0 - leadDist) / 8.0)
-              );
-              v.brakeLight = v.speed < leadSpeed;
-            } else {
-              v.brakeLight = false;
-            }
-
-            // If stuck behind for > 1.8s and has higher desired speed, evaluate OVERTAKE
-            if (
-              v.stateTimer > 1.8 &&
-              v.desiredSpeed > leadSpeed + 1.8 &&
-              leadDist < 25.0
-            ) {
-              // Check oncoming lane clearance ahead
-              const oncomingDanger = this.vehicles.some(
-                (other) =>
-                  other.lane === -1 &&
-                  other.s > v.s &&
-                  other.s < v.s + TRAFFIC_CONFIG.SAFE_OVERTAKE_DISTANCE
-              );
-              // Also check if player is currently in oncoming lane beside/ahead
-              const playerInWay =
-                playerLat < -0.4 &&
-                playerS > v.s - 10 &&
-                playerS < v.s + 50;
-
-              if (!oncomingDanger && !playerInWay) {
-                v.state = "OVERTAKE_OUT";
-                v.stateTimer = 0;
-                v.overtakenVehicleId = leadId;
-                v.blinkerRight = true; // signal pull out
-                if (Math.abs(v.s - playerS) < 80) {
-                  this.honkVehicle(v, playerS, playerLat);
-                }
-              }
-            }
-            break;
-          }
-
-          case "OVERTAKE_OUT": {
-            v.blinkerRight = true;
-            v.targetLateral = TRAFFIC_CONFIG.LANE_LEFT_X;
-            v.speed = Math.min(v.desiredSpeed * 1.12, v.speed + 4.2 * dt);
-
-            // Abort if oncoming vehicle appears
-            const suddenOncoming = this.vehicles.some(
-              (other) =>
-                other.lane === -1 &&
-                other.s > v.s &&
-                other.s < v.s + 38.0
-            );
-            if (suddenOncoming) {
-              v.state = "OVERTAKE_RETURN";
-              v.stateTimer = 0;
-              v.blinkerRight = false;
-              v.blinkerLeft = true;
-            } else if (Math.abs(v.lateralOffset - TRAFFIC_CONFIG.LANE_LEFT_X) < 0.25) {
-              v.state = "OVERTAKE_PASS";
-              v.stateTimer = 0;
-              v.blinkerRight = false;
-            }
-            break;
-          }
-
-          case "OVERTAKE_PASS": {
-            v.targetLateral = TRAFFIC_CONFIG.LANE_LEFT_X;
-            v.speed = Math.min(v.desiredSpeed * 1.15, v.speed + 4.0 * dt);
-
-            // Check if passed lead vehicle
-            const lead = this.vehicles.find((x) => x.id === v.overtakenVehicleId);
-            const passed = lead ? v.s - lead.s > 15.0 : v.stateTimer > 3.0;
-
-            if (passed) {
-              v.state = "OVERTAKE_RETURN";
-              v.stateTimer = 0;
-              v.blinkerLeft = true; // signal merge back
-            }
-            break;
-          }
-
-          case "OVERTAKE_RETURN": {
-            v.blinkerLeft = true;
-            v.targetLateral = TRAFFIC_CONFIG.LANE_RIGHT_X;
-
-            if (Math.abs(v.lateralOffset - TRAFFIC_CONFIG.LANE_RIGHT_X) < 0.25) {
-              v.state = "CRUISE";
-              v.stateTimer = 0;
-              v.blinkerLeft = false;
-              v.overtakenVehicleId = null;
-            }
-            break;
-          }
-        }
-
-        // Smooth lateral steering translation
-        const latDelta = v.targetLateral - v.lateralOffset;
-        const steerSpeed = v.state.startsWith("OVERTAKE") ? 2.4 : 1.8;
-        v.lateralOffset += Math.max(
-          -steerSpeed * dt,
-          Math.min(steerSpeed * dt, latDelta)
-        );
       }
 
-      // 5. Soft Player Collision Detection (Box Overlap)
-      const playerBoxLen = 6.5;
-      const playerBoxWidth = 2.2;
+      // --- IDM accel + integrate ---
+      v.accel = this.idmAccel(v.speed, v.v0, gap, dv, p);
+      v.speed = Math.max(0, v.speed + v.accel * h);
+      v.s += (v.lane === 1 ? 1 : -1) * v.speed * h;
+
+      // --- smooth lateral tracking (no snapping, no lane changes) ---
+      const targetLat = v.laneX + v.personalOffset;
+      v.lateralOffset +=
+        (targetLat - v.lateralOffset) * (1 - Math.exp(-3.0 * h));
+
+      // --- brake lights with hysteresis (no flicker) ---
+      if (!v.brakeLight && v.accel < -1.4) v.brakeLight = true;
+      else if (v.brakeLight && v.accel > -0.6) v.brakeLight = false;
+
+      // --- wheel spin (local axle frame: forward roll is always +) ---
+      v.wheelSpin += (Math.abs(v.speed) / v.wheelRadius) * h;
+
+      // --- overtake detection: player crosses from behind to ahead ---
+      if (v.lane === 1) {
+        const behindNow = playerS < v.s - v.length / 2 - 1;
+        const aheadNow = playerS > v.s + v.length / 2 + 1;
+        if (v.wasPlayerBehind && aheadNow) {
+          // OVERTAKE! Horn only now.
+          if (
+            v.honkCooldown <= 0 &&
+            Math.abs(playerLat - v.lateralOffset) <
+              TRAFFIC_CONFIG.OVERTAKE_LATERAL_RANGE
+          ) {
+            playOvertakeHorn(
+              v.type,
+              v.lateralOffset - playerLat,
+              Math.abs(v.s - playerS),
+              playerSpeed - v.speed
+            );
+            v.honkCooldown = TRAFFIC_CONFIG.HONK_COOLDOWN;
+          }
+          v.wasPlayerBehind = false;
+        } else if (behindNow) {
+          v.wasPlayerBehind = true;
+        } else if (aheadNow) {
+          v.wasPlayerBehind = false;
+        }
+      }
+
+      // --- soft player collision (box overlap) ---
       const dS = Math.abs(v.s - playerS);
       const dLat = Math.abs(v.lateralOffset - playerLat);
-
       if (
         this.collisionTimer <= 0 &&
-        dS < (v.length + playerBoxLen) * 0.48 &&
-        dLat < (v.width + playerBoxWidth) * 0.48
+        dS < (v.length + 6.5) * 0.42 &&
+        dLat < (v.width + 2.2) * 0.42
       ) {
         this.collisionTimer = TRAFFIC_CONFIG.COLLISION_COOLDOWN;
-
-        // Soft Bump Outcome:
-        // 1. Cut speed by 45%
-        const currentSpeed = useDriveStore.getState().speed;
-        useDriveStore.setState({
-          speed: Math.max(0, currentSpeed * 0.55),
-        });
-
-        // 2. Lateral push away
+        const st = useDriveStore.getState();
+        useDriveStore.setState({ speed: Math.max(0, st.speed * 0.55) });
         const pushDir = playerLat >= v.lateralOffset ? 1 : -1;
-        const newLat = Math.max(
-          -ROAD_HALF_WIDTH,
-          Math.min(ROAD_HALF_WIDTH, playerLat + pushDir * 0.75)
+        st.setLateralOffset(
+          Math.max(
+            -ROAD_HALF_WIDTH,
+            Math.min(ROAD_HALF_WIDTH, playerLat + pushDir * 0.75)
+          )
         );
-        useDriveStore.getState().setLateralOffset(newLat);
-
-        // 3. Cabin trauma shake impulse
-        useDriveStore.getState().triggerBump(0.85);
-
-        // 4. Soft bump collision audio & vehicle angry horn
+        st.triggerBump(0.85);
         playTrafficSound("bump", v.lateralOffset - playerLat, 5, playerSpeed);
-        this.honkVehicle(v, playerS, playerLat);
         v.brakeLight = true;
-      }
-    }
-  }
-
-  /**
-   * Called when player presses H (Horn). Nearby AI reacts!
-   */
-  onPlayerHorn(): void {
-    const { speed: playerSpeed, lateralOffset: playerLat, distanceTraveled: playerS } =
-      useDriveStore.getState();
-
-    // Find vehicles within 45m ahead of player
-    for (const v of this.vehicles) {
-      if (v.s > playerS && v.s - playerS < 45) {
-        // Vehicle eases slightly to shoulder or honks back
-        if (v.lane === 1) {
-          v.lateralOffset = Math.min(
-            ROAD_HALF_WIDTH - 0.2,
-            v.lateralOffset + 0.35
-          );
-        }
-        if (Math.random() > 0.45 && v.honkCooldown <= 0) {
-          setTimeout(() => {
-            this.honkVehicle(v, playerS, playerLat);
-          }, 350 + Math.random() * 400);
-        }
       }
     }
   }

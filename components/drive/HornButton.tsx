@@ -22,11 +22,7 @@ function IconHorn({ className = "h-5 w-5" }: { className?: string }) {
   );
 }
 
-import { trafficEngine } from "@/lib/traffic-system";
-
-/** Exported helper for steering boss or key listeners */
 export function honk() {
-  trafficEngine.onPlayerHorn();
   return playRandomHorn();
 }
 

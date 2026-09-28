@@ -77,6 +77,43 @@ function acquireVoiceSlot(): void {
   }
 }
 
+/** Horn samples used for overtake honks — deterministic per vehicle type. */
+const OVERTAKE_HORN_FILES = {
+  truck: [
+    "/audio/horn-truck-1.mp3",
+    "/audio/horn-truck-2.mp3",
+    "/audio/horn-truck-3.mp3",
+    "/audio/horn-truck-4.mp3",
+    "/audio/horn-truck-5.mp3",
+  ],
+  bus: ["/audio/horn-air.mp3"],
+  car: ["/audio/horn-rajasthani.mp3"],
+} as const;
+
+function pickCached(urls: readonly string[]): AudioBuffer | null {
+  for (const u of urls) {
+    const b = audioBufferCache.get(u);
+    if (b) return b;
+  }
+  return null;
+}
+
+/** Legacy horn-type -> sample selection (kept for compatibility). */
+function pickHornBuffer(type: HornType): AudioBuffer | null {
+  const available = Array.from(audioBufferCache.values());
+  if (available.length === 0) return null;
+  if (type === "musical") {
+    return (
+      pickCached(["/audio/horn-rajasthani.mp3"]) ??
+      available[Math.floor(Math.random() * available.length)]
+    );
+  }
+  if (type === "truck" || type === "car" || type === "rickshaw") {
+    return available[Math.floor(Math.random() * available.length)];
+  }
+  return null;
+}
+
 /**
  * Plays a spatialized traffic horn or collision sound
  *
@@ -87,6 +124,43 @@ function acquireVoiceSlot(): void {
  */
 export function playTrafficSound(
   type: HornType,
+  lateralDelta = 0,
+  distanceZ = 15,
+  relativeSpeed = 0
+): void {
+  playSpatial(pickHornBuffer(type), type === "bump", lateralDelta, distanceZ, relativeSpeed);
+}
+
+/**
+ * Overtake honk — the ONLY traffic horn trigger in the game.
+ * Call exactly once when the player completes an overtake of a vehicle.
+ * Deterministic sample per vehicle type: air horn for buses, Rajasthani
+ * musical horn for cars, a random air horn for trucks.
+ */
+export function playOvertakeHorn(
+  vehicleType: "car" | "bus" | "truck",
+  lateralDelta = 0,
+  distanceZ = 15,
+  relativeSpeed = 0
+): void {
+  let buffer = pickCached(OVERTAKE_HORN_FILES[vehicleType]);
+  if (!buffer) {
+    // Preferred file not decoded yet — use any loaded horn so the honk
+    // isn't lost; otherwise the synth fallback covers it.
+    const any = Array.from(audioBufferCache.values());
+    if (any.length > 0) buffer = any[Math.floor(Math.random() * any.length)];
+  }
+  playSpatial(buffer, false, lateralDelta, distanceZ, relativeSpeed);
+}
+
+/**
+ * Internal spatial playback: distance attenuation, stereo panning, air
+ * damping, music ducking, Doppler pitch, voice limiting. Plays the given
+ * MP3 buffer, a synthesized bump thud, or a synth horn fallback.
+ */
+function playSpatial(
+  buffer: AudioBuffer | null,
+  isBump: boolean,
   lateralDelta = 0,
   distanceZ = 15,
   relativeSpeed = 0
@@ -149,22 +223,10 @@ export function playTrafficSound(
     let sourceNode: AudioNode | null = null;
     let stopFn: () => void = () => {};
 
-    // Check if we have authentic MP3 samples for trucks / buses / horns
-    const isHorn = type === "truck" || type === "musical" || type === "car" || type === "rickshaw";
-    const availableBuffers = Array.from(audioBufferCache.values());
+    // Authentic MP3 horn sample when one was selected (synth fallback otherwise)
+    const chosenBuffer = buffer;
 
-    if (isHorn && availableBuffers.length > 0) {
-      // Pick random authentic Indian truck horn from public/audio
-      let chosenBuffer: AudioBuffer;
-      if (type === "musical") {
-        chosenBuffer =
-          audioBufferCache.get("/audio/horn-rajasthani.mp3") ||
-          availableBuffers[Math.floor(Math.random() * availableBuffers.length)];
-      } else {
-        const randIdx = Math.floor(Math.random() * availableBuffers.length);
-        chosenBuffer = availableBuffers[randIdx];
-      }
-
+    if (chosenBuffer) {
       const bufSource = ctx.createBufferSource();
       bufSource.buffer = chosenBuffer;
       bufSource.playbackRate.setValueAtTime(doppler, now);
@@ -180,7 +242,7 @@ export function playTrafficSound(
           bufSource.stop();
         } catch {}
       };
-    } else if (type === "bump") {
+    } else if (isBump) {
       // Soft Metallic & Rubber Thud for Collision
       duration = 0.42;
       gainNode.gain.setValueAtTime(masterVolume * 1.3, now);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { driveWorld } from "@/lib/drive-world";
@@ -10,73 +10,180 @@ import {
   getTerrainHeightLocal,
   roadSlopeAtDistance,
 } from "@/lib/road-generator";
-import { trafficEngine } from "@/lib/traffic-system";
-import {
-  getTrafficTruckGeometry,
-  getTrafficBusGeometry,
-  getTrafficRickshawGeometry,
-  getTrafficCarGeometry,
-  getTrafficScooterGeometry,
-  getBrakeLightGeometry,
-  getBlinkerLightGeometry,
-} from "@/lib/traffic-models";
+import { trafficEngine, type TrafficVehicleType } from "@/lib/traffic-system";
+import { getVehicleModels, disposeVehicleModels } from "@/lib/traffic-models";
 import { getToonGradient } from "@/lib/toon-material";
 import { preloadTrafficAudio } from "@/lib/traffic-sound";
 
-const MAX_TRUCKS = 8;
-const MAX_BUSES = 6;
-const MAX_RICKSHAWS = 8;
-const MAX_CARS = 8;
-const MAX_SCOOTERS = 6;
-const MAX_LIGHTS = 14;
+const TYPES: TrafficVehicleType[] = ["car", "bus", "truck"];
+const MAX_PER_TYPE = 12; // >= trafficEngine MAX_ACTIVE_VEHICLES
+const MAX_WHEELS = MAX_PER_TYPE * 6;
+
+/** uniform wheel-geometry scale per type (shared wheel geometry is truck-sized) */
+const WHEEL_SCALE: Record<TrafficVehicleType, number> = {
+  car: 0.32 / 0.48,
+  bus: 1,
+  truck: 1,
+};
+
+const BRAKE_ON = new THREE.Color(2.2, 0.14, 0.1);
+const BRAKE_OFF = new THREE.Color(0.4, 0.045, 0.035);
 
 export default function TrafficManager() {
-  const truckRef = useRef<THREE.InstancedMesh>(null);
-  const busRef = useRef<THREE.InstancedMesh>(null);
-  const rickshawRef = useRef<THREE.InstancedMesh>(null);
-  const carRef = useRef<THREE.InstancedMesh>(null);
-  const scooterRef = useRef<THREE.InstancedMesh>(null);
+  // body meshes: type -> livery variant -> mesh
+  const bodyRefs = useRef<Record<TrafficVehicleType, (THREE.InstancedMesh | null)[]>>({
+    car: [null, null, null],
+    bus: [null, null, null],
+    truck: [null, null, null],
+  });
+  const wheelRef = useRef<THREE.InstancedMesh>(null);
+  const headRefs = useRef<Record<TrafficVehicleType, THREE.InstancedMesh | null>>({
+    car: null,
+    bus: null,
+    truck: null,
+  });
+  const tailRefs = useRef<Record<TrafficVehicleType, THREE.InstancedMesh | null>>({
+    car: null,
+    bus: null,
+    truck: null,
+  });
+  const sideDecalRefs = useRef<Record<TrafficVehicleType, THREE.InstancedMesh | null>>({
+    car: null,
+    bus: null,
+    truck: null,
+  });
+  const rearDecalRef = useRef<THREE.InstancedMesh>(null);
 
-  const brakeLightsRef = useRef<THREE.InstancedMesh>(null);
-  const blinkerLeftRef = useRef<THREE.InstancedMesh>(null);
-  const blinkerRightRef = useRef<THREE.InstancedMesh>(null);
-
-  // Preload all authentic Indian highway truck horn audio files from /audio/horn-*.mp3
+  // Preload authentic Indian highway horn audio files from /audio/horn-*.mp3
   useEffect(() => {
     preloadTrafficAudio();
   }, []);
 
   const assets = useMemo(() => {
     const gradientMap = getToonGradient();
-    // Vertex colors baked into geometries for authentic vibrant liveries
-    const trafficMat = new THREE.MeshToonMaterial({
+    const bodyMat = new THREE.MeshToonMaterial({
       vertexColors: true,
       gradientMap,
       side: THREE.DoubleSide,
     });
-
-    const brakeMat = new THREE.MeshBasicMaterial({
-      color: "#ff1e1e",
+    const wheelMat = new THREE.MeshToonMaterial({
+      vertexColors: true,
+      gradientMap,
+    });
+    const headMat = new THREE.MeshBasicMaterial({
+      color: "#fff3cf",
+      toneMapped: false,
+    });
+    const tailMat = new THREE.MeshBasicMaterial({
+      color: "#ffffff",
       toneMapped: false,
     });
 
-    const blinkerMat = new THREE.MeshBasicMaterial({
-      color: "#ffaa00",
-      toneMapped: false,
-    });
-
-    return {
-      truckGeo: getTrafficTruckGeometry(),
-      busGeo: getTrafficBusGeometry(),
-      rickshawGeo: getTrafficRickshawGeometry(),
-      carGeo: getTrafficCarGeometry(),
-      scooterGeo: getTrafficScooterGeometry(),
-      brakeGeo: getBrakeLightGeometry(),
-      blinkerGeo: getBlinkerLightGeometry(),
-      trafficMat,
-      brakeMat,
-      blinkerMat,
+    const models = {
+      car: getVehicleModels("car"),
+      bus: getVehicleModels("bus"),
+      truck: getVehicleModels("truck"),
     };
+
+    const decalMats: Record<TrafficVehicleType, THREE.Material | null> = {
+      car: null,
+      bus: null,
+      truck: null,
+    };
+    for (const t of TYPES) {
+      if (models[t].sideDecal) {
+        decalMats[t] = new THREE.MeshStandardMaterial({
+          roughness: 0.6,
+          metalness: 0.05,
+          side: THREE.DoubleSide,
+          polygonOffset: true,
+          polygonOffsetFactor: -2,
+          polygonOffsetUnits: -2,
+        });
+      }
+    }
+    const rearDecalMat = models.truck.rearDecal
+      ? new THREE.MeshStandardMaterial({
+          roughness: 0.6,
+          metalness: 0.05,
+          side: THREE.DoubleSide,
+          polygonOffset: true,
+          polygonOffsetFactor: -2,
+          polygonOffsetUnits: -2,
+        })
+      : null;
+
+    return { models, bodyMat, wheelMat, headMat, tailMat, decalMats, rearDecalMat };
+  }, []);
+
+  // Generated livery artwork textures
+  const [maps, setMaps] = useState<Record<string, THREE.Texture | null>>({
+    car: null,
+    bus: null,
+    truck: null,
+    truckRear: null,
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    const loader = new THREE.TextureLoader();
+    const jobs: [string, string][] = [
+      ["car", "/assets/traffic/car-side.png"],
+      ["bus", "/assets/traffic/bus-side.png"],
+      ["truck", "/assets/traffic/truck-cargo-side.png"],
+      ["truckRear", "/assets/traffic/truck-rear.png"],
+    ];
+    (async () => {
+      const out: Record<string, THREE.Texture> = {};
+      for (const [key, url] of jobs) {
+        try {
+          const tex = await loader.loadAsync(url);
+          tex.colorSpace = THREE.SRGBColorSpace;
+          tex.anisotropy = 4;
+          out[key] = tex;
+        } catch {
+          // texture stays null -> plain livery
+        }
+      }
+      if (!cancelled) setMaps((m) => ({ ...m, ...out }));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Assign loaded textures to decal materials (car art is vertically cropped)
+  useEffect(() => {
+    const { decalMats, rearDecalMat, models } = assets;
+    for (const t of TYPES) {
+      const mat = decalMats[t] as THREE.MeshStandardMaterial | null;
+      if (!mat) continue;
+      const tex = maps[t];
+      mat.map = tex;
+      if (tex) {
+        const crop = models[t].sideDecalVCrop;
+        if (crop) {
+          tex.repeat.set(1, crop[1] - crop[0]);
+          tex.offset.set(0, crop[0]);
+        } else {
+          tex.repeat.set(1, 1);
+          tex.offset.set(0, 0);
+        }
+      }
+      mat.needsUpdate = true;
+    }
+    if (rearDecalMat) {
+      (rearDecalMat as THREE.MeshStandardMaterial).map = maps.truckRear;
+      rearDecalMat.needsUpdate = true;
+    }
+  }, [maps, assets]);
+
+  useEffect(() => {
+    return () => {
+      disposeVehicleModels();
+      for (const t of Object.values(maps)) t?.dispose();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const scratch = useMemo(
@@ -85,7 +192,7 @@ export default function TrafficManager() {
       q: new THREE.Quaternion(),
       e: new THREE.Euler(),
       v: new THREE.Vector3(),
-      s: new THREE.Vector3(),
+      s: new THREE.Vector3(1, 1, 1),
       zeroM: new THREE.Matrix4().makeScale(0, 0, 0),
     }),
     []
@@ -94,47 +201,37 @@ export default function TrafficManager() {
   useFrame((_, rawDt) => {
     const dt = Math.min(rawDt, 0.05);
 
-    // 1. Advance 1D traffic simulation & AI state machines
+    // 1. Advance fixed-timestep IDM traffic simulation
     trafficEngine.update(dt);
     const vehicles = trafficEngine.getVehicles();
 
-    const truck = truckRef.current;
-    const bus = busRef.current;
-    const rickshaw = rickshawRef.current;
-    const car = carRef.current;
-    const scooter = scooterRef.current;
-    const brakeLights = brakeLightsRef.current;
-    const blinkerLeft = blinkerLeftRef.current;
-    const blinkerRight = blinkerRightRef.current;
-
-    if (
-      !truck ||
-      !bus ||
-      !rickshaw ||
-      !car ||
-      !scooter ||
-      !brakeLights ||
-      !blinkerLeft ||
-      !blinkerRight
-    ) {
-      return;
+    const bodies = bodyRefs.current;
+    const wheelMesh = wheelRef.current;
+    const heads = headRefs.current;
+    const tails = tailRefs.current;
+    const sides = sideDecalRefs.current;
+    const rear = rearDecalRef.current;
+    if (!wheelMesh || !rear) return;
+    for (const t of TYPES) {
+      if (!heads[t] || !tails[t] || !sides[t]) return;
+      for (const b of bodies[t]) if (!b) return;
     }
 
     const { m, q, e, v, s, zeroM } = scratch;
+    const { models } = assets;
 
-    let ki = 0; // trucks
-    let bi = 0; // buses
-    let ri = 0; // rickshaws
-    let ci = 0; // cars
-    let si = 0; // scooters
-    let bli = 0; // brake lights
-    let bll = 0; // blinkers left
-    let blr = 0; // blinkers right
+    const bi: Record<TrafficVehicleType, number[]> = {
+      car: [0, 0, 0],
+      bus: [0, 0, 0],
+      truck: [0, 0, 0],
+    };
+    const wi = { n: 0 };
+    const hi: Record<TrafficVehicleType, number> = { car: 0, bus: 0, truck: 0 };
+    const ti: Record<TrafficVehicleType, number> = { car: 0, bus: 0, truck: 0 };
+    const si: Record<TrafficVehicleType, number> = { car: 0, bus: 0, truck: 0 };
+    let ri = 0;
 
-    // Blink timer (2Hz flashing for indicators)
-    const blinkOn = Math.floor(performance.now() / 250) % 2 === 0;
-
-    // 2. Position active vehicles in car-space along road spline
+    // 2. Place every active vehicle in car-space along the road spline
     for (const veh of vehicles) {
       const n = Math.floor(veh.s / CHUNK_LENGTH);
       const T = driveWorld.transforms.get(n);
@@ -150,10 +247,6 @@ export default function TrafficManager() {
       const pz = lz + rz * veh.lateralOffset;
       const py = getTerrainHeightLocal(n, px, pz) + 0.08;
 
-      // Road pitch and yaw
-      const slope = roadSlopeAtDistance(veh.s);
-      const basePitch = Math.atan(slope);
-
       // Car-space world coordinates
       const cos = Math.cos(T.ry);
       const sin = Math.sin(T.ry);
@@ -161,9 +254,13 @@ export default function TrafficManager() {
       const wy = T.py + py;
       const wz = T.pz + (-px * sin + pz * cos);
 
-      const isReverse = veh.lane < 0;
-      const yaw = T.ry + lh + (isReverse ? Math.PI : 0);
-      const pitch = isReverse ? -basePitch : basePitch;
+      // Models face +Z. Verified numerically: route-forward in car-space
+      // is rotY(sin(lh), -cos(lh), ry); lane 1 (same direction) needs the
+      // PI flip so the nose (+Z) aligns with travel (+s), oncoming needs none.
+      const slope = roadSlopeAtDistance(veh.s);
+      const basePitch = Math.atan(slope);
+      const yaw = T.ry + lh + (veh.lane === 1 ? Math.PI : 0);
+      const pitch = veh.lane === 1 ? -basePitch : basePitch;
 
       e.set(pitch, yaw, 0, "YXZ");
       q.setFromEuler(e);
@@ -171,122 +268,158 @@ export default function TrafficManager() {
       s.set(1, 1, 1);
       m.compose(v, q, s);
 
-      // Place in type-specific instanced mesh
-      if (veh.type === "truck" && ki < MAX_TRUCKS) {
-        truck.setMatrixAt(ki++, m);
-      } else if (veh.type === "bus" && bi < MAX_BUSES) {
-        bus.setMatrixAt(bi++, m);
-      } else if (veh.type === "rickshaw" && ri < MAX_RICKSHAWS) {
-        rickshaw.setMatrixAt(ri++, m);
-      } else if (veh.type === "car" && ci < MAX_CARS) {
-        car.setMatrixAt(ci++, m);
-      } else if (veh.type === "scooter" && si < MAX_SCOOTERS) {
-        scooter.setMatrixAt(si++, m);
+      const model = models[veh.type];
+
+      // Body (per livery variant)
+      const variant = Math.max(0, Math.min(2, veh.colorVariant));
+      bodies[veh.type][variant]!.setMatrixAt(bi[veh.type][variant]++, m);
+
+      // Headlights + taillights share the body transform
+      heads[veh.type]!.setMatrixAt(hi[veh.type]++, m);
+      tails[veh.type]!.setMatrixAt(ti[veh.type], m);
+      tails[veh.type]!.setColorAt(ti[veh.type]++, veh.brakeLight ? BRAKE_ON : BRAKE_OFF);
+
+      // Wheels: spin about the local X axle (pre-yaw), positioned at mounts
+      const wScale = WHEEL_SCALE[veh.type];
+      const cosY = Math.cos(yaw);
+      const sinY = Math.sin(yaw);
+      for (const mount of model.wheelMounts) {
+        const ox = mount.x * 1; // mounts are symmetric; yaw handles orientation
+        const oz = mount.z;
+        v.set(
+          wx + ox * cosY + oz * sinY,
+          wy + mount.y,
+          wz + -ox * sinY + oz * cosY
+        );
+        e.set(veh.wheelSpin, yaw, 0, "YXZ");
+        q.setFromEuler(e);
+        s.set(wScale, wScale, wScale);
+        m.compose(v, q, s);
+        if (wi.n < MAX_WHEELS) wheelMesh.setMatrixAt(wi.n++, m);
+      }
+      s.set(1, 1, 1);
+
+      // Textured side livery (taxi art only on the taxi livery variant)
+      const showSide =
+        models[veh.type].sideDecal &&
+        sides[veh.type] &&
+        !(veh.type === "car" && variant !== 0);
+      if (showSide) {
+        e.set(pitch, yaw, 0, "YXZ");
+        q.setFromEuler(e);
+        v.set(wx, wy, wz);
+        m.compose(v, q, s);
+        sides[veh.type]!.setMatrixAt(si[veh.type]++, m);
       }
 
-      // Dynamic Brake Lights (when slowing down)
-      if (veh.brakeLight && bli < MAX_LIGHTS) {
-        const rearDist = veh.length * 0.48;
-        const bX = wx + Math.sin(yaw) * rearDist;
-        const bZ = wz + Math.cos(yaw) * rearDist;
-        v.set(bX, wy + 0.65, bZ);
+      // Truck tailgate art
+      if (veh.type === "truck" && model.rearDecal) {
+        e.set(pitch, yaw, 0, "YXZ");
+        q.setFromEuler(e);
+        v.set(wx, wy, wz);
         m.compose(v, q, s);
-        brakeLights.setMatrixAt(bli++, m);
-      }
-
-      // Dynamic Turn Indicators (flashing amber)
-      if (blinkOn && veh.blinkerLeft && bll < MAX_LIGHTS) {
-        const rearDist = veh.length * 0.46;
-        const indX = wx + Math.sin(yaw) * rearDist - Math.cos(yaw) * (veh.width * 0.44);
-        const indZ = wz + Math.cos(yaw) * rearDist + Math.sin(yaw) * (veh.width * 0.44);
-        v.set(indX, wy + 0.7, indZ);
-        m.compose(v, q, s);
-        blinkerLeft.setMatrixAt(bll++, m);
-      }
-
-      if (blinkOn && veh.blinkerRight && blr < MAX_LIGHTS) {
-        const rearDist = veh.length * 0.46;
-        const indX = wx + Math.sin(yaw) * rearDist + Math.cos(yaw) * (veh.width * 0.44);
-        const indZ = wz + Math.cos(yaw) * rearDist - Math.sin(yaw) * (veh.width * 0.44);
-        v.set(indX, wy + 0.7, indZ);
-        m.compose(v, q, s);
-        blinkerRight.setMatrixAt(blr++, m);
+        rear.setMatrixAt(ri++, m);
       }
     }
 
-    // 3. Zero out unused instances
-    for (let i = ki; i < MAX_TRUCKS; i++) truck.setMatrixAt(i, zeroM);
-    for (let i = bi; i < MAX_BUSES; i++) bus.setMatrixAt(i, zeroM);
-    for (let i = ri; i < MAX_RICKSHAWS; i++) rickshaw.setMatrixAt(i, zeroM);
-    for (let i = ci; i < MAX_CARS; i++) car.setMatrixAt(i, zeroM);
-    for (let i = si; i < MAX_SCOOTERS; i++) scooter.setMatrixAt(i, zeroM);
-    for (let i = bli; i < MAX_LIGHTS; i++) brakeLights.setMatrixAt(i, zeroM);
-    for (let i = bll; i < MAX_LIGHTS; i++) blinkerLeft.setMatrixAt(i, zeroM);
-    for (let i = blr; i < MAX_LIGHTS; i++) blinkerRight.setMatrixAt(i, zeroM);
-
-    // 4. Mark matrices dirty for GPU upload
-    truck.instanceMatrix.needsUpdate = true;
-    bus.instanceMatrix.needsUpdate = true;
-    rickshaw.instanceMatrix.needsUpdate = true;
-    car.instanceMatrix.needsUpdate = true;
-    scooter.instanceMatrix.needsUpdate = true;
-    brakeLights.instanceMatrix.needsUpdate = true;
-    blinkerLeft.instanceMatrix.needsUpdate = true;
-    blinkerRight.instanceMatrix.needsUpdate = true;
+    // 3. Park unused instances at zero scale
+    for (const t of TYPES) {
+      for (let k = 0; k < 3; k++) {
+        const mesh = bodies[t][k]!;
+        for (let i = bi[t][k]; i < MAX_PER_TYPE; i++) mesh.setMatrixAt(i, zeroM);
+        mesh.instanceMatrix.needsUpdate = true;
+      }
+      const hm = heads[t]!;
+      for (let i = hi[t]; i < MAX_PER_TYPE; i++) hm.setMatrixAt(i, zeroM);
+      hm.instanceMatrix.needsUpdate = true;
+      const tm = tails[t]!;
+      for (let i = ti[t]; i < MAX_PER_TYPE; i++) {
+        tm.setMatrixAt(i, zeroM);
+        tm.setColorAt(i, BRAKE_OFF);
+      }
+      tm.instanceMatrix.needsUpdate = true;
+      if (tm.instanceColor) tm.instanceColor.needsUpdate = true;
+      const sm = sides[t];
+      if (sm) {
+        for (let i = si[t]; i < MAX_PER_TYPE; i++) sm.setMatrixAt(i, zeroM);
+        sm.instanceMatrix.needsUpdate = true;
+      }
+    }
+    for (let i = wi.n; i < MAX_WHEELS; i++) wheelMesh.setMatrixAt(i, zeroM);
+    wheelMesh.instanceMatrix.needsUpdate = true;
+    for (let i = ri; i < MAX_PER_TYPE; i++) rear.setMatrixAt(i, zeroM);
+    rear.instanceMatrix.needsUpdate = true;
   });
+
+  const setBodyRef = (t: TrafficVehicleType, k: number) => (mesh: THREE.InstancedMesh | null) => {
+    bodyRefs.current[t][k] = mesh;
+  };
 
   return (
     <group name="TrafficVehicles">
-      {/* Heavy Indian Trucks */}
+      {TYPES.map((t) =>
+        assets.models[t].bodies.map((geo, k) => (
+          <instancedMesh
+            key={`${t}-body-${k}`}
+            ref={setBodyRef(t, k)}
+            args={[geo, assets.bodyMat, MAX_PER_TYPE]}
+            castShadow
+            receiveShadow
+            frustumCulled={false}
+          />
+        ))
+      )}
+
+      {/* Spinning wheels (shared geometry, per-type scale) */}
       <instancedMesh
-        ref={truckRef}
-        args={[assets.truckGeo, assets.trafficMat, MAX_TRUCKS]}
+        ref={wheelRef}
+        args={[assets.models.truck.wheel, assets.wheelMat, MAX_WHEELS]}
         castShadow
-        receiveShadow
-      />
-      {/* Highway Passenger Buses */}
-      <instancedMesh
-        ref={busRef}
-        args={[assets.busGeo, assets.trafficMat, MAX_BUSES]}
-        castShadow
-        receiveShadow
-      />
-      {/* Auto-Rickshaws */}
-      <instancedMesh
-        ref={rickshawRef}
-        args={[assets.rickshawGeo, assets.trafficMat, MAX_RICKSHAWS]}
-        castShadow
-        receiveShadow
-      />
-      {/* Cars & Taxis */}
-      <instancedMesh
-        ref={carRef}
-        args={[assets.carGeo, assets.trafficMat, MAX_CARS]}
-        castShadow
-        receiveShadow
-      />
-      {/* Scooters */}
-      <instancedMesh
-        ref={scooterRef}
-        args={[assets.scooterGeo, assets.trafficMat, MAX_SCOOTERS]}
-        castShadow
-        receiveShadow
+        frustumCulled={false}
       />
 
-      {/* Dynamic Emissive Brake Lights */}
-      <instancedMesh
-        ref={brakeLightsRef}
-        args={[assets.brakeGeo, assets.brakeMat, MAX_LIGHTS]}
-      />
-      {/* Dynamic Flashing Indicators (Left & Right) */}
-      <instancedMesh
-        ref={blinkerLeftRef}
-        args={[assets.blinkerGeo, assets.blinkerMat, MAX_LIGHTS]}
-      />
-      <instancedMesh
-        ref={blinkerRightRef}
-        args={[assets.blinkerGeo, assets.blinkerMat, MAX_LIGHTS]}
-      />
+      {TYPES.map((t) => (
+        <instancedMesh
+          key={`${t}-head`}
+          ref={(mesh: THREE.InstancedMesh | null) => {
+            headRefs.current[t] = mesh;
+          }}
+          args={[assets.models[t].headlights, assets.headMat, MAX_PER_TYPE]}
+          frustumCulled={false}
+        />
+      ))}
+
+      {TYPES.map((t) => (
+        <instancedMesh
+          key={`${t}-tail`}
+          ref={(mesh: THREE.InstancedMesh | null) => {
+            tailRefs.current[t] = mesh;
+          }}
+          args={[assets.models[t].taillights, assets.tailMat, MAX_PER_TYPE]}
+          frustumCulled={false}
+        />
+      ))}
+
+      {TYPES.map((t) =>
+        assets.models[t].sideDecal && assets.decalMats[t] ? (
+          <instancedMesh
+            key={`${t}-side`}
+            ref={(mesh: THREE.InstancedMesh | null) => {
+              sideDecalRefs.current[t] = mesh;
+            }}
+            args={[assets.models[t].sideDecal!, assets.decalMats[t]!, MAX_PER_TYPE]}
+            frustumCulled={false}
+          />
+        ) : null
+      )}
+
+      {assets.models.truck.rearDecal && assets.rearDecalMat ? (
+        <instancedMesh
+          ref={rearDecalRef}
+          args={[assets.models.truck.rearDecal, assets.rearDecalMat, MAX_PER_TYPE]}
+          frustumCulled={false}
+        />
+      ) : null}
     </group>
   );
 }
