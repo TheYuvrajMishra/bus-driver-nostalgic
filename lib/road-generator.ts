@@ -545,33 +545,33 @@ function buildChunkTerrainGeometry(n: number): THREE.BufferGeometry {
 
       const absU = Math.abs(u);
       if (absU <= 7.0) {
-        // Roadside warm sand/gravel shoulder
-        colors.push(0.86, 0.67, 0.45); // #dca76e
+        // Roadside light brown gravel shoulder (less yellow)
+        colors.push(0.79, 0.63, 0.42); // #c9a06b
       } else if (u < -7.0) {
-        // Left side: Warm tan-to-orange faceted rock cliff & hill palette
+        // Left side: Light brown faceted rock cliff & hill palette
         const heightRel = worldHeight - roadY;
         if (heightRel > 8.0) {
-          // Sunlit rock ledge / ridge crest (bright golden-orange)
-          colors.push(0.96, 0.70, 0.38); // #f5b261
+          // Sunlit rock ledge / ridge crest (soft light tan)
+          colors.push(0.85, 0.66, 0.43); // #d9a86e
         } else if (heightRel > 3.0) {
-          // Steep faceted rock face (vibrant tan/terracotta)
-          colors.push(0.88, 0.54, 0.22); // #e08a38
+          // Steep faceted rock face (muted brown-tan)
+          colors.push(0.75, 0.54, 0.31); // #c08a4f
         } else {
-          // Crevices & shaded rock base (rich rust/umber)
-          colors.push(0.68, 0.34, 0.12); // #ad571f
+          // Crevices & shaded rock base (deep brown umber)
+          colors.push(0.54, 0.35, 0.20); // #8a5933
         }
       } else {
-        // Right side: Golden savanna plain
+        // Right side: Light yellow-brown rolling plain
         const heightRel = worldHeight - roadY;
         if (heightRel > 4.5) {
-          // Sunlit savanna knoll
-          colors.push(0.90, 0.73, 0.46); // #e6ba75
+          // Sunlit knoll (light warm brown)
+          colors.push(0.83, 0.69, 0.47); // #d4b078
         } else if (heightRel < -2.0) {
-          // Shaded desert dip
-          colors.push(0.72, 0.51, 0.26); // #b88242
+          // Shaded dip (deeper brown)
+          colors.push(0.60, 0.44, 0.27); // #997044
         } else {
-          // Rolling desert sand / savanna grass
-          colors.push(0.85, 0.65, 0.38); // #d9a661
+          // Rolling light brown earth
+          colors.push(0.77, 0.60, 0.38); // #c49961
         }
       }
     }
