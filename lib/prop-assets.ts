@@ -1109,3 +1109,28 @@ export function getBlobShadowTexture(): THREE.CanvasTexture | null {
   }
   return blobTex;
 }
+
+// -----------------------------------------------------------------------------
+// Far Forest Silhouette Tree — ultra-low-poly for distant woodland bands.
+// Just 2 merged parts (~30 tris). Atmospheric tint applied via instance color.
+// -----------------------------------------------------------------------------
+let farTreeGeo: THREE.BufferGeometry | null = null;
+
+export function getFarTreeGeometry(): THREE.BufferGeometry {
+  if (!farTreeGeo) {
+    const parts: THREE.BufferGeometry[] = [];
+
+    // Stubby trunk (5-sided, no cap detail needed at distance)
+    parts.push(paint(new THREE.CylinderGeometry(0.22, 0.34, 2.6, 5), "#4a2e1a", 0, 1.3, 0));
+
+    // Soft blob canopy — single icosahedron, slightly squashed (reads as blurred foliage)
+    parts.push(paint(new THREE.IcosahedronGeometry(2.4, 0), "#2d5a22", 0, 4.2, 0, 0, 0, 0, 1.15, 0.95, 1.15));
+
+    // Secondary smaller puff for silhouette variety
+    parts.push(paint(new THREE.IcosahedronGeometry(1.5, 0), "#35682a", 0.9, 3.1, 0.5));
+
+    farTreeGeo = mergeGeometries(parts);
+    parts.forEach((p) => p.dispose());
+  }
+  return farTreeGeo;
+}

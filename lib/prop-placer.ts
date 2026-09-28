@@ -19,6 +19,7 @@ export type PropType =
   | "tree_banyan"
   | "tree_gulmohar"
   | "tree_ashoka"
+  | "tree_far"
   | "bush"
   | "rock"
   | "cliff"
@@ -76,14 +77,14 @@ function buildProps(n: number): PropItem[] {
   }
 
   // ---------------------------------------------------------------------------
-  // 2. Rich Varied 100% Volumetric Roadside Trees (Neem, Banyan, Gulmohar, Ashoka)
+  // 2. Forest Layers — Dense Multi-Band Trees (driving through a forest feel)
+  //    Near band (5-30m): detailed hero trees · Mid band (30-60m): detailed
+  //    Far band (60-115m): ultra-simple silhouettes (atmospheric depth)
   // ---------------------------------------------------------------------------
-  const treeCount = 10 + Math.floor(rand() * 4);
-  for (let i = 0; i < treeCount; i++) {
+  const treeNearCount = 14 + Math.floor(rand() * 5); // 14-18
+  for (let i = 0; i < treeNearCount; i++) {
     const side = i % 2 === 0 ? -1 : 1;
-    const offset = side < 0
-      ? ROAD_HALF + 5.8 + rand() * 18.0
-      : ROAD_HALF + 5.2 + rand() * 24.0;
+    const offset = ROAD_HALF + 5.0 + rand() * 25.0; // 5-30m
 
     // Weighted 4-species selection: 38% Volumetric Neem, 26% Banyan, 20% Gulmohar, 16% Ashoka
     const rType = rand();
@@ -101,8 +102,57 @@ function buildProps(n: number): PropItem[] {
     items.push({
       type,
       x: side * offset,
-      z: -(i / treeCount) * 58 - rand() * 2,
+      z: -(i / treeNearCount) * 58 - rand() * 2,
       s: 0.9 + rand() * 0.45,
+      ry: rand() * Math.PI * 2,
+      v: Math.floor(rand() * 3),
+    });
+  }
+
+  // Mid band: continued detailed canopy (30-60m)
+  const treeMidCount = 10 + Math.floor(rand() * 5); // 10-14
+  for (let i = 0; i < treeMidCount; i++) {
+    const side = i % 2 === 0 ? 1 : -1;
+    const offset = ROAD_HALF + 30.0 + rand() * 30.0; // 30-60m
+
+    const rType = rand();
+    let type: PropType = "tree";
+    if (rType < 0.4) {
+      type = "tree";
+    } else if (rType < 0.65) {
+      type = "tree_banyan";
+    } else if (rType < 0.85) {
+      type = "tree_gulmohar";
+    } else {
+      type = "tree_ashoka";
+    }
+
+    items.push({
+      type,
+      x: side * offset,
+      z: -(i / treeMidCount) * 58 - rand() * 2,
+      s: 1.0 + rand() * 0.6, // Slightly larger to read at distance
+      ry: rand() * Math.PI * 2,
+      v: Math.floor(rand() * 3),
+    });
+  }
+
+  // Far band: ultra-simple silhouettes for forest depth (60-115m)
+  // Placed in clusters for a natural woodland edge
+  const treeFarCount = 18 + Math.floor(rand() * 8); // 18-25
+  for (let i = 0; i < treeFarCount; i++) {
+    const side = i % 2 === 0 ? -1 : 1;
+    // Clustered placement: pick a cluster center, scatter around it
+    const clusterC = Math.floor(rand() * 4);
+    const clusterX = ROAD_HALF + 62 + clusterC * 13 + rand() * 10;
+    const offset = clusterX + (rand() - 0.5) * 16; // ±8m scatter
+    const zBase = -(clusterC / 4) * 58 - rand() * 14;
+
+    items.push({
+      type: "tree_far",
+      x: side * Math.max(ROAD_HALF + 58, offset),
+      z: zBase,
+      s: 1.3 + rand() * 0.9, // Big soft silhouettes
       ry: rand() * Math.PI * 2,
       v: Math.floor(rand() * 3),
     });

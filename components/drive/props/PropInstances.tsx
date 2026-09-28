@@ -13,6 +13,7 @@ import {
   getBanyanTreeGeometry,
   getGulmoharTreeGeometry,
   getAshokaTreeGeometry,
+  getFarTreeGeometry,
   getBushGeometry,
   getRockGeometry,
   getCliffFormationGeometry,
@@ -25,10 +26,11 @@ import {
 import { getToonGradient } from "@/lib/toon-material";
 
 const MAX_GRASS = 220;
-const MAX_TREE = 64;
-const MAX_TREE_BANYAN = 48;
-const MAX_TREE_GULMOHAR = 32;
-const MAX_TREE_ASHOKA = 36;
+const MAX_TREE = 96;
+const MAX_TREE_BANYAN = 72;
+const MAX_TREE_GULMOHAR = 56;
+const MAX_TREE_ASHOKA = 48;
+const MAX_TREE_FAR = 200;
 const MAX_BUSH = 200;
 const MAX_ROCK = 120;
 const MAX_CLIFF = 20;
@@ -42,6 +44,8 @@ const TREE_TINTS = ["#ffffff", "#f2f8eb", "#e4f2da"];
 const BANYAN_TINTS = ["#ffffff", "#eef7e8", "#e2f2da"];
 const GULMOHAR_TINTS = ["#ffffff", "#fff3ea", "#ffe8e0"];
 const ASHOKA_TINTS = ["#ffffff", "#f0faeb", "#e2f2da"];
+// Far silhouettes: desaturated blue-green atmospheric tints (aerial perspective blur)
+const FAR_TREE_TINTS = ["#b9cdc9", "#a9c2c9", "#c2d4cb"];
 const BUSH_TINTS = ["#ffffff", "#edf6e6", "#e1f0d8"];
 const ROCK_TINTS = ["#ffffff", "#f7ede1", "#eeddcb"];
 const TRUCK_TINTS = ["#ffffff", "#ffe9c4", "#d9e6ff"];
@@ -53,6 +57,7 @@ export default function PropInstances() {
   const treeBanyanRef = useRef<THREE.InstancedMesh>(null);
   const treeGulmoharRef = useRef<THREE.InstancedMesh>(null);
   const treeAshokaRef = useRef<THREE.InstancedMesh>(null);
+  const treeFarRef = useRef<THREE.InstancedMesh>(null);
   const bushRef = useRef<THREE.InstancedMesh>(null);
   const rockRef = useRef<THREE.InstancedMesh>(null);
   const cliffRef = useRef<THREE.InstancedMesh>(null);
@@ -72,6 +77,7 @@ export default function PropInstances() {
       treeBanyanGeo: getBanyanTreeGeometry(),
       treeGulmoharGeo: getGulmoharTreeGeometry(),
       treeAshokaGeo: getAshokaTreeGeometry(),
+      treeFarGeo: getFarTreeGeometry(),
       bushGeo: getBushGeometry(),
       rockGeo: getRockGeometry(),
       cliffGeo: getCliffFormationGeometry(),
@@ -105,6 +111,7 @@ export default function PropInstances() {
     const treeBanyan = treeBanyanRef.current;
     const treeGulmohar = treeGulmoharRef.current;
     const treeAshoka = treeAshokaRef.current;
+    const treeFar = treeFarRef.current;
     const bush = bushRef.current;
     const rock = rockRef.current;
     const cliff = cliffRef.current;
@@ -120,6 +127,7 @@ export default function PropInstances() {
       !treeBanyan ||
       !treeGulmohar ||
       !treeAshoka ||
+      !treeFar ||
       !bush ||
       !rock ||
       !cliff ||
@@ -150,6 +158,9 @@ export default function PropInstances() {
       for (let i = 0; i < MAX_TREE_ASHOKA; i++) {
         treeAshoka.setColorAt(i, c.set(ASHOKA_TINTS[i % ASHOKA_TINTS.length]));
       }
+      for (let i = 0; i < MAX_TREE_FAR; i++) {
+        treeFar.setColorAt(i, c.set(FAR_TREE_TINTS[i % FAR_TREE_TINTS.length]));
+      }
       for (let i = 0; i < MAX_BUSH; i++) {
         bush.setColorAt(i, c.set(BUSH_TINTS[i % BUSH_TINTS.length]));
       }
@@ -164,6 +175,7 @@ export default function PropInstances() {
       if (treeBanyan.instanceColor) treeBanyan.instanceColor.needsUpdate = true;
       if (treeGulmohar.instanceColor) treeGulmohar.instanceColor.needsUpdate = true;
       if (treeAshoka.instanceColor) treeAshoka.instanceColor.needsUpdate = true;
+      if (treeFar.instanceColor) treeFar.instanceColor.needsUpdate = true;
       if (bush.instanceColor) bush.instanceColor.needsUpdate = true;
       if (rock.instanceColor) rock.instanceColor.needsUpdate = true;
       if (truck.instanceColor) truck.instanceColor.needsUpdate = true;
@@ -174,6 +186,7 @@ export default function PropInstances() {
     let tbi = 0;
     let tgi = 0;
     let tai = 0;
+    let tfi = 0;
     let bi = 0;
     let ri = 0;
     let cli = 0;
@@ -240,6 +253,8 @@ export default function PropInstances() {
           place(treeGulmohar, tgi++, T.px, T.py, T.pz, T.ry, p.x, py, p.z, p.ry, p.s);
         } else if (p.type === "tree_ashoka" && tai < MAX_TREE_ASHOKA) {
           place(treeAshoka, tai++, T.px, T.py, T.pz, T.ry, p.x, py, p.z, p.ry, p.s);
+        } else if (p.type === "tree_far" && tfi < MAX_TREE_FAR) {
+          place(treeFar, tfi++, T.px, T.py, T.pz, T.ry, p.x, py, p.z, p.ry, p.s);
         } else if (p.type === "bush" && bi < MAX_BUSH) {
           place(bush, bi++, T.px, T.py, T.pz, T.ry, p.x, py, p.z, p.ry, p.s);
         } else if (p.type === "rock" && ri < MAX_ROCK) {
@@ -267,6 +282,7 @@ export default function PropInstances() {
     treeBanyan.count = tbi;
     treeGulmohar.count = tgi;
     treeAshoka.count = tai;
+    treeFar.count = tfi;
     bush.count = bi;
     rock.count = ri;
     cliff.count = cli;
@@ -282,6 +298,7 @@ export default function PropInstances() {
       treeBanyan,
       treeGulmohar,
       treeAshoka,
+      treeFar,
       bush,
       rock,
       cliff,
@@ -316,6 +333,8 @@ export default function PropInstances() {
       <instancedMesh args={[assets.treeBanyanGeo, assets.propMat, MAX_TREE_BANYAN]} {...dynamic(treeBanyanRef)} castShadow receiveShadow={false} />
       <instancedMesh args={[assets.treeGulmoharGeo, assets.propMat, MAX_TREE_GULMOHAR]} {...dynamic(treeGulmoharRef)} castShadow receiveShadow={false} />
       <instancedMesh args={[assets.treeAshokaGeo, assets.propMat, MAX_TREE_ASHOKA]} {...dynamic(treeAshokaRef)} castShadow receiveShadow={false} />
+      {/* Far forest silhouettes — ultra-low-poly, no shadows, atmospheric tint */}
+      <instancedMesh args={[assets.treeFarGeo, assets.propMat, MAX_TREE_FAR]} {...dynamic(treeFarRef)} castShadow={false} receiveShadow={false} />
       <instancedMesh args={[assets.poleGeo, assets.propMat, MAX_POLE]} {...dynamic(poleRef)} castShadow receiveShadow={false} />
       <instancedMesh args={[assets.rockGeo, assets.propMat, MAX_ROCK]} {...dynamic(rockRef)} castShadow receiveShadow={false} />
       <instancedMesh args={[assets.cliffGeo, assets.propMat, MAX_CLIFF]} {...dynamic(cliffRef)} castShadow receiveShadow={false} />
