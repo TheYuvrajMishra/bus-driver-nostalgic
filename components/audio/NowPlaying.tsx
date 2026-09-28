@@ -8,10 +8,10 @@ import { YOUTUBE_PLAYLIST_TITLE } from "@/lib/radio-config";
  * audio store, but never owns playback itself (architecture.md §8).
  */
 export default function NowPlaying() {
-  const { track, radioTitle, engine, isPlaying, toggle } = useAudioStore();
+  const { track, radioTitle, audioSource, isPlaying, toggle } = useAudioStore();
   const title = radioTitle ?? track.title;
   const subtitle =
-    engine === "youtube" ? `📻 ${YOUTUBE_PLAYLIST_TITLE} · YouTube` : track.artist;
+    audioSource === "youtube" ? `📻 ${YOUTUBE_PLAYLIST_TITLE} · YouTube` : track.artist;
   return (
     <div className="rounded-xl border border-amber-900/50 bg-[#1a0f0c] p-6">
       <p className="text-xs uppercase tracking-widest text-amber-400/70">Now playing</p>

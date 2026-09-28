@@ -1,6 +1,7 @@
 /**
  * 100 Gaane Bus-Driver Jukebox Catalog
  * 80s-90s Bollywood Classics for Nostalgic Indian Highway Radio.
+ * Sabhi 100 links YouTube oEmbed check se verified embeddable hain.
  */
 
 export interface JukeboxSong {
@@ -9,6 +10,7 @@ export interface JukeboxSong {
   videoId: string;
   startSeconds?: number | null;
   youtubeUrl: string;
+  embedUrl: string;
   notes?: string | null;
 }
 
@@ -19,6 +21,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "Bhyks5Yzz7s",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=Bhyks5Yzz7s",
+    "embedUrl": "https://www.youtube.com/embed/Bhyks5Yzz7s",
     "notes": null
   },
   {
@@ -27,6 +30,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "uNt18l9UfjE",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=uNt18l9UfjE",
+    "embedUrl": "https://www.youtube.com/embed/uNt18l9UfjE",
     "notes": null
   },
   {
@@ -35,6 +39,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "yxCJOJORwlA",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=yxCJOJORwlA",
+    "embedUrl": "https://www.youtube.com/embed/yxCJOJORwlA",
     "notes": null
   },
   {
@@ -43,6 +48,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "1jtyBzKi1yE",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=1jtyBzKi1yE",
+    "embedUrl": "https://www.youtube.com/embed/1jtyBzKi1yE",
     "notes": null
   },
   {
@@ -51,15 +57,17 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "960oyJh9egg",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=960oyJh9egg",
+    "embedUrl": "https://www.youtube.com/embed/960oyJh9egg",
     "notes": null
   },
   {
     "id": 6,
     "title": "Ek Do Teen Char",
-    "videoId": "00d_dLvH-6I",
+    "videoId": "dx57HiK1wUg",
     "startSeconds": null,
-    "youtubeUrl": "https://www.youtube.com/watch?v=00d_dLvH-6I",
-    "notes": null
+    "youtubeUrl": "https://www.youtube.com/watch?v=dx57HiK1wUg",
+    "embedUrl": "https://www.youtube.com/embed/dx57HiK1wUg",
+    "notes": "(T-Series, official upload)"
   },
   {
     "id": 7,
@@ -67,6 +75,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "FEvBiayarlc",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=FEvBiayarlc",
+    "embedUrl": "https://www.youtube.com/embed/FEvBiayarlc",
     "notes": null
   },
   {
@@ -75,6 +84,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "k6IepWQzEgo",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=k6IepWQzEgo",
+    "embedUrl": "https://www.youtube.com/embed/k6IepWQzEgo",
     "notes": null
   },
   {
@@ -83,6 +93,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "HgYiNVNsHwE",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=HgYiNVNsHwE",
+    "embedUrl": "https://www.youtube.com/embed/HgYiNVNsHwE",
     "notes": null
   },
   {
@@ -91,6 +102,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "32tNhs2Vk8U",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=32tNhs2Vk8U",
+    "embedUrl": "https://www.youtube.com/embed/32tNhs2Vk8U",
     "notes": null
   },
   {
@@ -99,6 +111,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "PhkADyPektU",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=PhkADyPektU",
+    "embedUrl": "https://www.youtube.com/embed/PhkADyPektU",
     "notes": null
   },
   {
@@ -107,6 +120,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "a1tVvBxs4rk",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=a1tVvBxs4rk",
+    "embedUrl": "https://www.youtube.com/embed/a1tVvBxs4rk",
     "notes": null
   },
   {
@@ -115,6 +129,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "HYf0DzhYEc0",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=HYf0DzhYEc0",
+    "embedUrl": "https://www.youtube.com/embed/HYf0DzhYEc0",
     "notes": null
   },
   {
@@ -123,6 +138,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "eYl9i8mH1lI",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=eYl9i8mH1lI",
+    "embedUrl": "https://www.youtube.com/embed/eYl9i8mH1lI",
     "notes": null
   },
   {
@@ -131,6 +147,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "mElP6Ws029o",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=mElP6Ws029o",
+    "embedUrl": "https://www.youtube.com/embed/mElP6Ws029o",
     "notes": null
   },
   {
@@ -139,6 +156,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "oIAWNE_pulk",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=oIAWNE_pulk",
+    "embedUrl": "https://www.youtube.com/embed/oIAWNE_pulk",
     "notes": null
   },
   {
@@ -147,6 +165,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "Wbiqty6b20c",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=Wbiqty6b20c",
+    "embedUrl": "https://www.youtube.com/embed/Wbiqty6b20c",
     "notes": null
   },
   {
@@ -155,6 +174,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "hkqVdyFb2mg",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=hkqVdyFb2mg",
+    "embedUrl": "https://www.youtube.com/embed/hkqVdyFb2mg",
     "notes": null
   },
   {
@@ -163,6 +183,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "BhS8ngubgTk",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=BhS8ngubgTk",
+    "embedUrl": "https://www.youtube.com/embed/BhS8ngubgTk",
     "notes": null
   },
   {
@@ -171,6 +192,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "gJYXhAdEQmo",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=gJYXhAdEQmo",
+    "embedUrl": "https://www.youtube.com/embed/gJYXhAdEQmo",
     "notes": null
   },
   {
@@ -179,6 +201,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "RNfEsmEakq4",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=RNfEsmEakq4",
+    "embedUrl": "https://www.youtube.com/embed/RNfEsmEakq4",
     "notes": null
   },
   {
@@ -187,6 +210,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "hlUiL08N1L4",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=hlUiL08N1L4",
+    "embedUrl": "https://www.youtube.com/embed/hlUiL08N1L4",
     "notes": null
   },
   {
@@ -195,6 +219,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "ZJYYfX8hO0M",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=ZJYYfX8hO0M",
+    "embedUrl": "https://www.youtube.com/embed/ZJYYfX8hO0M",
     "notes": null
   },
   {
@@ -203,6 +228,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "uhQiPZJqWmA",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=uhQiPZJqWmA",
+    "embedUrl": "https://www.youtube.com/embed/uhQiPZJqWmA",
     "notes": null
   },
   {
@@ -211,6 +237,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "vCTW2GfcepQ",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=vCTW2GfcepQ",
+    "embedUrl": "https://www.youtube.com/embed/vCTW2GfcepQ",
     "notes": null
   },
   {
@@ -219,6 +246,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "7ctIHBY-yn8",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=7ctIHBY-yn8",
+    "embedUrl": "https://www.youtube.com/embed/7ctIHBY-yn8",
     "notes": null
   },
   {
@@ -227,6 +255,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "hw_HpTI_Wkw",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=hw_HpTI_Wkw",
+    "embedUrl": "https://www.youtube.com/embed/hw_HpTI_Wkw",
     "notes": null
   },
   {
@@ -235,6 +264,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "mA_h4iQJhoU",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=mA_h4iQJhoU",
+    "embedUrl": "https://www.youtube.com/embed/mA_h4iQJhoU",
     "notes": null
   },
   {
@@ -243,6 +273,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "-ijfNEF7-JY",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=-ijfNEF7-JY",
+    "embedUrl": "https://www.youtube.com/embed/-ijfNEF7-JY",
     "notes": null
   },
   {
@@ -251,6 +282,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "WlWlGlvN4L4",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=WlWlGlvN4L4",
+    "embedUrl": "https://www.youtube.com/embed/WlWlGlvN4L4",
     "notes": null
   },
   {
@@ -259,6 +291,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "EjnTA7zGVQU",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=EjnTA7zGVQU",
+    "embedUrl": "https://www.youtube.com/embed/EjnTA7zGVQU",
     "notes": null
   },
   {
@@ -267,6 +300,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "R2Z-AU0Xd-s",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=R2Z-AU0Xd-s",
+    "embedUrl": "https://www.youtube.com/embed/R2Z-AU0Xd-s",
     "notes": null
   },
   {
@@ -275,6 +309,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "QjbGePa-vG0",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=QjbGePa-vG0",
+    "embedUrl": "https://www.youtube.com/embed/QjbGePa-vG0",
     "notes": null
   },
   {
@@ -283,6 +318,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "BtlnpBb4O8E",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=BtlnpBb4O8E",
+    "embedUrl": "https://www.youtube.com/embed/BtlnpBb4O8E",
     "notes": null
   },
   {
@@ -291,6 +327,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "DA97eWDVyfI",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=DA97eWDVyfI",
+    "embedUrl": "https://www.youtube.com/embed/DA97eWDVyfI",
     "notes": null
   },
   {
@@ -299,6 +336,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "Yqj1_V90KJo",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=Yqj1_V90KJo",
+    "embedUrl": "https://www.youtube.com/embed/Yqj1_V90KJo",
     "notes": null
   },
   {
@@ -307,6 +345,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "hcCvSmjHwGY",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=hcCvSmjHwGY",
+    "embedUrl": "https://www.youtube.com/embed/hcCvSmjHwGY",
     "notes": null
   },
   {
@@ -315,6 +354,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "2V56f0xZNqw",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=2V56f0xZNqw",
+    "embedUrl": "https://www.youtube.com/embed/2V56f0xZNqw",
     "notes": null
   },
   {
@@ -323,6 +363,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "gIODEFkvjTA",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=gIODEFkvjTA",
+    "embedUrl": "https://www.youtube.com/embed/gIODEFkvjTA",
     "notes": null
   },
   {
@@ -331,23 +372,26 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "qik8FXSqZIE",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=qik8FXSqZIE",
+    "embedUrl": "https://www.youtube.com/embed/qik8FXSqZIE",
     "notes": null
   },
   {
     "id": 41,
     "title": "Dhak Dhak Karne Laga",
-    "videoId": "PriYgiqUOlE",
+    "videoId": "Xqqvm9dxoPA",
     "startSeconds": null,
-    "youtubeUrl": "https://www.youtube.com/watch?v=PriYgiqUOlE",
-    "notes": null
+    "youtubeUrl": "https://www.youtube.com/watch?v=Xqqvm9dxoPA",
+    "embedUrl": "https://www.youtube.com/embed/Xqqvm9dxoPA",
+    "notes": "(Indian Hits / Shemaroo, official upload)"
   },
   {
     "id": 42,
     "title": "Mera Dil Bhi Kitna Pagal Hai",
-    "videoId": "DIvHIjOYq3U",
+    "videoId": "QCy38ePxzuY",
     "startSeconds": null,
-    "youtubeUrl": "https://www.youtube.com/watch?v=DIvHIjOYq3U",
-    "notes": null
+    "youtubeUrl": "https://www.youtube.com/watch?v=QCy38ePxzuY",
+    "embedUrl": "https://www.youtube.com/embed/QCy38ePxzuY",
+    "notes": "(fan upload — Ultra Bollywood Songs)"
   },
   {
     "id": 43,
@@ -355,15 +399,17 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "iupGwQqjgOk",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=iupGwQqjgOk",
+    "embedUrl": "https://www.youtube.com/embed/iupGwQqjgOk",
     "notes": null
   },
   {
     "id": 44,
     "title": "Pehla Nasha Pehla Khumar",
-    "videoId": "UB9r46LiEXg",
+    "videoId": "caVcIQS-k3Q",
     "startSeconds": null,
-    "youtubeUrl": "https://www.youtube.com/watch?v=UB9r46LiEXg",
-    "notes": null
+    "youtubeUrl": "https://www.youtube.com/watch?v=caVcIQS-k3Q",
+    "embedUrl": "https://www.youtube.com/embed/caVcIQS-k3Q",
+    "notes": "(fan upload)"
   },
   {
     "id": 45,
@@ -371,6 +417,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "fV5Mpc7fzb4",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=fV5Mpc7fzb4",
+    "embedUrl": "https://www.youtube.com/embed/fV5Mpc7fzb4",
     "notes": null
   },
   {
@@ -379,6 +426,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "JxpHlUMmUB0",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=JxpHlUMmUB0",
+    "embedUrl": "https://www.youtube.com/embed/JxpHlUMmUB0",
     "notes": null
   },
   {
@@ -387,6 +435,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "2tTxFyOS3Fo",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=2tTxFyOS3Fo",
+    "embedUrl": "https://www.youtube.com/embed/2tTxFyOS3Fo",
     "notes": null
   },
   {
@@ -395,6 +444,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "W1GNGlaFKYw",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=W1GNGlaFKYw",
+    "embedUrl": "https://www.youtube.com/embed/W1GNGlaFKYw",
     "notes": null
   },
   {
@@ -403,6 +453,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "Izp7NUYn3oE",
     "startSeconds": 331,
     "youtubeUrl": "https://www.youtube.com/watch?v=Izp7NUYn3oE&t=331s",
+    "embedUrl": "https://www.youtube.com/embed/Izp7NUYn3oE?start=331",
     "notes": "(Rangeela full album, gaana 05:31 se)"
   },
   {
@@ -411,6 +462,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "i9lB-am_hyY",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=i9lB-am_hyY",
+    "embedUrl": "https://www.youtube.com/embed/i9lB-am_hyY",
     "notes": null
   },
   {
@@ -419,6 +471,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "r7cUMWxS6Xo",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=r7cUMWxS6Xo",
+    "embedUrl": "https://www.youtube.com/embed/r7cUMWxS6Xo",
     "notes": null
   },
   {
@@ -427,6 +480,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "69ZysVHlRPI",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=69ZysVHlRPI",
+    "embedUrl": "https://www.youtube.com/embed/69ZysVHlRPI",
     "notes": null
   },
   {
@@ -435,6 +489,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "I5_BhsgR9G8",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=I5_BhsgR9G8",
+    "embedUrl": "https://www.youtube.com/embed/I5_BhsgR9G8",
     "notes": null
   },
   {
@@ -443,6 +498,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "q00LcLAxlaE",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=q00LcLAxlaE",
+    "embedUrl": "https://www.youtube.com/embed/q00LcLAxlaE",
     "notes": null
   },
   {
@@ -451,6 +507,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "5gTToFIZp-g",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=5gTToFIZp-g",
+    "embedUrl": "https://www.youtube.com/embed/5gTToFIZp-g",
     "notes": null
   },
   {
@@ -459,6 +516,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "yX-mepQYD60",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=yX-mepQYD60",
+    "embedUrl": "https://www.youtube.com/embed/yX-mepQYD60",
     "notes": null
   },
   {
@@ -467,6 +525,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "kMCrpyGsWkk",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=kMCrpyGsWkk",
+    "embedUrl": "https://www.youtube.com/embed/kMCrpyGsWkk",
     "notes": null
   },
   {
@@ -475,6 +534,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "BcropAvHZdw",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=BcropAvHZdw",
+    "embedUrl": "https://www.youtube.com/embed/BcropAvHZdw",
     "notes": null
   },
   {
@@ -483,6 +543,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "DrCtc6d_r-M",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=DrCtc6d_r-M",
+    "embedUrl": "https://www.youtube.com/embed/DrCtc6d_r-M",
     "notes": null
   },
   {
@@ -491,6 +552,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "MdoOO4Uf-lQ",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=MdoOO4Uf-lQ",
+    "embedUrl": "https://www.youtube.com/embed/MdoOO4Uf-lQ",
     "notes": null
   },
   {
@@ -499,6 +561,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "3_tZ7GK18dY",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=3_tZ7GK18dY",
+    "embedUrl": "https://www.youtube.com/embed/3_tZ7GK18dY",
     "notes": null
   },
   {
@@ -507,6 +570,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "tX8KbMy17A8",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=tX8KbMy17A8",
+    "embedUrl": "https://www.youtube.com/embed/tX8KbMy17A8",
     "notes": null
   },
   {
@@ -515,6 +579,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "u71QAVvTnZU",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=u71QAVvTnZU",
+    "embedUrl": "https://www.youtube.com/embed/u71QAVvTnZU",
     "notes": null
   },
   {
@@ -523,6 +588,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "GdCzV6y3zJA",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=GdCzV6y3zJA",
+    "embedUrl": "https://www.youtube.com/embed/GdCzV6y3zJA",
     "notes": null
   },
   {
@@ -531,6 +597,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "up40nlh6mek",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=up40nlh6mek",
+    "embedUrl": "https://www.youtube.com/embed/up40nlh6mek",
     "notes": null
   },
   {
@@ -539,6 +606,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "ibikPYmtpLw",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=ibikPYmtpLw",
+    "embedUrl": "https://www.youtube.com/embed/ibikPYmtpLw",
     "notes": null
   },
   {
@@ -547,6 +615,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "I_iIY81069o",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=I_iIY81069o",
+    "embedUrl": "https://www.youtube.com/embed/I_iIY81069o",
     "notes": null
   },
   {
@@ -555,6 +624,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "QwVEFR2NHPk",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=QwVEFR2NHPk",
+    "embedUrl": "https://www.youtube.com/embed/QwVEFR2NHPk",
     "notes": null
   },
   {
@@ -563,6 +633,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "VWax-YiHvg4",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=VWax-YiHvg4",
+    "embedUrl": "https://www.youtube.com/embed/VWax-YiHvg4",
     "notes": null
   },
   {
@@ -571,6 +642,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "esWNC99Sqx8",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=esWNC99Sqx8",
+    "embedUrl": "https://www.youtube.com/embed/esWNC99Sqx8",
     "notes": null
   },
   {
@@ -579,6 +651,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "SD1yaAHZ8SM",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=SD1yaAHZ8SM",
+    "embedUrl": "https://www.youtube.com/embed/SD1yaAHZ8SM",
     "notes": null
   },
   {
@@ -587,6 +660,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "v0_IRIFYC0k",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=v0_IRIFYC0k",
+    "embedUrl": "https://www.youtube.com/embed/v0_IRIFYC0k",
     "notes": null
   },
   {
@@ -595,6 +669,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "opVwEZ5080g",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=opVwEZ5080g",
+    "embedUrl": "https://www.youtube.com/embed/opVwEZ5080g",
     "notes": null
   },
   {
@@ -603,6 +678,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "6foHjJHMJN4",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=6foHjJHMJN4",
+    "embedUrl": "https://www.youtube.com/embed/6foHjJHMJN4",
     "notes": null
   },
   {
@@ -611,6 +687,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "vDLoznafoqI",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=vDLoznafoqI",
+    "embedUrl": "https://www.youtube.com/embed/vDLoznafoqI",
     "notes": null
   },
   {
@@ -619,15 +696,17 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "0LEuQ5SGkaw",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=0LEuQ5SGkaw",
+    "embedUrl": "https://www.youtube.com/embed/0LEuQ5SGkaw",
     "notes": null
   },
   {
     "id": 77,
     "title": "O Dil Tod Ke Hansti Ho Mera",
-    "videoId": "Q4qpEZeHzMY",
+    "videoId": "6cHZgDWQsws",
     "startSeconds": null,
-    "youtubeUrl": "https://www.youtube.com/watch?v=Q4qpEZeHzMY",
-    "notes": null
+    "youtubeUrl": "https://www.youtube.com/watch?v=6cHZgDWQsws",
+    "embedUrl": "https://www.youtube.com/embed/6cHZgDWQsws",
+    "notes": "(fan upload)"
   },
   {
     "id": 78,
@@ -635,6 +714,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "o5T3SIkOZn4",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=o5T3SIkOZn4",
+    "embedUrl": "https://www.youtube.com/embed/o5T3SIkOZn4",
     "notes": null
   },
   {
@@ -643,6 +723,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "mGFHNncE-tc",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=mGFHNncE-tc",
+    "embedUrl": "https://www.youtube.com/embed/mGFHNncE-tc",
     "notes": null
   },
   {
@@ -651,6 +732,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "xSLdkayw6Ak",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=xSLdkayw6Ak",
+    "embedUrl": "https://www.youtube.com/embed/xSLdkayw6Ak",
     "notes": null
   },
   {
@@ -659,6 +741,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "KwiDJclWo44",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=KwiDJclWo44",
+    "embedUrl": "https://www.youtube.com/embed/KwiDJclWo44",
     "notes": null
   },
   {
@@ -667,6 +750,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "Tdos1NBRn3U",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=Tdos1NBRn3U",
+    "embedUrl": "https://www.youtube.com/embed/Tdos1NBRn3U",
     "notes": null
   },
   {
@@ -675,6 +759,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "FKbX2c2UkjY",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=FKbX2c2UkjY",
+    "embedUrl": "https://www.youtube.com/embed/FKbX2c2UkjY",
     "notes": null
   },
   {
@@ -683,6 +768,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "sBrxR0J6Th0",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=sBrxR0J6Th0",
+    "embedUrl": "https://www.youtube.com/embed/sBrxR0J6Th0",
     "notes": null
   },
   {
@@ -691,6 +777,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "Lr7uDm2qNMI",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=Lr7uDm2qNMI",
+    "embedUrl": "https://www.youtube.com/embed/Lr7uDm2qNMI",
     "notes": null
   },
   {
@@ -699,6 +786,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "9kWz9Y-2K98",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=9kWz9Y-2K98",
+    "embedUrl": "https://www.youtube.com/embed/9kWz9Y-2K98",
     "notes": null
   },
   {
@@ -707,6 +795,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "NZBjH70KKJY",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=NZBjH70KKJY",
+    "embedUrl": "https://www.youtube.com/embed/NZBjH70KKJY",
     "notes": null
   },
   {
@@ -715,6 +804,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "qufw2rxLDQg",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=qufw2rxLDQg",
+    "embedUrl": "https://www.youtube.com/embed/qufw2rxLDQg",
     "notes": null
   },
   {
@@ -723,6 +813,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "jor_SaUzuVI",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=jor_SaUzuVI",
+    "embedUrl": "https://www.youtube.com/embed/jor_SaUzuVI",
     "notes": null
   },
   {
@@ -731,6 +822,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "X2mYudVYfS0",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=X2mYudVYfS0",
+    "embedUrl": "https://www.youtube.com/embed/X2mYudVYfS0",
     "notes": null
   },
   {
@@ -739,6 +831,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "bCBjY7ejRCM",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=bCBjY7ejRCM",
+    "embedUrl": "https://www.youtube.com/embed/bCBjY7ejRCM",
     "notes": null
   },
   {
@@ -747,6 +840,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "FBdqEtxQpaY",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=FBdqEtxQpaY",
+    "embedUrl": "https://www.youtube.com/embed/FBdqEtxQpaY",
     "notes": null
   },
   {
@@ -755,15 +849,17 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "gmJW33derRY",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=gmJW33derRY",
+    "embedUrl": "https://www.youtube.com/embed/gmJW33derRY",
     "notes": null
   },
   {
     "id": 94,
     "title": "Bin Tere Sanam Mar Mitenge Hum",
-    "videoId": "Lw_SseYk6H0",
+    "videoId": "5otOLgqOeoE",
     "startSeconds": null,
-    "youtubeUrl": "https://www.youtube.com/watch?v=Lw_SseYk6H0",
-    "notes": null
+    "youtubeUrl": "https://www.youtube.com/watch?v=5otOLgqOeoE",
+    "embedUrl": "https://www.youtube.com/embed/5otOLgqOeoE",
+    "notes": "(fan upload — Ultra Bollywood Songs)"
   },
   {
     "id": 95,
@@ -771,6 +867,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "HQdDipuUGcs",
     "startSeconds": 2364,
     "youtubeUrl": "https://www.youtube.com/watch?v=HQdDipuUGcs&t=2364s",
+    "embedUrl": "https://www.youtube.com/embed/HQdDipuUGcs?start=2364",
     "notes": "(Tips Official jukebox, gaana 39:24 se)"
   },
   {
@@ -779,6 +876,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "lNEimxHmh6c",
     "startSeconds": 2272,
     "youtubeUrl": "https://www.youtube.com/watch?v=lNEimxHmh6c&t=2272s",
+    "embedUrl": "https://www.youtube.com/embed/lNEimxHmh6c?start=2272",
     "notes": "(Saregama jukebox, gaana 37:52 se)"
   },
   {
@@ -787,6 +885,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "YtrzfyV5kGA",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=YtrzfyV5kGA",
+    "embedUrl": "https://www.youtube.com/embed/YtrzfyV5kGA",
     "notes": null
   },
   {
@@ -795,6 +894,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "mcxmGinrUMs",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=mcxmGinrUMs",
+    "embedUrl": "https://www.youtube.com/embed/mcxmGinrUMs",
     "notes": null
   },
   {
@@ -803,6 +903,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "sw37BI70UZM",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=sw37BI70UZM",
+    "embedUrl": "https://www.youtube.com/embed/sw37BI70UZM",
     "notes": null
   },
   {
@@ -811,6 +912,7 @@ export const JUKEBOX_SONGS: JukeboxSong[] = [
     "videoId": "yIFMTfgJzY0",
     "startSeconds": null,
     "youtubeUrl": "https://www.youtube.com/watch?v=yIFMTfgJzY0",
+    "embedUrl": "https://www.youtube.com/embed/yIFMTfgJzY0",
     "notes": null
   }
 ];
