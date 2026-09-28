@@ -4,17 +4,157 @@ import { useEffect, useState, useId, useRef, useCallback } from "react";
 import { useAudioStore } from "@/lib/audio-store";
 import { getSongEffectiveStart, getSongEmbedUrl } from "@/lib/songs-catalog";
 
+// -----------------------------------------------------------------------------
+// Vector SVG Icons (Zero Emojis, Agency-Grade Precision)
+// -----------------------------------------------------------------------------
+function IconPlay({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={`${className} fill-current`} aria-hidden>
+      <path d="M8 5.5v13a1 1 0 0 0 1.53.85l10.2-6.5a1 1 0 0 0 0-1.7L9.53 4.65A1 1 0 0 0 8 5.5Z" />
+    </svg>
+  );
+}
+
+function IconPause({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={`${className} fill-current`} aria-hidden>
+      <rect x="6" y="5" width="4" height="14" rx="1" />
+      <rect x="14" y="5" width="4" height="14" rx="1" />
+    </svg>
+  );
+}
+
+function IconPrev({ className = "h-3.5 w-3.5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={`${className} fill-current`} aria-hidden>
+      <path d="M6 5h2.5v14H6zM19 5.5v13a1 1 0 0 1-1.53.85L8.6 13.2a1 1 0 0 1 0-1.7l8.87-6.15A1 1 0 0 1 19 5.5Z" />
+    </svg>
+  );
+}
+
+function IconNext({ className = "h-3.5 w-3.5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={`${className} fill-current`} aria-hidden>
+      <path d="M15.5 5H18v14h-2.5zM5 5.5v13a1 1 0 0 0 1.53.85l8.87-6.15a1 1 0 0 0 0-1.7L6.53 4.65A1 1 0 0 0 5 5.5Z" />
+    </svg>
+  );
+}
+
+function IconShuffle({ className = "h-3.5 w-3.5" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={`${className} fill-none stroke-current stroke-2 stroke-linecap-round stroke-linejoin-round`}
+      aria-hidden
+    >
+      <path d="M16 3h5v5M4 20l5-5M21 3l-7 7M4 4l11 11M16 21h5v-5M21 21l-3-3" />
+    </svg>
+  );
+}
+
+function IconSpeakerMute({ className = "h-3.5 w-3.5" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={`${className} fill-none stroke-current stroke-2 stroke-linecap-round stroke-linejoin-round`}
+      aria-hidden
+    >
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" />
+      <line x1="23" y1="9" x2="17" y2="15" />
+      <line x1="17" y1="9" x2="23" y2="15" />
+    </svg>
+  );
+}
+
+function IconSpeakerLow({ className = "h-3.5 w-3.5" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={`${className} fill-none stroke-current stroke-2 stroke-linecap-round stroke-linejoin-round`}
+      aria-hidden
+    >
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" />
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+    </svg>
+  );
+}
+
+function IconSpeakerHigh({ className = "h-3.5 w-3.5" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={`${className} fill-none stroke-current stroke-2 stroke-linecap-round stroke-linejoin-round`}
+      aria-hidden
+    >
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" />
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+    </svg>
+  );
+}
+
+function IconReverb({ className = "h-3.5 w-3.5" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={`${className} fill-none stroke-current stroke-2 stroke-linecap-round stroke-linejoin-round`}
+      aria-hidden
+    >
+      <path d="M2 10v4M6 7v10M10 4v16M14 7v10M18 10v4M22 12v0" />
+    </svg>
+  );
+}
+
+function IconPhone({ className = "h-3.5 w-3.5" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={`${className} fill-none stroke-current stroke-2 stroke-linecap-round stroke-linejoin-round`}
+      aria-hidden
+    >
+      <rect x="5" y="2" width="14" height="20" rx="3" ry="3" />
+      <line x1="12" y1="18" x2="12.01" y2="18" />
+    </svg>
+  );
+}
+
+function IconGrip({ className = "h-3.5 w-3.5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={`${className} fill-current`} aria-hidden>
+      <circle cx="9" cy="6" r="1.5" />
+      <circle cx="15" cy="6" r="1.5" />
+      <circle cx="9" cy="12" r="1.5" />
+      <circle cx="15" cy="12" r="1.5" />
+      <circle cx="9" cy="18" r="1.5" />
+      <circle cx="15" cy="18" r="1.5" />
+    </svg>
+  );
+}
+
+function IconClose({ className = "h-3 w-3" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={`${className} fill-none stroke-current stroke-2 stroke-linecap-round stroke-linejoin-round`}
+      aria-hidden
+    >
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
+
 /**
  * PersistentPlayer — Mounted ONCE in RootLayout (app/layout.tsx).
  *
  * Provides:
- * 1. Center-Bottom Minimalist Floating Glassmorphic Player Bar.
- * 2. Realistic Smartphone Mockup Dashboard TV Mounted on the Right.
- * 3. 100% Uninterrupted Audio Playback even when the phone screen is minimized.
+ * 1. Center-Bottom Minimalist Floating Glassmorphic Player Bar with Even Padding & Vector Icons.
+ * 2. Realistic 3D Draggable Smartphone Mockup that can be placed anywhere across the screen.
+ * 3. 100% Uninterrupted Audio Playback even when minimized or dragged.
  * 4. Automatic Radio Static Sound & Visual Transition on song changes.
  * 5. Song Timing Rules:
  *    - All songs start after 60 seconds (effective start = 60s or offset+60s).
- *    - Automatically transitions to the next song 60s before the current song completes.
+ *    - Automatically transitions to the next song 60s before current song completes.
  */
 export default function PersistentPlayer() {
   const mountId = useId();
@@ -23,6 +163,18 @@ export default function PersistentPlayer() {
   const [currentTimeFormatted, setCurrentTimeFormatted] = useState("01:00");
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const lastSkipSongIdRef = useRef<number | null>(null);
+
+  // --------------------------------------------------------------------------
+  // Draggable State for 3D Phone Mockup
+  // --------------------------------------------------------------------------
+  const [phonePos, setPhonePos] = useState<{ x: number; y: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef<{ mouseX: number; mouseY: number; posX: number; posY: number }>({
+    mouseX: 0,
+    mouseY: 0,
+    posX: 0,
+    posY: 0,
+  });
 
   const {
     currentSong,
@@ -43,12 +195,28 @@ export default function PersistentPlayer() {
     playRandomSong,
     initRandomOnClientMount,
     track,
-    rotationId,
   } = useAudioStore();
 
   useEffect(() => {
     setMounted(true);
     initRandomOnClientMount();
+
+    // Initialize phone position to bottom-right above HUD
+    const initX = Math.max(16, window.innerWidth - 350);
+    const initY = Math.max(16, window.innerHeight - 340);
+    setPhonePos({ x: initX, y: initY });
+
+    const onResize = () => {
+      setPhonePos((prevPos) => {
+        if (!prevPos) return null;
+        const clampedX = Math.max(12, Math.min(window.innerWidth - 330, prevPos.x));
+        const clampedY = Math.max(12, Math.min(window.innerHeight - 300, prevPos.y));
+        return { x: clampedX, y: clampedY };
+      });
+    };
+
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, [initRandomOnClientMount]);
 
   // Live IST Clock for Phone Mockup Header
@@ -69,7 +237,7 @@ export default function PersistentPlayer() {
     return () => clearInterval(interval);
   }, []);
 
-  // Spacebar = Play/Pause (Skip when inside input fields)
+  // Spacebar = Play/Pause
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.code !== "Space") return;
@@ -91,7 +259,7 @@ export default function PersistentPlayer() {
   }, []);
 
   // --------------------------------------------------------------------------
-  // YouTube IFrame PostMessage Communication & 60s Auto-Advance
+  // YouTube IFrame PostMessage Handshake & 60s Rule
   // --------------------------------------------------------------------------
   const sendYtCommand = useCallback((func: string, args: unknown[] = []) => {
     try {
@@ -106,7 +274,6 @@ export default function PersistentPlayer() {
     }
   }, []);
 
-  // Register listening handshake when iframe or song changes
   useEffect(() => {
     lastSkipSongIdRef.current = null;
     const initTimer = setTimeout(() => {
@@ -132,7 +299,6 @@ export default function PersistentPlayer() {
     return () => clearTimeout(initTimer);
   }, [currentSong?.id, isPlaying]);
 
-  // Handle postMessage events from YouTube IFrame
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
       if (!event.data || typeof event.data !== "string") return;
@@ -161,7 +327,7 @@ export default function PersistentPlayer() {
             );
           }
 
-          // Trigger change 60 seconds before the song ends!
+          // Rule: Transition to next track 60s before completion
           if (
             typeof ct === "number" &&
             typeof dur === "number" &&
@@ -175,7 +341,7 @@ export default function PersistentPlayer() {
           }
         }
       } catch {
-        // ignore non-JSON messages
+        // non-json message from extensions
       }
     };
 
@@ -183,21 +349,88 @@ export default function PersistentPlayer() {
     return () => window.removeEventListener("message", onMessage);
   }, [currentSong?.id]);
 
-  // Periodic polling interval to query currentTime & duration
+  // Periodic polling for time tracking
   useEffect(() => {
-    if (!isPlaying) return;
     const interval = setInterval(() => {
-      sendYtCommand("getCurrentTime");
-      sendYtCommand("getDuration");
+      if (isPlaying) {
+        sendYtCommand("getCurrentTime");
+        sendYtCommand("getDuration");
+      }
     }, 1200);
     return () => clearInterval(interval);
   }, [isPlaying, sendYtCommand]);
 
-  const title = currentSong?.title || "Bollywood 90s Hits";
-  const songNumber = currentSong?.id || currentSongIndex + 1;
-  const volumePercent = Math.round((isMuted ? 0 : volume) * 100);
+  // Sync play/pause with YouTube iframe
+  useEffect(() => {
+    if (!mounted) return;
+    if (isPlaying) {
+      sendYtCommand("playVideo");
+    } else {
+      sendYtCommand("pauseVideo");
+    }
+  }, [isPlaying, mounted, sendYtCommand]);
 
-  // YouTube Embed URL (always starts after 60 seconds)
+  // Sync volume with YouTube iframe
+  useEffect(() => {
+    if (!mounted) return;
+    const volInt = isMuted ? 0 : Math.round(volume * 100);
+    sendYtCommand("setVolume", [volInt]);
+    if (isMuted) {
+      sendYtCommand("mute");
+    } else {
+      sendYtCommand("unMute");
+    }
+  }, [volume, isMuted, mounted, sendYtCommand]);
+
+  // --------------------------------------------------------------------------
+  // Drag Handler Functions for 3D Phone Mockup
+  // --------------------------------------------------------------------------
+  const handlePointerDown = (e: React.PointerEvent) => {
+    // Only trigger drag on main chassis/header/grip, not on nested buttons or iframe
+    const target = e.target as HTMLElement;
+    if (target.closest("button") || target.closest("iframe") || target.closest("input")) {
+      return;
+    }
+
+    e.preventDefault();
+    setIsDragging(true);
+    const currentX = phonePos?.x ?? (window.innerWidth - 350);
+    const currentY = phonePos?.y ?? (window.innerHeight - 340);
+
+    dragStartRef.current = {
+      mouseX: e.clientX,
+      mouseY: e.clientY,
+      posX: currentX,
+      posY: currentY,
+    };
+
+    const handlePointerMove = (moveEvt: PointerEvent) => {
+      const dx = moveEvt.clientX - dragStartRef.current.mouseX;
+      const dy = moveEvt.clientY - dragStartRef.current.mouseY;
+
+      const newX = dragStartRef.current.posX + dx;
+      const newY = dragStartRef.current.posY + dy;
+
+      const clampedX = Math.max(12, Math.min(window.innerWidth - 330, newX));
+      const clampedY = Math.max(12, Math.min(window.innerHeight - 280, newY));
+
+      setPhonePos({ x: clampedX, y: clampedY });
+    };
+
+    const handlePointerUp = () => {
+      setIsDragging(false);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+  };
+
+  const songNumber = String(currentSongIndex + 1).padStart(2, "0");
+  const title = currentSong?.title || track.title;
+  const volumePercent = isMuted ? 0 : Math.round(volume * 100);
+
   const effectiveStart = currentSong ? getSongEffectiveStart(currentSong) : 60;
   const ytEmbedUrl = currentSong
     ? getSongEmbedUrl(currentSong, isPlaying)
@@ -206,75 +439,89 @@ export default function PersistentPlayer() {
   return (
     <>
       {/* ====================================================================
-          📱 REALISTIC DASHBOARD SMARTPHONE MOCKUP (RIGHT COCKPIT)
-          - Keeps iframe mounted 100% of the time so audio never cuts out.
-          - Smooth spring cubic-bezier entrance & exit when minimized.
+          📱 3D REALISTIC DRAGGABLE SMARTPHONE MOCKUP
+          - Machined titanium chassis, CNC side buttons, Dynamic Island.
+          - Draggable anywhere across the screen.
+          - 100% uninterrupted audio playback even when minimized.
           ==================================================================== */}
       <div
         data-mount-id={mountId}
-        className={`fixed bottom-24 sm:bottom-28 right-4 sm:right-6 md:right-8 z-40 w-[290px] sm:w-[330px] select-none transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+        onPointerDown={handlePointerDown}
+        style={{
+          left: phonePos ? `${phonePos.x}px` : "auto",
+          top: phonePos ? `${phonePos.y}px` : "auto",
+          right: phonePos ? "auto" : "1.5rem",
+          bottom: phonePos ? "auto" : "7rem",
+          position: "fixed",
+        }}
+        className={`z-40 w-[295px] sm:w-[330px] select-none transition-transform duration-300 ${
+          isDragging ? "cursor-grabbing scale-[1.02] shadow-2xl" : "cursor-grab"
+        } ${
           showVideoScreen
             ? "translate-y-0 scale-100 opacity-100 pointer-events-auto"
             : "translate-y-16 scale-90 opacity-0 pointer-events-none"
         }`}
       >
-        {/* Magnetic Mount Stand Shadow & Base Bracket */}
-        <div className="absolute -bottom-3 left-1/2 h-5 w-24 -translate-x-1/2 rounded-full bg-black/70 blur-md pointer-events-none" />
-        <div className="absolute -bottom-2 left-1/2 h-3.5 w-16 -translate-x-1/2 rounded-t-lg bg-gradient-to-t from-neutral-900 to-neutral-700 border-x border-t border-amber-500/30 shadow-lg pointer-events-none" />
+        {/* CNC Physical Side Buttons (Left: Volume Rockers, Right: Power Key) */}
+        <div className="absolute -left-1 top-16 h-8 w-1 rounded-l-md bg-neutral-700/80 border-l border-y border-white/20 pointer-events-none" />
+        <div className="absolute -left-1 top-26 h-8 w-1 rounded-l-md bg-neutral-700/80 border-l border-y border-white/20 pointer-events-none" />
+        <div className="absolute -right-1 top-20 h-12 w-1 rounded-r-md bg-neutral-700/80 border-r border-y border-white/20 pointer-events-none" />
 
-        {/* Outer Phone Chassis (Anodized Titanium Double-Bezel) */}
-        <div className="relative glass-phone-body rounded-[2.5rem] p-2 sm:p-2.5 border border-amber-500/30">
-          {/* Subtle Phone Rim Highlights */}
-          <div className="absolute inset-0 rounded-[2.5rem] ring-1 ring-white/20 pointer-events-none" />
+        {/* Outer 3D Phone Chassis */}
+        <div className="relative phone-3d-chassis rounded-[2.5rem] p-2 sm:p-2.5">
+          {/* Top Speaker Micro-Slit */}
+          <div className="absolute top-1.5 left-1/2 -translate-x-1/2 h-1 w-12 rounded-full bg-neutral-900 border-t border-white/10 pointer-events-none" />
 
-          {/* Inner Phone Screen Container */}
-          <div className="relative overflow-hidden rounded-[2rem] bg-neutral-950 border border-black shadow-inner">
-            {/* Top Phone Status Bar & Dynamic Island */}
-            <div className="relative flex items-center justify-between px-4 pt-2.5 pb-1.5 text-[11px] font-medium text-amber-100/90 bg-gradient-to-b from-black/80 to-transparent">
-              {/* Clock */}
-              <span className="font-mono text-[10px] text-amber-200/90 font-bold tracking-tight">
-                {phoneTime} IST
-              </span>
+          {/* Inner OLED Glass Screen Container */}
+          <div className="relative overflow-hidden rounded-[2rem] bg-neutral-950 border border-neutral-900 shadow-inner">
+            {/* Top Drag Handle Header & Dynamic Island */}
+            <div className="relative flex items-center justify-between px-3.5 pt-2.5 pb-1.5 text-[11px] font-medium text-amber-100/90 bg-gradient-to-b from-neutral-900/90 to-transparent border-b border-white/5">
+              {/* Drag Grip + Clock */}
+              <div className="flex items-center gap-1.5 text-neutral-400">
+                <IconGrip className="h-3 w-3 text-neutral-500" />
+                <span className="font-mono text-[10px] text-neutral-300 font-semibold tracking-tight">
+                  {phoneTime} IST
+                </span>
+              </div>
 
               {/* Dynamic Island Notch */}
-              <div className="flex items-center gap-1.5 rounded-full bg-black/90 px-2.5 py-0.5 border border-white/10 shadow-sm">
+              <div className="flex items-center gap-1.5 rounded-full bg-black px-2.5 py-0.5 border border-white/10 shadow-sm">
                 <span
                   className={`h-1.5 w-1.5 rounded-full ${
                     isPlaying ? "bg-emerald-400 animate-pulse" : "bg-neutral-600"
                   }`}
                 />
-                <span className="text-[9px] font-mono text-amber-300 tracking-wider uppercase">
+                <span className="text-[9px] font-mono text-amber-300/90 tracking-wider uppercase font-semibold">
                   {isTuning ? "TUNING..." : isPlaying ? "ON AIR" : "PAUSED"}
                 </span>
               </div>
 
-              {/* Action Buttons: Reverb, Dice & Minimize */}
-              <div className="flex items-center gap-1.5">
+              {/* Action Buttons: Reverb, Shuffle & Minimize */}
+              <div className="flex items-center gap-1">
                 <button
                   onClick={toggleReverb}
-                  title={reverbEnabled ? "Cabin Reverb Filter: ON" : "Cabin Reverb Filter: OFF"}
-                  className={`rounded-full px-1.5 py-0.5 text-[9px] font-mono transition cursor-pointer flex items-center gap-1 ${
+                  title={reverbEnabled ? "Cabin Reverb: ON" : "Cabin Reverb: OFF"}
+                  className={`rounded-full p-1 transition cursor-pointer ${
                     reverbEnabled
-                      ? "bg-amber-500/25 text-amber-300 ring-1 ring-amber-400/40"
-                      : "bg-white/5 text-neutral-400 hover:text-neutral-200"
+                      ? "bg-white/15 text-amber-200 ring-1 ring-white/20"
+                      : "text-neutral-400 hover:text-white hover:bg-white/10"
                   }`}
                 >
-                  <span>🏛️</span>
-                  <span>{reverbEnabled ? "REVERB" : "DRY"}</span>
+                  <IconReverb className="h-3 w-3" />
                 </button>
                 <button
                   onClick={playRandomSong}
                   title="Random Song"
-                  className="rounded-full p-1 bg-amber-500/15 hover:bg-amber-500/30 text-amber-300 transition cursor-pointer text-[10px]"
+                  className="rounded-full p-1 text-neutral-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
                 >
-                  🎲
+                  <IconShuffle className="h-3 w-3" />
                 </button>
                 <button
                   onClick={toggleVideoScreen}
                   title="Minimize Phone (Audio continues playing)"
-                  className="rounded-full h-4 w-4 flex items-center justify-center bg-white/10 hover:bg-white/20 text-amber-200 text-[10px] transition cursor-pointer"
+                  className="rounded-full p-1 text-neutral-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
                 >
-                  ✕
+                  <IconClose className="h-3 w-3" />
                 </button>
               </div>
             </div>
@@ -295,9 +542,9 @@ export default function PersistentPlayer() {
 
               {/* Radio Tuning Static Glitch Flash Overlay */}
               {isTuning && (
-                <div className="pointer-events-none absolute inset-0 z-30 bg-amber-950/70 backdrop-blur-sm flex items-center justify-center animate-tuning-glitch">
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="text-xl animate-spin">📻</span>
+                <div className="pointer-events-none absolute inset-0 z-30 bg-neutral-950/80 backdrop-blur-sm flex items-center justify-center animate-tuning-glitch">
+                  <div className="flex flex-col items-center gap-1.5">
+                    <div className="h-2 w-2 rounded-full bg-amber-400 animate-ping" />
                     <span className="text-[10px] font-mono font-bold text-amber-200 tracking-widest uppercase">
                       TUNING FREQUENCY...
                     </span>
@@ -306,33 +553,33 @@ export default function PersistentPlayer() {
               )}
 
               {/* Light-Bending Screen Reflection Glass Sheen */}
-              <div className="pointer-events-none absolute inset-0 glass-reflection opacity-40 z-20" />
+              <div className="pointer-events-none absolute inset-0 glass-reflection opacity-35 z-20" />
             </div>
 
             {/* Bottom Phone Info Drawer */}
-            <div className="px-3.5 py-2.5 bg-gradient-to-t from-[#140a06] via-[#1a0f0a] to-transparent border-t border-amber-950/60">
+            <div className="px-3.5 py-2 bg-gradient-to-t from-neutral-950 via-[#180e08]/90 to-transparent border-t border-white/5">
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-bold text-amber-100">
+                  <p className="truncate text-xs font-semibold text-neutral-100">
                     #{songNumber} {title}
                   </p>
-                  <p className="truncate text-[10px] text-amber-300/60 font-mono mt-0.5">
+                  <p className="truncate text-[10px] text-amber-300/70 font-mono mt-0.5">
                     ⏱ {currentTimeFormatted} · Starts @ 60s
                   </p>
                 </div>
 
                 {/* Animated Equalizer */}
-                <div className="flex items-end gap-0.5 h-4 px-1 shrink-0">
-                  <div className={`w-1 rounded-full bg-amber-400 ${isPlaying ? "eq-bar-1" : "h-1"}`} />
-                  <div className={`w-1 rounded-full bg-amber-400 ${isPlaying ? "eq-bar-2" : "h-1.5"}`} />
-                  <div className={`w-1 rounded-full bg-amber-400 ${isPlaying ? "eq-bar-3" : "h-2"}`} />
-                  <div className={`w-1 rounded-full bg-amber-400 ${isPlaying ? "eq-bar-4" : "h-1"}`} />
+                <div className="flex items-end gap-0.5 h-3.5 px-1 shrink-0">
+                  <div className={`w-0.5 rounded-full bg-amber-400 ${isPlaying ? "eq-bar-1" : "h-1"}`} />
+                  <div className={`w-0.5 rounded-full bg-amber-400 ${isPlaying ? "eq-bar-2" : "h-1.5"}`} />
+                  <div className={`w-0.5 rounded-full bg-amber-400 ${isPlaying ? "eq-bar-3" : "h-2"}`} />
+                  <div className={`w-0.5 rounded-full bg-amber-400 ${isPlaying ? "eq-bar-4" : "h-1"}`} />
                 </div>
               </div>
 
               {/* Phone Home Bar Pill */}
-              <div className="mt-2 flex justify-center">
-                <div className="h-1 w-20 rounded-full bg-white/20" />
+              <div className="mt-1.5 flex justify-center">
+                <div className="h-1 w-16 rounded-full bg-white/20" />
               </div>
             </div>
           </div>
@@ -342,66 +589,61 @@ export default function PersistentPlayer() {
       {/* ====================================================================
           📻 CENTER-BOTTOM MINIMALIST GLASSMORPHIC PLAYER BAR
           - Centered horizontally with light-bending specular border.
-          - Tactile controls, animated equalizer, volume hover slider.
+          - Evenly padded segmented cluster with high-end SVG vector icons.
+          - Zero loud yellow backgrounds or rookie borders.
           ==================================================================== */}
       <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 select-none max-w-[calc(100vw-1.5rem)]">
-        {/* Outer Bezel Wrapper */}
-        <div className="glass-pill rounded-full p-1.5 shadow-2xl flex items-center gap-2 sm:gap-3 transition-all duration-300">
+        {/* Outer Frosted Glass Pill Wrapper */}
+        <div className="glass-pill rounded-full p-1.5 shadow-2xl flex items-center gap-2 sm:gap-2.5 transition-all duration-300">
           {/* 1. Play / Pause Button with Button-in-Button Highlight */}
           <button
             onClick={toggle}
             aria-label={isPlaying ? "Pause radio" : "Play radio"}
             title={isPlaying ? "Pause (Space)" : "Play Track (Space)"}
-            className="group relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-amber-500 to-orange-400 text-neutral-950 shadow-lg shadow-amber-500/30 transition-all duration-300 hover:scale-105 hover:shadow-amber-500/50 active:scale-95 cursor-pointer ring-1 ring-white/30"
+            className="group relative flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-amber-500 to-orange-400 text-neutral-950 shadow-lg shadow-amber-500/25 transition-all duration-300 hover:scale-105 hover:shadow-amber-500/40 active:scale-95 cursor-pointer ring-1 ring-white/30"
           >
             {isPlaying ? (
-              <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current transition group-hover:scale-110" aria-hidden>
-                <rect x="6" y="5" width="4" height="14" rx="1" />
-                <rect x="14" y="5" width="4" height="14" rx="1" />
-              </svg>
+              <IconPause className="h-4 w-4 transition group-hover:scale-110" />
             ) : (
-              <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current translate-x-0.5 transition group-hover:scale-110" aria-hidden>
-                <path d="M8 5.5v13a1 1 0 0 0 1.53.85l10.2-6.5a1 1 0 0 0 0-1.7L9.53 4.65A1 1 0 0 0 8 5.5Z" />
-              </svg>
+              <IconPlay className="h-4 w-4 translate-x-0.5 transition group-hover:scale-110" />
             )}
           </button>
 
           {/* 2. Track Navigation (Prev, Next, Shuffle) */}
-          <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+          <div className="flex shrink-0 items-center gap-1">
             <button
               onClick={prev}
               aria-label="Previous song"
               title="Previous song (with radio static transition)"
-              className="flex h-8 w-8 items-center justify-center rounded-full text-amber-200/70 transition hover:bg-white/10 hover:text-amber-100 active:scale-90 cursor-pointer"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-300 transition hover:bg-white/10 hover:text-white active:scale-90 cursor-pointer"
             >
-              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 fill-current" aria-hidden>
-                <path d="M6 5h2.5v14H6zM19 5.5v13a1 1 0 0 1-1.53.85L8.6 13.2a1 1 0 0 1 0-1.7l8.87-6.15A1 1 0 0 1 19 5.5Z" />
-              </svg>
+              <IconPrev className="h-3.5 w-3.5" />
             </button>
 
             <button
               onClick={next}
               aria-label="Next song"
               title="Next song (with radio static transition)"
-              className="flex h-8 w-8 items-center justify-center rounded-full text-amber-200/70 transition hover:bg-white/10 hover:text-amber-100 active:scale-90 cursor-pointer"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-300 transition hover:bg-white/10 hover:text-white active:scale-90 cursor-pointer"
             >
-              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 fill-current" aria-hidden>
-                <path d="M15.5 5H18v14h-2.5zM5 5.5v13a1 1 0 0 0 1.53.85l8.87-6.15a1 1 0 0 0 0-1.7L6.53 4.65A1 1 0 0 0 5 5.5Z" />
-              </svg>
+              <IconNext className="h-3.5 w-3.5" />
             </button>
 
             <button
               onClick={playRandomSong}
               aria-label="Random Song"
               title="Surprise Me (Play Random Track)"
-              className="flex h-8 w-8 items-center justify-center rounded-full text-amber-300/80 hover:bg-white/10 hover:text-amber-100 active:scale-90 transition cursor-pointer text-xs"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-300 hover:bg-white/10 hover:text-white active:scale-90 transition cursor-pointer"
             >
-              🎲
+              <IconShuffle className="h-3.5 w-3.5" />
             </button>
           </div>
 
+          {/* Divider */}
+          <div className="h-5 w-px bg-white/10 shrink-0" />
+
           {/* 3. Track Metadata & Live Equalizer */}
-          <div className="flex items-center gap-2.5 min-w-0 max-w-[140px] sm:max-w-[220px] md:max-w-[280px] px-1 border-l border-white/10">
+          <div className="flex items-center gap-2.5 min-w-0 max-w-[130px] sm:max-w-[200px] md:max-w-[260px] px-1">
             {/* Equalizer frequency bars */}
             <div className="flex items-end gap-0.5 h-3.5 shrink-0">
               <div className={`w-0.5 rounded-full bg-amber-400 ${isPlaying ? "eq-bar-1" : "h-1"}`} />
@@ -413,30 +655,39 @@ export default function PersistentPlayer() {
             <div className="min-w-0 flex-1">
               <p
                 suppressHydrationWarning
-                className="truncate text-xs sm:text-sm font-bold text-amber-100 tracking-tight"
+                className="truncate text-xs sm:text-sm font-semibold text-neutral-100 tracking-tight"
               >
                 {mounted ? `#${songNumber} ${title}` : track.title}
               </p>
               <p
                 suppressHydrationWarning
-                className="truncate text-[10px] text-amber-300/60 font-medium"
+                className="truncate text-[10px] text-amber-300/70 font-medium font-mono"
               >
-                {isTuning ? "⚡ Tuning Frequency..." : mounted && isPlaying ? `📻 Gaana #${songNumber}/100` : "Click ▶ or Space to play"}
+                {isTuning ? "Tuning Frequency..." : mounted && isPlaying ? `Track #${songNumber}/100` : "Click Play or Space"}
               </p>
             </div>
           </div>
 
-          {/* 4. Controls Divider & Volume + Phone Toggles */}
-          <div className="flex items-center gap-1 shrink-0 pl-1 border-l border-white/10">
+          {/* Divider */}
+          <div className="h-5 w-px bg-white/10 shrink-0" />
+
+          {/* 4. Evenly Padded Rightmost Controls Cluster (Volume, Reverb, Phone) */}
+          <div className="flex items-center gap-1.5 shrink-0 px-1">
             {/* Hover Volume Slider */}
             <div className="relative flex items-center">
               <button
                 onClick={toggleMute}
                 onMouseEnter={() => setShowVolumeSlider(true)}
                 title={`Volume: ${volumePercent}% (Click to Mute/Unmute)`}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-amber-200/80 hover:bg-white/10 hover:text-amber-100 transition cursor-pointer text-xs sm:text-sm"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-300 hover:bg-white/10 hover:text-white transition cursor-pointer"
               >
-                {isMuted || volumePercent === 0 ? "🔇" : volumePercent < 50 ? "🔉" : "🔊"}
+                {isMuted || volumePercent === 0 ? (
+                  <IconSpeakerMute className="h-3.5 w-3.5 text-neutral-400" />
+                ) : volumePercent < 50 ? (
+                  <IconSpeakerLow className="h-3.5 w-3.5" />
+                ) : (
+                  <IconSpeakerHigh className="h-3.5 w-3.5" />
+                )}
               </button>
 
               {/* Smooth expandable slider */}
@@ -458,13 +709,13 @@ export default function PersistentPlayer() {
                   className="h-1.5 w-16 sm:w-20 cursor-pointer accent-amber-400 bg-neutral-900 rounded-lg ring-1 ring-white/10"
                   title={`Volume ${volumePercent}%`}
                 />
-                <span className="text-[10px] font-mono text-amber-300 w-5">
+                <span className="text-[10px] font-mono text-amber-300/80 w-5">
                   {volumePercent}%
                 </span>
               </div>
             </div>
 
-            {/* 🏛️ Cabin Reverb Acoustic Filter Toggle */}
+            {/* Cabin Reverb Acoustic Filter Toggle */}
             <button
               onClick={toggleReverb}
               title={
@@ -472,30 +723,30 @@ export default function PersistentPlayer() {
                   ? "Cabin Reverb: ON (Warm bus interior acoustic echo)"
                   : "Cabin Reverb: OFF (Click to enable cozy cabin echo)"
               }
-              className={`flex h-8 w-8 items-center justify-center rounded-full transition-all cursor-pointer text-xs ${
+              className={`flex h-8 w-8 items-center justify-center rounded-full transition-all cursor-pointer ${
                 reverbEnabled
-                  ? "bg-amber-500/25 text-amber-300 ring-1 ring-amber-400/60 shadow-sm"
-                  : "text-amber-200/50 hover:bg-white/10 hover:text-amber-100"
+                  ? "bg-white/15 text-amber-200 ring-1 ring-white/25 shadow-[0_0_12px_rgba(255,200,100,0.15)]"
+                  : "text-neutral-400 hover:bg-white/10 hover:text-white"
               }`}
             >
-              🏛️
+              <IconReverb className="h-3.5 w-3.5" />
             </button>
 
-            {/* 📱 Phone Mockup Dashboard Toggle */}
+            {/* 3D Phone Mockup Dashboard Toggle */}
             <button
               onClick={toggleVideoScreen}
               title={
                 showVideoScreen
                   ? "Minimize Dashboard Phone (Audio keeps playing)"
-                  : "Open Dashboard Phone Mockup"
+                  : "Open 3D Dashboard Phone (Draggable)"
               }
-              className={`flex h-8 w-8 items-center justify-center rounded-full transition-all cursor-pointer text-xs sm:text-sm ${
+              className={`flex h-8 w-8 items-center justify-center rounded-full transition-all cursor-pointer ${
                 showVideoScreen
-                  ? "bg-amber-500/25 text-amber-300 ring-1 ring-amber-400/60 shadow-sm"
-                  : "text-amber-200/60 hover:bg-white/10 hover:text-amber-100"
+                  ? "bg-white/15 text-amber-200 ring-1 ring-white/25 shadow-[0_0_12px_rgba(255,200,100,0.15)]"
+                  : "text-neutral-400 hover:bg-white/10 hover:text-white"
               }`}
             >
-              📱
+              <IconPhone className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>

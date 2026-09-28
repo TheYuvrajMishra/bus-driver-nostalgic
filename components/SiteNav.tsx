@@ -4,10 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const LINKS = [
-  { href: "/", label: "Drive 🚌" },
-  { href: "/playlists", label: "Playlists 📼" },
-  { href: "/songs", label: "100 Songs 📻" },
-  { href: "/about", label: "About 📖" },
+  { href: "/", label: "Drive" },
+  { href: "/playlists", label: "Playlists" },
+  { href: "/songs", label: "100 Songs" },
+  { href: "/about", label: "About" },
 ];
 
 export default function SiteNav() {
@@ -19,12 +19,12 @@ export default function SiteNav() {
         {/* Brand Lockup */}
         <Link
           href="/"
-          className="flex items-center gap-1.5 px-3 py-1 rounded-full hover:bg-white/5 transition"
+          className="flex items-center gap-2 px-3 py-1 rounded-full hover:bg-white/5 transition"
         >
-          <span className="text-base">🚌</span>
-          <span className="font-bold tracking-tight text-xs sm:text-sm text-amber-100 hidden xs:inline">
+          <div className="h-2 w-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
+          <span className="font-bold tracking-tight text-xs sm:text-sm text-amber-100">
             <span className="text-amber-400">bus-driver</span>
-            <span className="text-amber-200/70 font-light">-nostalgic</span>
+            <span className="text-neutral-400 font-normal">-nostalgic</span>
           </span>
         </Link>
 
@@ -41,7 +41,7 @@ export default function SiteNav() {
                 className={`relative rounded-full px-3 py-1 text-xs sm:text-sm font-medium transition-all duration-300 ${
                   active
                     ? "bg-gradient-to-r from-amber-500 to-orange-400 text-neutral-950 font-bold shadow-md shadow-amber-500/25 scale-[1.02]"
-                    : "text-amber-100/70 hover:text-white hover:bg-white/10"
+                    : "text-neutral-300 hover:text-white hover:bg-white/10"
                 }`}
               >
                 {l.label}

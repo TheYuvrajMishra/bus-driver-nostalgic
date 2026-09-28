@@ -34,18 +34,18 @@ body {
   background: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0.12) 0%,
-    rgba(255, 255, 255, 0.03) 40%,
-    rgba(18, 10, 6, 0.72) 100%
+    rgba(255, 255, 255, 0.04) 40%,
+    rgba(14, 8, 5, 0.75) 100%
   ),
-  rgba(14, 8, 5, 0.82);
-  backdrop-filter: blur(24px) saturate(190%) contrast(105%);
-  -webkit-backdrop-filter: blur(24px) saturate(190%) contrast(105%);
+  rgba(16, 9, 6, 0.82);
+  backdrop-filter: blur(28px) saturate(190%) contrast(105%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%) contrast(105%);
   box-shadow:
-    0 20px 48px -10px rgba(0, 0, 0, 0.75),
+    0 24px 50px -10px rgba(0, 0, 0, 0.8),
     0 1px 1px 0 rgba(255, 255, 255, 0.35) inset,
     0 -1px 1px 0 rgba(0, 0, 0, 0.6) inset,
-    0 0 20px 0 rgba(245, 158, 11, 0.08);
-  border: 1px solid rgba(245, 158, 11, 0.28);
+    0 0 24px 0 rgba(245, 158, 11, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
 /* Minimalist Glass Panel / Card (Double-Bezel Inner Core) */
@@ -63,30 +63,33 @@ body {
     0 24px 60px -12px rgba(0, 0, 0, 0.8),
     0 1px 1px 0 rgba(255, 255, 255, 0.22) inset,
     0 -1px 1px 0 rgba(0, 0, 0, 0.5) inset;
-  border: 1px solid rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-/* Phone Mockup on Dashboard */
-.glass-phone-body {
+/* 3D Realistic Smartphone Mockup Chassis */
+.phone-3d-chassis {
   background: linear-gradient(
-    145deg,
-    #2c1a12 0%,
-    #180e08 40%,
-    #0d0604 100%
+    135deg,
+    #2c2420 0%,
+    #1c1410 25%,
+    #120c08 50%,
+    #1e1612 75%,
+    #2b221d 100%
   );
   box-shadow:
-    0 30px 70px -15px rgba(0, 0, 0, 0.95),
-    0 0 0 1px rgba(255, 255, 255, 0.14),
-    0 0 35px 2px rgba(245, 158, 11, 0.12),
-    0 2px 4px 0 rgba(255, 255, 255, 0.25) inset;
+    0 35px 80px -15px rgba(0, 0, 0, 0.95),
+    0 15px 35px -5px rgba(0, 0, 0, 0.85),
+    0 0 0 1px rgba(255, 255, 255, 0.18),
+    0 2px 2px 0 rgba(255, 255, 255, 0.45) inset,
+    0 -2px 3px 0 rgba(0, 0, 0, 0.9) inset;
 }
 
 /* Light-bending refraction lens reflection streak */
 .glass-reflection {
   background: linear-gradient(
     125deg,
-    rgba(255, 255, 255, 0.25) 0%,
-    rgba(255, 255, 255, 0.08) 22%,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.06) 22%,
     transparent 42%,
     transparent 100%
   );
