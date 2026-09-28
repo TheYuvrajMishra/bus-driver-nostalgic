@@ -7,6 +7,7 @@ import {
   type JukeboxSong,
 } from "./songs-catalog";
 import { playRadioStatic } from "./radio-static";
+import { cabinReverb } from "./reverb-processor";
 
 export interface Track {
   id: string;
@@ -176,10 +177,14 @@ export const useAudioStore = create<AudioState>((set, get) => {
     },
 
     toggleReverb: () => {
-      set((s) => ({ reverbEnabled: !s.reverbEnabled }));
+      const nextVal = !get().reverbEnabled;
+      cabinReverb.playAcousticFeedback(nextVal);
+      cabinReverb.setReverbEnabled(nextVal);
+      set({ reverbEnabled: nextVal });
     },
 
     setReverbEnabled: (enabled: boolean) => {
+      cabinReverb.setReverbEnabled(enabled);
       set({ reverbEnabled: enabled });
     },
 

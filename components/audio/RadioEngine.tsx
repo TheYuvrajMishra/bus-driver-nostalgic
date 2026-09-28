@@ -4,11 +4,7 @@ import { useEffect, useRef } from "react";
 import { useAudioStore } from "@/lib/audio-store";
 import { ambientAudio } from "@/lib/ambient-audio";
 import { initLightningScheduler } from "@/lib/lightning-system";
-import {
-  getSharedAudioContext,
-  createBusReverbChain,
-  type ReverbGraph,
-} from "@/lib/reverb-processor";
+import { cabinReverb } from "@/lib/reverb-processor";
 
 /**
  * RadioEngine — mounted ONCE in RootLayout (app/layout.tsx).
@@ -21,7 +17,6 @@ import {
  */
 export default function RadioEngine() {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const reverbGraphRef = useRef<ReverbGraph | null>(null);
   const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
 
   const {
@@ -34,39 +29,40 @@ export default function RadioEngine() {
     pause,
   } = useAudioStore();
 
-  // Initialize ambient rain and lightning scheduler on mount
+  // Initialize ambient rain, lightning scheduler, and cabin reverb on mount
   useEffect(() => {
     ambientAudio.init();
     initLightningScheduler();
+    cabinReverb.init();
 
     return () => {
       ambientAudio.cleanup();
     };
   }, []);
 
-  // Unlock browser audio context & setup Web Audio reverb graph on first user interaction
+  // Unlock browser audio context & connect local audio on first user interaction
   useEffect(() => {
     const unlock = () => {
       try {
-        const ctx = getSharedAudioContext();
+        const ctx = cabinReverb.getAudioContext();
         if (ctx) {
           if (ctx.state === "suspended") {
             ctx.resume();
           }
 
-          // Wire local audio through the Cabin Reverb graph
+          cabinReverb.init();
+
+          // Connect local audio element through the master input if present
           if (audioRef.current && !sourceNodeRef.current) {
             try {
               const source = ctx.createMediaElementSource(audioRef.current);
               sourceNodeRef.current = source;
-              const graph = createBusReverbChain(ctx);
-              reverbGraphRef.current = graph;
-
-              source.connect(graph.inputNode);
-              graph.outputNode.connect(ctx.destination);
-              graph.setReverb(useAudioStore.getState().reverbEnabled);
+              const masterIn = cabinReverb.getMasterInput();
+              if (masterIn) {
+                source.connect(masterIn);
+              }
             } catch {
-              // fallback if element source already connected
+              // ignore
             }
           }
         }
@@ -85,9 +81,7 @@ export default function RadioEngine() {
 
   // Sync reverb state changes
   useEffect(() => {
-    if (reverbGraphRef.current) {
-      reverbGraphRef.current.setReverb(reverbEnabled);
-    }
+    cabinReverb.setReverbEnabled(reverbEnabled);
   }, [reverbEnabled]);
 
   // Sync volume & mute for local audio
