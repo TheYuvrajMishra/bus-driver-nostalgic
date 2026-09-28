@@ -134,7 +134,7 @@ export function getDominantTreeGeometry(): THREE.BufferGeometry {
     // 100% Volumetric 3D Foliage Clusters (Faceted Dodecahedra / Icosahedra)
     const domeCenter = paint(
       new THREE.DodecahedronGeometry(2.3, 1),
-      "#35702a", // rich foliage mid-tone
+      "#3f8c24", // rich foliage mid-tone
       0,
       5.1,
       0,
@@ -144,20 +144,17 @@ export function getDominantTreeGeometry(): THREE.BufferGeometry {
     );
     const crownTop = paint(
       new THREE.DodecahedronGeometry(1.6, 1),
-      "#4d9a30", // sunlit highlight crown
+      "#62c434", // sunlit highlight crown
       0.15,
-      5.7,
+      6.1,
       -0.1,
       0.3,
       0.1,
-      -0.2,
-      1.25,
-      0.62,
-      1.2
+      -0.2
     );
     const clusterRight = paint(
       new THREE.DodecahedronGeometry(1.8, 1),
-      "#2f6b24",
+      "#388020",
       1.7,
       4.5,
       0.6,
@@ -167,7 +164,7 @@ export function getDominantTreeGeometry(): THREE.BufferGeometry {
     );
     const clusterRightTop = paint(
       new THREE.DodecahedronGeometry(1.3, 1),
-      "#468c2b",
+      "#56ba2e",
       1.9,
       5.2,
       0.5,
@@ -177,7 +174,7 @@ export function getDominantTreeGeometry(): THREE.BufferGeometry {
     );
     const clusterLeft = paint(
       new THREE.DodecahedronGeometry(1.7, 1),
-      "#2b6522",
+      "#32771c",
       -1.6,
       4.4,
       -0.6,
@@ -187,7 +184,7 @@ export function getDominantTreeGeometry(): THREE.BufferGeometry {
     );
     const clusterLeftTop = paint(
       new THREE.DodecahedronGeometry(1.2, 1),
-      "#3f8a28",
+      "#4eb229",
       -1.8,
       5.0,
       -0.5,
@@ -197,7 +194,7 @@ export function getDominantTreeGeometry(): THREE.BufferGeometry {
     );
     const clusterFront = paint(
       new THREE.DodecahedronGeometry(1.5, 1),
-      "#295f1e",
+      "#2e6f18",
       -0.3,
       4.2,
       1.4,
@@ -207,7 +204,7 @@ export function getDominantTreeGeometry(): THREE.BufferGeometry {
     );
     const clusterBack = paint(
       new THREE.DodecahedronGeometry(1.5, 1),
-      "#245a1c",
+      "#296515",
       0.4,
       4.3,
       -1.3,
@@ -216,7 +213,7 @@ export function getDominantTreeGeometry(): THREE.BufferGeometry {
       0.35
     );
     const understoryPockets = paint(
-      new THREE.DodecahedronGeometry(2.5, 0),
+      new THREE.DodecahedronGeometry(2.0, 0),
       "#18440b", // deep shaded underside
       0,
       3.7,
@@ -224,73 +221,6 @@ export function getDominantTreeGeometry(): THREE.BufferGeometry {
       0.4,
       0.2,
       -0.2
-    );
-    // Wide umbrella skirt — flat acacia canopy ring (rich elegant greens)
-    const skirtRight = paint(
-      new THREE.DodecahedronGeometry(1.7, 1),
-      "#33702a",
-      3.0,
-      4.0,
-      0.4,
-      0.15,
-      0.3,
-      -0.1,
-      1.15,
-      0.62,
-      1.05
-    );
-    const skirtLeft = paint(
-      new THREE.DodecahedronGeometry(1.7, 1),
-      "#2a6826",
-      -3.0,
-      3.9,
-      -0.4,
-      -0.1,
-      -0.25,
-      0.15,
-      1.15,
-      0.62,
-      1.05
-    );
-    const skirtFront = paint(
-      new THREE.DodecahedronGeometry(1.6, 1),
-      "#2f7024",
-      0.3,
-      3.8,
-      2.6,
-      0.2,
-      0.1,
-      0.3,
-      1.05,
-      0.6,
-      1.15
-    );
-    const skirtBack = paint(
-      new THREE.DodecahedronGeometry(1.6, 1),
-      "#286523",
-      -0.3,
-      3.9,
-      -2.6,
-      -0.2,
-      -0.1,
-      -0.25,
-      1.05,
-      0.6,
-      1.15
-    );
-    // Broad sunlit top shell — flat acacia disc highlight layer
-    const topShell = paint(
-      new THREE.DodecahedronGeometry(2.1, 1),
-      "#55a336",
-      0,
-      5.5,
-      0,
-      0.1,
-      0.5,
-      0.05,
-      1.55,
-      0.42,
-      1.5
     );
     parts.push(
       domeCenter,
@@ -301,12 +231,7 @@ export function getDominantTreeGeometry(): THREE.BufferGeometry {
       clusterLeftTop,
       clusterFront,
       clusterBack,
-      understoryPockets,
-      skirtRight,
-      skirtLeft,
-      skirtFront,
-      skirtBack,
-      topShell
+      understoryPockets
     );
 
     dominantTreeGeo = mergeGeometries(parts)!;
@@ -409,7 +334,7 @@ export function getBanyanTreeGeometry(): THREE.BufferGeometry {
     // Organic leafy cloud puffs (faceted dodecahedra volumes)
     const domeCenter = paint(
       new THREE.DodecahedronGeometry(2.4, 1),
-      "#3f8a26",
+      "#4fa62d",
       0,
       5.2,
       0,
@@ -419,7 +344,7 @@ export function getBanyanTreeGeometry(): THREE.BufferGeometry {
     );
     const crownTop = paint(
       new THREE.DodecahedronGeometry(1.7, 1),
-      "#55a336", // sunny crown highlight
+      "#6ecf3e", // sunny crown highlight
       0.2,
       6.2,
       -0.1,
@@ -429,7 +354,7 @@ export function getBanyanTreeGeometry(): THREE.BufferGeometry {
     );
     const cloudRight = paint(
       new THREE.DodecahedronGeometry(2.1, 1),
-      "#377a24",
+      "#429324",
       1.8,
       4.4,
       0.9,
@@ -439,7 +364,7 @@ export function getBanyanTreeGeometry(): THREE.BufferGeometry {
     );
     const cloudRightTop = paint(
       new THREE.DodecahedronGeometry(1.4, 1),
-      "#4d9a30",
+      "#63c435",
       2.2,
       5.1,
       0.8,
@@ -449,7 +374,7 @@ export function getBanyanTreeGeometry(): THREE.BufferGeometry {
     );
     const cloudLeft = paint(
       new THREE.DodecahedronGeometry(2.0, 1),
-      "#327022",
+      "#3b8720",
       -1.7,
       4.3,
       -0.8,
@@ -459,7 +384,7 @@ export function getBanyanTreeGeometry(): THREE.BufferGeometry {
     );
     const cloudLeftTop = paint(
       new THREE.DodecahedronGeometry(1.3, 1),
-      "#4a9630",
+      "#5aba30",
       -2.0,
       4.9,
       -0.7,
@@ -469,7 +394,7 @@ export function getBanyanTreeGeometry(): THREE.BufferGeometry {
     );
     const cloudFront = paint(
       new THREE.DodecahedronGeometry(1.8, 1),
-      "#2e6720",
+      "#357b1c",
       -0.4,
       4.1,
       1.6,
@@ -479,7 +404,7 @@ export function getBanyanTreeGeometry(): THREE.BufferGeometry {
     );
     const cloudBack = paint(
       new THREE.DodecahedronGeometry(1.7, 1),
-      "#295f1e",
+      "#2e6f18",
       0.5,
       4.2,
       -1.5,
@@ -488,80 +413,14 @@ export function getBanyanTreeGeometry(): THREE.BufferGeometry {
       0.4
     );
     const understoryShadow = paint(
-      new THREE.DodecahedronGeometry(2.6, 0),
-      "#183d0e",
+      new THREE.DodecahedronGeometry(2.2, 0),
+      "#1c4a0d",
       0,
       3.8,
       0,
       0.5,
       0.2,
       -0.3
-    );
-    // Wide umbrella skirt — flat banyan canopy ring
-    const skirtR = paint(
-      new THREE.DodecahedronGeometry(1.8, 1),
-      "#357a24",
-      3.1,
-      4.1,
-      0.5,
-      0.12,
-      0.35,
-      -0.08,
-      1.2,
-      0.6,
-      1.05
-    );
-    const skirtL = paint(
-      new THREE.DodecahedronGeometry(1.8, 1),
-      "#2f7022",
-      -3.1,
-      4.0,
-      -0.5,
-      -0.12,
-      -0.3,
-      0.12,
-      1.2,
-      0.6,
-      1.05
-    );
-    const skirtF = paint(
-      new THREE.DodecahedronGeometry(1.7, 1),
-      "#327426",
-      0.4,
-      3.9,
-      2.7,
-      0.18,
-      0.12,
-      0.28,
-      1.05,
-      0.58,
-      1.2
-    );
-    const skirtB = paint(
-      new THREE.DodecahedronGeometry(1.7, 1),
-      "#2c6924",
-      -0.4,
-      4.0,
-      -2.7,
-      -0.18,
-      -0.12,
-      -0.28,
-      1.05,
-      0.58,
-      1.2
-    );
-    const topCanopy = paint(
-      new THREE.DodecahedronGeometry(2.2, 1),
-      "#5cab38",
-      0,
-      6.0,
-      0,
-      0.12,
-      0.45,
-      0.06,
-      1.35,
-      0.55,
-      1.3
     );
     parts.push(
       domeCenter,
@@ -572,12 +431,7 @@ export function getBanyanTreeGeometry(): THREE.BufferGeometry {
       cloudLeftTop,
       cloudFront,
       cloudBack,
-      understoryShadow,
-      skirtR,
-      skirtL,
-      skirtF,
-      skirtB,
-      topCanopy
+      understoryShadow
     );
 
     banyanTreeGeo = mergeGeometries(parts)!;
@@ -641,7 +495,7 @@ export function getGulmoharTreeGeometry(): THREE.BufferGeometry {
     // 100% Volumetric 3D Blossom & Leaf Clusters (NO flat disc geometry)
     const centerBlossom = paint(
       new THREE.DodecahedronGeometry(2.2, 1),
-      "#b0322c", // fiery scarlet blossom
+      "#e53935", // fiery scarlet blossom
       0,
       5.0,
       0.1,
@@ -651,7 +505,7 @@ export function getGulmoharTreeGeometry(): THREE.BufferGeometry {
     );
     const crownBlossom = paint(
       new THREE.DodecahedronGeometry(1.6, 1),
-      "#cf4a26", // bright flame highlight crown
+      "#ff5722", // bright flame highlight crown
       0.1,
       5.9,
       0,
@@ -661,7 +515,7 @@ export function getGulmoharTreeGeometry(): THREE.BufferGeometry {
     );
     const rightBlossom = paint(
       new THREE.DodecahedronGeometry(1.8, 1),
-      "#c74522", // vermilion blossom
+      "#f4511e", // vermilion blossom
       2.0,
       4.6,
       0.4,
@@ -671,7 +525,7 @@ export function getGulmoharTreeGeometry(): THREE.BufferGeometry {
     );
     const rightBlossomTop = paint(
       new THREE.DodecahedronGeometry(1.3, 1),
-      "#d84a30", // coral highlight
+      "#ff7043", // coral highlight
       2.2,
       5.3,
       0.3,
@@ -691,7 +545,7 @@ export function getGulmoharTreeGeometry(): THREE.BufferGeometry {
     );
     const leftBlossom = paint(
       new THREE.DodecahedronGeometry(1.7, 1),
-      "#a52c28", // deep crimson blossom
+      "#d32f2f", // deep crimson blossom
       -1.8,
       4.5,
       -0.5,
@@ -701,7 +555,7 @@ export function getGulmoharTreeGeometry(): THREE.BufferGeometry {
     );
     const leftBlossomTop = paint(
       new THREE.DodecahedronGeometry(1.2, 1),
-      "#d2482e",
+      "#ff6e40",
       -2.0,
       5.1,
       -0.4,
@@ -721,7 +575,7 @@ export function getGulmoharTreeGeometry(): THREE.BufferGeometry {
     );
     const frontBlossom = paint(
       new THREE.DodecahedronGeometry(1.5, 1),
-      "#bd4220",
+      "#e64a19",
       0.3,
       4.3,
       1.4,
@@ -731,7 +585,7 @@ export function getGulmoharTreeGeometry(): THREE.BufferGeometry {
     );
     const backBlossom = paint(
       new THREE.DodecahedronGeometry(1.4, 1),
-      "#962924",
+      "#c62828",
       -0.3,
       4.4,
       -1.3,

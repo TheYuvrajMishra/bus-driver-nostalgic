@@ -150,7 +150,7 @@ function makeLargeCumulusCloud(seedOffset = 0): THREE.BufferGeometry {
   };
 
   const topColor = "#ffffff";
-  const botColor = "#a8c6e0"; // warm-leaning soft sky shade
+  const botColor = "#9ebbd9"; // soft sky ambient blue-grey
 
   // Core base layer: wide flat puffs
   for (let i = 0; i < 7; i++) {
@@ -236,18 +236,21 @@ function makeLargeCumulusCloud(seedOffset = 0): THREE.BufferGeometry {
 }
 
 const CLOUD_POSITIONS = [
-  // Scattered mid-sky puffs with blue gaps between them (matching reference)
-  { x: -170, y: 120, z: -300, s: 1.5, ry: 0.3 },
-  { x: -40, y: 105, z: -400, s: 1.3, ry: 1.1 },
-  { x: 200, y: 130, z: -340, s: 1.6, ry: -0.4 },
-  { x: 120, y: 95, z: -260, s: 1.2, ry: 2.2 },
+  // Dominant large cloud on the left sky (matching reference)
+  { x: -160, y: 130, z: -280, s: 2.1, ry: 0.3 },
+  // Towering center-left cloud
+  { x: -45, y: 105, z: -380, s: 1.8, ry: 1.1 },
+  // Far right high cumulus bank
+  { x: 190, y: 140, z: -320, s: 2.3, ry: -0.4 },
+  // Midground center-right puffy cloud
+  { x: 110, y: 95, z: -240, s: 1.5, ry: 2.2 },
   // Distant horizon cloud layers
-  { x: -300, y: 85, z: -480, s: 1.8, ry: 0.8 },
-  { x: 320, y: 90, z: -510, s: 1.9, ry: -1.2 },
-  { x: 0, y: 80, z: -540, s: 1.7, ry: 1.7 },
-  // High overhead-forward clouds
-  { x: -100, y: 145, z: -180, s: 1.2, ry: -0.8 },
-  { x: 150, y: 155, z: -190, s: 1.3, ry: 0.5 },
+  { x: -280, y: 80, z: -460, s: 2.6, ry: 0.8 },
+  { x: 300, y: 85, z: -490, s: 2.8, ry: -1.2 },
+  { x: 10, y: 75, z: -520, s: 2.4, ry: 1.7 },
+  // Overhead forward clouds
+  { x: -90, y: 150, z: -160, s: 1.6, ry: -0.8 },
+  { x: 140, y: 160, z: -170, s: 1.7, ry: 0.5 },
 ];
 
 function LowPolyClouds() {
@@ -292,8 +295,7 @@ function LowPolyClouds() {
       args={[cloudGeo, undefined, CLOUD_POSITIONS.length]}
       frustumCulled={false}
     >
-      {/* Unlit: clouds stay bright white with baked soft-blue undersides regardless of scene lights */}
-      <meshBasicMaterial vertexColors toneMapped={false} />
+      <meshLambertMaterial vertexColors flatShading />
     </instancedMesh>
   );
 }
@@ -322,7 +324,7 @@ function makeHorizonMountains(
 
   const colRust = new THREE.Color(rustColor);
   const colSlate = new THREE.Color(slateColor);
-  const colMid = new THREE.Color("#96705c"); // warm sunlit mid-slope
+  const colMid = new THREE.Color("#755358"); // warm purplish slate
 
   // Ring of mountain vertices: 3 rings (base, mid-ridge, summit peaks)
   const angleStep = (Math.PI * 2) / segments;
@@ -389,13 +391,13 @@ function HorizonMountains() {
   const outerMountains = useMemo(
     () =>
       makeHorizonMountains(
-        580,
-        -14,
-        125,
+        700,
+        -15,
+        155,
         48,
         101,
-        "#b45f28", // deep rust base
-        "#7a5c50" // summit warm taupe-slate
+        "#bd6e3c", // base rust
+        "#424e62"  // summit cool slate grey
       ),
     []
   );
@@ -403,13 +405,13 @@ function HorizonMountains() {
   const innerRidge = useMemo(
     () =>
       makeHorizonMountains(
-        400,
-        -11,
-        75,
+        480,
+        -12,
+        82,
         36,
         202,
-        "#c06a24", // deep terracotta
-        "#86665a" // warm ridge taupe
+        "#c9783e", // warm terracotta
+        "#624e52"  // purplish slate ridge
       ),
     []
   );
