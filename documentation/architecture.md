@@ -108,28 +108,3 @@ Priority order, matching research.md §3:
 4. Swap the static road for the chunk manager (spawn/despawn loop), still no props — confirm no seams/hitches while driving indefinitely.
 5. Add instanced props per chunk (trees first, then dhabas/trucks/milestones), verifying frame rate stays flat as prop count grows.
 6. Only after 1–5 are smooth on the target iGPU: layer in cartoon shading polish, camera bob/sway, horn/easter-egg extras from design.md Phase 3.
-
-## 11. Traffic & Driving Dynamics Architecture (Spec Extension)
-
-### 1. Kinematic Driving Model (`lib/drive-store.ts`, `components/drive/DriveController.tsx`)
-- State: `speed` (0..30.5 m/s ≈ 0..110 km/h), `distanceTraveled`, `lateralOffset`, `throttle` (0..1), `brake` (0..1), `gear`, `rpm`.
-- Acceleration: non-linear asymptotic curve `a(v) = a_max * (1 - (v / v_max)^1.5)`.
-- Braking: strong linear deceleration `b = b_max * brake` down to 0 (holds at 0, no reverse).
-- Engine Coasting: gentle resistive deceleration.
-- Steering authority: speed-attenuated lateral rate `d_offset/dt = steer * max_rate * (1 - 0.25 * (v / v_max))`.
-
-### 2. Spring-Damper Cabin Rig (`components/drive/DriverRig.tsx`, `lib/cabin-physics.ts`)
-- Config scale: `CABIN_MOTION_SCALE` in `lib/driving-config.ts` (0 = off, default = 1.0).
-- Spring 1 (Cabin Body): Pitch (accel/brake), Roll (steer * speed), Heave (road noise * speed), Engine idle vibration (8Hz harmonic).
-- Spring 2 (Driver Head): Inertial lag and counter-motion.
-- Secondary Physics: Hanging nimbu-mirchi charm pendulum driven by cabin acceleration vector; steering wheel smooth centering.
-- Bump Impulse: Decaying trauma shake on soft collision / road irregularity.
-
-### 3. 1D Road-Space Traffic Simulation (`lib/traffic-system.ts`, `components/drive/TrafficManager.tsx`)
-- Lane coordinate system: `s` (longitudinal distance along road in meters) and `lane` (+1 right same-direction, -1 left oncoming).
-- Window culling: Active window `[player_s - 150m, player_s + 400m]`. Seeded spawn/despawn by chunk hash.
-- Vehicle types: Decorated Truck, Bus, Auto-Rickshaw, Taxi/Car, Scooter.
-- Instanced rendering: Batch `InstancedMesh` per archetype with instance matrix and color/emissive state.
-- AI State Machine: `CRUISE` -> `FOLLOW` (car-following gap) -> `OVERTAKE` (check oncoming window, blinker indicator, ease out, pass, merge back).
-- Soft Collisions: 1D road box overlap test -> triggers soft bump velocity cut, lateral push, cabin shake impulse, and AI horn honk.
-

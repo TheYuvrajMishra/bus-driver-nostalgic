@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import PersistentPlayer from "@/components/audio/PersistentPlayer";
 import RadioEngine from "@/components/audio/RadioEngine";
-import ScreenGrainOverlay from "@/components/effects/ScreenGrainOverlay";
+import SiteNav from "@/components/SiteNav";
 
 export const metadata: Metadata = {
   title: "bus-driver-nostalgic",
@@ -11,15 +11,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className="h-full w-full overflow-hidden antialiased">
+    <html lang="en" className="h-full antialiased">
       {/* RadioEngine owns playback (hidden YouTube playlist + legacy
           fallback). It is NOT inside any page or per-route layout, so the
           player survives client-side navigation (architecture.md §8). */}
-      <body className="h-full w-full overflow-hidden bg-[#150803] text-amber-50">
-        <main className="h-full w-full">{children}</main>
+      <body className="min-h-full bg-[#150803] text-amber-50">
+        <SiteNav />
+        <main className="mx-auto max-w-5xl px-4 pb-24 pt-8">{children}</main>
         <RadioEngine />
         <PersistentPlayer />
-        <ScreenGrainOverlay opacity={0.24} blendMode="overlay" animated={true} grainScale="medium" />
       </body>
     </html>
   );

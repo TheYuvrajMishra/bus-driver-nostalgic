@@ -107,32 +107,36 @@ export function getSandTexture(): THREE.CanvasTexture | null {
   if (typeof document === "undefined") return null;
   if (sandTex) return sandTex;
   const c = document.createElement("canvas");
-  c.width = 128;
-  c.height = 128;
+  c.width = 256;
+  c.height = 256;
   const g = c.getContext("2d")!;
   g.fillStyle = "#b08d5e";
-  g.fillRect(0, 0, 128, 128);
+  g.fillRect(0, 0, 256, 256);
   let seed = 987654321;
   const rand = () => {
     seed = (seed * 1664525 + 1013904223) >>> 0;
     return seed / 0xffffffff;
   };
-  for (let i = 0; i < 900; i++) {
-    const v = 120 + Math.floor(rand() * 60);
-    g.fillStyle = `rgba(${v},${Math.floor(v * 0.82)},${Math.floor(v * 0.58)},0.5)`;
-    const s = 1 + rand() * 2;
-    g.fillRect(rand() * 128, rand() * 128, s, s);
+  // Fine, low-contrast speckle tiled small: reads as still, crisp grain.
+  // (The old 128px / 48-repeat version magnified into blurry blobs that
+  // shimmered with the camera bob — looked like animated low-res grain.)
+  for (let i = 0; i < 1500; i++) {
+    const v = 120 + Math.floor(rand() * 90);
+    g.fillStyle = `rgba(${v},${Math.floor(v * 0.82)},${Math.floor(v * 0.58)},0.3)`;
+    const s = rand() < 0.8 ? 1 : 2;
+    g.fillRect(rand() * 256, rand() * 256, s, s);
   }
-  // a few scrub dots
-  for (let i = 0; i < 26; i++) {
-    g.fillStyle = "rgba(96,110,62,0.55)";
-    const s = 2 + rand() * 3;
-    g.fillRect(rand() * 128, rand() * 128, s, s * 0.7);
+  // a few scrub dots, subtle
+  for (let i = 0; i < 30; i++) {
+    g.fillStyle = "rgba(96,110,62,0.35)";
+    const s = 2 + rand() * 2;
+    g.fillRect(rand() * 256, rand() * 256, s, s * 0.7);
   }
   const tex = new THREE.CanvasTexture(c);
   tex.wrapS = THREE.RepeatWrapping;
   tex.wrapT = THREE.RepeatWrapping;
-  tex.repeat.set(48, 48);
+  tex.repeat.set(140, 140);
+  tex.anisotropy = 4;
   tex.colorSpace = THREE.SRGBColorSpace;
   sandTex = tex;
   return tex;

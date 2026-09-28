@@ -6,50 +6,36 @@ import { usePathname } from "next/navigation";
 const LINKS = [
   { href: "/", label: "Drive" },
   { href: "/playlists", label: "Playlists" },
-  { href: "/songs", label: "100 Songs" },
+  { href: "/songs", label: "Songs" },
   { href: "/about", label: "About" },
 ];
 
 export default function SiteNav() {
   const pathname = usePathname();
-
   return (
-    <header className="sticky top-3 z-40 px-3 sm:px-6 w-full flex justify-center pointer-events-none select-none">
-      <nav className="glass-pill pointer-events-auto rounded-full p-1.5 shadow-2xl flex items-center gap-1 sm:gap-2">
-        {/* Brand Lockup */}
-        <Link
-          href="/"
-          className="flex items-center gap-2 px-3 py-1 rounded-full hover:bg-white/5 transition"
-        >
-          <div className="h-2 w-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
-          <span className="font-bold tracking-tight text-xs sm:text-sm text-amber-100">
-            <span className="text-amber-400">bus-driver</span>
-            <span className="text-neutral-400 font-normal">-nostalgic</span>
-          </span>
-        </Link>
-
-        <div className="h-4 w-px bg-white/10 mx-0.5" />
-
-        {/* Navigation Links */}
-        <div className="flex items-center gap-1">
-          {LINKS.map((l) => {
-            const active = pathname === l.href;
-            return (
-              <Link
-                key={l.href}
-                href={l.href}
-                className={`relative rounded-full px-3 py-1 text-xs sm:text-sm font-medium transition-all duration-300 ${
-                  active
-                    ? "bg-gradient-to-r from-amber-500 to-orange-400 text-neutral-950 font-bold shadow-md shadow-amber-500/25 scale-[1.02]"
-                    : "text-neutral-300 hover:text-white hover:bg-white/10"
-                }`}
-              >
-                {l.label}
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
-    </header>
+    <nav className="sticky top-0 z-40 border-b border-amber-900/40 bg-[#150803]/90 backdrop-blur">
+      <div className="mx-auto flex h-14 max-w-5xl items-center gap-1 px-4">
+        <span className="mr-4 text-lg font-bold tracking-tight text-amber-100">
+          🚌 <span className="text-amber-400">bus-driver</span>
+          <span className="text-amber-200/70">-nostalgic</span>
+        </span>
+        {LINKS.map((l) => {
+          const active = pathname === l.href;
+          return (
+            <Link
+              key={l.href}
+              href={l.href}
+              className={`rounded-md px-3 py-1.5 text-sm transition ${
+                active
+                  ? "bg-amber-500/15 text-amber-300"
+                  : "text-amber-100/60 hover:text-amber-100"
+              }`}
+            >
+              {l.label}
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
   );
 }

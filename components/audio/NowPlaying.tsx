@@ -1,33 +1,32 @@
 "use client";
 
 import { useAudioStore } from "@/lib/audio-store";
+import { YOUTUBE_PLAYLIST_TITLE } from "@/lib/radio-config";
 
 /**
- * NowPlaying — Minimalist Glassmorphic Now Playing Card.
+ * Example of a page-level component: it reads and dispatches the shared
+ * audio store, but never owns playback itself (architecture.md §8).
  */
 export default function NowPlaying() {
-  const { currentSong, isPlaying, toggle } = useAudioStore();
-  const title = currentSong?.title ?? "Bollywood 90s Hits";
-  const subtitle = `📻 Gaana #${currentSong?.id ?? 1}/100 · 80s-90s Classics`;
-
+  const { track, radioTitle, engine, isPlaying, toggle } = useAudioStore();
+  const title = radioTitle ?? track.title;
+  const subtitle =
+    engine === "youtube" ? `📻 ${YOUTUBE_PLAYLIST_TITLE} · YouTube` : track.artist;
   return (
-    <div className="glass-panel rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
-      <div className="glass-reflection pointer-events-none absolute inset-0 opacity-25" />
-      <div className="relative z-10 space-y-3">
-        <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 px-3 py-1 text-[11px] font-mono font-semibold text-amber-300 uppercase tracking-widest">
-          <span>📻</span> Now Broadcasting
-        </div>
-        <p className="text-xl sm:text-2xl font-extrabold text-amber-100 tracking-tight">
-          {title}
-        </p>
-        <p className="text-xs sm:text-sm text-amber-200/60 font-mono">{subtitle}</p>
-        <button
-          onClick={toggle}
-          className="mt-2 rounded-full bg-gradient-to-tr from-amber-500 to-orange-400 px-5 py-2 text-xs sm:text-sm font-bold text-neutral-950 shadow-lg shadow-amber-500/25 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer ring-1 ring-white/30"
-        >
-          {isPlaying ? "Pause Radio" : "Play Radio"}
-        </button>
-      </div>
+    <div className="rounded-xl border border-amber-900/50 bg-[#1a0f0c] p-6">
+      <p className="text-xs uppercase tracking-widest text-amber-400/70">Now playing</p>
+      <p className="mt-2 text-2xl font-bold text-amber-100">{title}</p>
+      <p className="text-sm text-amber-200/60">{subtitle}</p>
+      <button
+        onClick={toggle}
+        className="mt-4 rounded-full bg-amber-500 px-5 py-2 text-sm font-semibold text-[#1a0f0c] transition hover:bg-amber-400"
+      >
+        {isPlaying ? "Pause" : "Play"}
+      </button>
+      <p className="mt-4 text-xs text-amber-200/40">
+        Real 90s Bollywood radio, straight from YouTube. Navigate with the top
+        links — the radio must keep playing without restarting.
+      </p>
     </div>
   );
 }

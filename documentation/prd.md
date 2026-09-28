@@ -35,8 +35,8 @@ An always-on Indian nostalgia music radio (like busdriverplaylist.in / busdriver
 - Mobile: touch drag-to-steer wheel.
 
 ### Explicit non-goals (v1)
-- No real physics engine / suspension / tyre simulation (pure kinematic 1D road model).
-- No lap times, no scoring, no destructive crashes or game-over state — collisions exist as a SOFT bump only (pushes away, cuts speed, triggers shake/bump SFX and AI honk, no damage, no scoring, no game over).
+- No real physics engine / suspension / tyre simulation.
+- No lap times, no scoring, no crash/game-over state — this is an ambient toy, not a racing game.
 - No multiplayer.
 - No hand-authored maps — everything procedural.
 
@@ -55,9 +55,3 @@ An always-on Indian nostalgia music radio (like busdriverplaylist.in / busdriver
 - Exact music catalog/licensing source (are tracks self-hosted files, or embed of Spotify/YT like busdriverplaylist.in?).
 - Final visual identity/name for the project (see design.md for direction, not a final name).
 - Whether time-of-day rotation logic drives both the playlist *and* the game's lighting, or just the playlist.
-
-## 8. Traffic & Driving Dynamics (Spec Extension)
-- **Kinematic Player Dynamics**: ArrowUp accelerates (~100-110 km/h cap, non-linear torque curve), ArrowDown brakes to 0 and holds (no reverse), A/D / left-right steer with speed-sensitive authority. Real distance-traveled drives seamless chunk streaming.
-- **Spring-Damper Cabin Rig**: Decoupled cockpit mesh & driver head with pitch, roll, road vibration, hanging lemon-chilli pendulum, and soft bump impulse scaled by a single master tuning constant (0 = disabled).
-- **1D Road-Space Traffic**: Deterministic seeded streaming window around player (400m ahead, 150m behind, max 14 vehicles, ~8 near). Same-direction and oncoming 2-lane traffic, state-machine car following, safe overtaking with blinkers, AI honking reactions, and soft box-overlap bumps.
-
