@@ -36,6 +36,7 @@ interface AudioState {
 
   // Volume, Reverb & Screen state
   volume: number; // 0.0 to 1.0
+  duckRatio: number; // 0.0 to 1.0 multiplier during horns/passes
   isMuted: boolean;
   reverbEnabled: boolean; // Cozy Bus Cabin Acoustic Reverb Filter
   showVideoScreen: boolean;
@@ -50,6 +51,7 @@ interface AudioState {
   initRandomOnClientMount: () => void;
   toggleShuffle: () => void;
   setVolume: (volume: number) => void;
+  duckVolume: (ratio?: number, durationMs?: number) => void;
   toggleMute: () => void;
   toggleReverb: () => void;
   setReverbEnabled: (enabled: boolean) => void;
@@ -93,6 +95,7 @@ export const useAudioStore = create<AudioState>((set, get) => {
     isTuning: false,
 
     volume: 0.9,
+    duckRatio: 1.0,
     isMuted: false,
     reverbEnabled: true, // Enabled by default for cozy bus interior acoustics
     showVideoScreen: true,
@@ -100,6 +103,13 @@ export const useAudioStore = create<AudioState>((set, get) => {
     play: () => set({ isPlaying: true }),
     pause: () => set({ isPlaying: false }),
     toggle: () => set((s) => ({ isPlaying: !s.isPlaying })),
+
+    duckVolume: (ratio = 0.72, durationMs = 600) => {
+      set({ duckRatio: ratio });
+      setTimeout(() => {
+        set({ duckRatio: 1.0 });
+      }, durationMs);
+    },
 
     initRandomOnClientMount: () => {
       if (get().hasRandomizedOnMount) return;

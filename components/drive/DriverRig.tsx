@@ -2,43 +2,69 @@
 
 import { useFrame, useThree } from "@react-three/fiber";
 import { useDriveStore, EYE_HEIGHT } from "@/lib/drive-store";
-import { roadSlopeAtDistance, roadElevationAtDistance } from "@/lib/road-generator";
+import {
+  roadSlopeAtDistance,
+  roadElevationAtDistance,
+} from "@/lib/road-generator";
+import { cabinPhysics } from "@/lib/cabin-physics";
 
 /**
- * DriverRig — Camera motion controller:
- * Controls first-person driver camera through the 3D world.
- * Smoothly interpolates lateral steering offset, camera roll into turns,
- * 3D road slope/pitch when climbing uphill or descending downhill,
- * and high-speed road shock bobbing.
+ * DriverRig — Camera Motion & Head Inertia Controller:
+ *
+ * Implements the second-order driver head lag & counter-motion model:
+ * - Driver position follows lateral offset + spring-damper head sway
+ * - Braking lurches view forward and pitches down slightly
+ * - Turns produce realistic head lean and counter-sway
+ * - Elevation & hill slope tracking for seamless uphill/downhill views
  */
 export default function DriverRig() {
   const camera = useThree((s) => s.camera);
 
-  useFrame((state) => {
-    const { lateralOffset, steeringAngle, speed, distanceTraveled } = useDriveStore.getState();
+  useFrame((state, rawDt) => {
+    const dt = Math.min(rawDt, 0.05);
+    const {
+      lateralOffset,
+      steeringAngle,
+      speed,
+      distanceTraveled,
+      throttle,
+      brake,
+      shakeImpulse,
+    } = useDriveStore.getState();
+
     const t = state.clock.elapsedTime;
-    const speedK = Math.min(speed / 16, 1.0);
 
-    // Smooth camera shock & road vibration
-    const bobY = Math.sin(t * 12.0) * 0.015 * speedK;
-    const bobX = Math.sin(t * 6.5) * 0.008 * speedK;
+    // 1. Update Spring-Damper Physics
+    const motion = cabinPhysics.update(
+      dt,
+      t,
+      speed,
+      steeringAngle,
+      throttle,
+      brake,
+      shakeImpulse
+    );
 
-    // Road slope and elevation ahead for uphill climbs and downhill crests
+    // 2. Road Slope & Elevation ahead
     const slope = roadSlopeAtDistance(distanceTraveled);
     const elevAhead =
       roadElevationAtDistance(distanceTraveled + 45) -
       roadElevationAtDistance(distanceTraveled);
 
-    // First-person driver position slightly offset to right-hand drive lane center
-    camera.position.set(lateralOffset + bobX, EYE_HEIGHT + bobY, 0);
+    // 3. Driver Head Camera Position in Car-Space
+    const camX = lateralOffset + motion.headX;
+    const camY = EYE_HEIGHT + motion.headY;
+    const camZ = motion.headZ;
+    camera.position.set(camX, camY, camZ);
 
-    // Look ahead at vanishing point down the road with turn anticipation and hill climb/descent tracking
-    const lookTargetX = lateralOffset * 0.6 + bobX * 2 - steeringAngle * 4.0;
-    const lookTargetY = 1.42 + elevAhead * 0.6;
+    // 4. Look-at Target with turn anticipation and hill climbing
+    const lookTargetX = lateralOffset * 0.65 + motion.headX * 2.0 - steeringAngle * 3.8;
+    const lookTargetY = 1.45 + elevAhead * 0.6 + motion.headPitch * 15.0;
     camera.lookAt(lookTargetX, lookTargetY, -55);
 
-    // Dynamic camera lean into turn (roll)
-    camera.rotateZ(-steeringAngle * 0.035);
+    // 5. Dynamic Camera Roll & Pitch Lean
+    camera.rotateZ(motion.headRoll);
+    camera.rotateX(motion.headPitch);
   });
 
   return null;

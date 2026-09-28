@@ -5,6 +5,7 @@ import { useDriveStore } from "@/lib/drive-store";
 import { useWeatherStore } from "@/lib/weather-store";
 import { useLightningStore } from "@/lib/lightning-system";
 import { steeringInput } from "@/lib/steering-input";
+import { cabinPhysics } from "@/lib/cabin-physics";
 import { honk } from "./HornButton";
 
 function WindshieldRain() {
@@ -119,33 +120,20 @@ function WindshieldRain() {
 }
 
 /**
- * 2D/3D Hybrid Cockpit Overlay:
- * 1. Windshield Glass Layer (Underneath cockpit frame, zIndex: 2)
- * 2. High-resolution Indian bus cabin frame with authentic painted dashboard dials (zIndex: 10).
- * 3. Hanging Nimbu-Mirchi charm with inertia pendulum physics (zIndex: 15).
- * 4. Interactive 3D Perspective Volumetric Steering Wheel with calibrated driver POV geometry (zIndex: 20).
- * 5. Cockpit camera shake & road vibration.
+ * Multi-layer 3D volumetric extrusion for steering wheel rim & spokes
  */
-
-// Calibrated 3D Volumetric Extrusion Slices (clean, shadow-free, bright front face)
 const DEPTH_LAYERS = [
-  { z: -38.0, b: 0.70, s: 0.9750 },
-  { z: -35.3, b: 0.72, s: 0.9768 },
-  { z: -32.6, b: 0.74, s: 0.9785 },
-  { z: -29.9, b: 0.76, s: 0.9803 },
-  { z: -27.1, b: 0.78, s: 0.9820 },
-  { z: -24.4, b: 0.81, s: 0.9838 },
-  { z: -21.7, b: 0.84, s: 0.9855 },
-  { z: -19.0, b: 0.87, s: 0.9873 },
-  { z: -16.3, b: 0.89, s: 0.9890 },
-  { z: -13.6, b: 0.92, s: 0.9908 },
-  { z: -10.9, b: 0.94, s: 0.9925 },
-  { z: -8.1, b: 0.96, s: 0.9943 },
-  { z: -5.4, b: 0.97, s: 0.9960 },
-  { z: -2.7, b: 0.99, s: 0.9978 },
-  { z: 0.0, b: 1.00, s: 1.0000 },
+  { z: -16, s: 0.94, b: 0.35 },
+  { z: -12, s: 0.955, b: 0.45 },
+  { z: -8, s: 0.97, b: 0.6 },
+  { z: -4, s: 0.985, b: 0.78 },
+  { z: 0, s: 1.0, b: 1.0 },
 ];
 
+/**
+ * CockpitOverlay with 3D Volumetric Steering Wheel, Spring-Damper Cabin Physics,
+ * Calibrated Instrument Needles (Speedometer & Tachometer), and Nimbu-Mirchi Pendulum.
+ */
 export default function CockpitOverlay() {
   const containerRef = useRef<HTMLDivElement>(null);
   const cockpitWrapRef = useRef<HTMLDivElement>(null);
@@ -158,10 +146,6 @@ export default function CockpitOverlay() {
   const dragCenter = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const startPointerAngle = useRef(0);
   const startWheelAngle = useRef(0);
-
-  // Inertia states
-  const nimbuAngle = useRef(0);
-  const nimbuVel = useRef(0);
 
   // ----------------------------------------------------
   // Interactive Pointer Drag Handling
@@ -176,7 +160,8 @@ export default function CockpitOverlay() {
     const dx = e.clientX - dragCenter.current.x;
     const dy = e.clientY - dragCenter.current.y;
     startPointerAngle.current = Math.atan2(dy, dx);
-    startWheelAngle.current = (useDriveStore.getState().steeringAngle * Math.PI) / 3.0;
+    startWheelAngle.current =
+      (useDriveStore.getState().steeringAngle * Math.PI) / 3.0;
     isDragging.current = true;
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
   }, []);
@@ -210,7 +195,7 @@ export default function CockpitOverlay() {
   }, []);
 
   // ----------------------------------------------------
-  // Animation Frame: Wheel Spin, Talisman Sway, Engine Shake
+  // Animation Frame: Cabin Motion Rig, Gauges, Talisman & Wheel
   // ----------------------------------------------------
   useEffect(() => {
     let animId: number;
@@ -220,42 +205,55 @@ export default function CockpitOverlay() {
       const dt = Math.min((time - prevTime) / 1000, 0.1);
       prevTime = time;
 
-      const { steeringAngle, speed } = useDriveStore.getState();
-      const speedNorm = Math.min(speed / 16, 1.0);
+      const {
+        steeringAngle,
+        speed,
+        speedKmh,
+        rpm,
+        distanceTraveled,
+        throttle,
+        brake,
+        shakeImpulse,
+      } = useDriveStore.getState();
 
-      // 1. In-plane Steering Wheel Rotation (Z-axis spin in local tilted coordinate frame)
+      // 1. In-plane Steering Wheel Rotation (Z-axis spin)
       if (wheelRef.current) {
-        const spinDeg = steeringAngle * 75; // 75 deg max rotation lock
+        const spinDeg = steeringAngle * 75; // 75 deg max lock
         wheelRef.current.style.transform = `rotateZ(${spinDeg}deg)`;
       }
 
-      // 2. Nimbu-Mirchi Charm Inertia (Spring pendulum physics - inverted direction)
-      if (nimbuRef.current) {
-        const targetAngle = steeringAngle * 38;
-        const springForce = (targetAngle - nimbuAngle.current) * 16.0;
-        const damping = -nimbuVel.current * 4.8;
-        const roadJolt = Math.sin(time * 0.014) * 2.2 * speedNorm;
+      // 2. Cabin Spring-Damper & Secondary Physics
+      const motion = cabinPhysics.update(
+        dt,
+        time / 1000,
+        speed,
+        steeringAngle,
+        throttle,
+        brake,
+        shakeImpulse
+      );
 
-        nimbuVel.current += (springForce + damping + roadJolt) * dt;
-        nimbuAngle.current += nimbuVel.current * dt;
-
-        nimbuRef.current.style.transform = `rotate(${nimbuAngle.current.toFixed(2)}deg)`;
+      // Cabin Body Pitch/Roll/Heave/Sway
+      if (cockpitWrapRef.current) {
+        const tX = motion.cabinSway.toFixed(2);
+        const tY = motion.cabinHeave.toFixed(2);
+        const rZ = motion.cabinRoll.toFixed(2);
+        const rX = motion.cabinPitch.toFixed(2);
+        cockpitWrapRef.current.style.transform = `translate3d(${tX}px, ${tY}px, 0) rotateX(${rX}deg) rotateZ(${rZ}deg)`;
       }
 
-      // 3. Cabin Engine Vibration & Road Bump Shake
-      if (cockpitWrapRef.current) {
-        const idleVibeY = Math.sin(time * 0.024) * 0.6;
-        const roadBumpY = Math.sin(time * 0.012) * 1.2 * speedNorm;
-        const roadBumpX = Math.cos(time * 0.007) * 0.7 * speedNorm;
-
-        cockpitWrapRef.current.style.transform = `translate3d(${roadBumpX.toFixed(2)}px, ${(idleVibeY + roadBumpY).toFixed(2)}px, 0)`;
+      // Hanging Nimbu-Mirchi Charm
+      if (nimbuRef.current) {
+        nimbuRef.current.style.transform = `rotate(${motion.talismanAngle.toFixed(2)}deg)`;
       }
 
       // Smooth return to center when not dragging or pressing keys
       if (!isDragging.current && !steeringInput.left && !steeringInput.right) {
         if (Math.abs(steeringAngle) > 0.001) {
           const decayed = steeringAngle * Math.exp(-dt * 6.0);
-          useDriveStore.getState().setSteering(Math.abs(decayed) < 0.001 ? 0 : decayed);
+          useDriveStore
+            .getState()
+            .setSteering(Math.abs(decayed) < 0.001 ? 0 : decayed);
         }
       }
 
@@ -284,6 +282,7 @@ export default function CockpitOverlay() {
           height: "100vh",
           minWidth: "100vw",
           minHeight: "100vh",
+          transformOrigin: "center 85%",
         }}
       >
         {/* Scaling canvas space matching 2172 x 724 */}
@@ -323,7 +322,7 @@ export default function CockpitOverlay() {
               <WindshieldRain />
             </div>
 
-            {/* 2. High-Resolution Indian Bus Cockpit Frame (with integrated dashboard dials) (zIndex: 10) */}
+            {/* 2. High-Resolution Indian Bus Cockpit Frame (zIndex: 10) */}
             <div
               className="pointer-events-none absolute inset-0 h-full w-full"
               style={{ zIndex: 10 }}
@@ -386,7 +385,8 @@ export default function CockpitOverlay() {
                 className="relative h-full w-full"
                 style={{
                   transformStyle: "preserve-3d",
-                  transform: "rotateX(57.5deg) rotateY(-10.5deg) rotateZ(14deg)",
+                  transform:
+                    "rotateX(57.5deg) rotateY(-10.5deg) rotateZ(14deg)",
                   transformOrigin: "center center",
                 }}
               >

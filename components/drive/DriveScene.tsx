@@ -11,6 +11,7 @@ import DriverRig from "./DriverRig";
 import DriveController from "./DriveController";
 import RoadChunkManager from "./RoadChunkManager";
 import PropInstances from "./props/PropInstances";
+import TrafficManager from "./TrafficManager";
 import Environment from "./Environment";
 import DistanceDepthBlur from "./DistanceDepthBlur";
 import SteeringKeys from "./SteeringKeys";
@@ -168,6 +169,7 @@ export default function DriveScene() {
         <Environment />
         <RoadChunkManager />
         <PropInstances />
+        <TrafficManager />
         <DriverRig />
         <DriveController />
         <DistanceDepthBlur />
@@ -203,11 +205,13 @@ export default function DriveScene() {
 
       {/* Subtle Minimalist Controls Glass Badge (Bottom Left next to Horn) */}
       <div className="pointer-events-none fixed left-18 sm:left-22 bottom-6 z-30 hidden md:flex items-center gap-2 rounded-full glass-pill px-3 py-1 text-[11px] font-mono text-amber-200/80 shadow-lg">
+        <span>↑/↓ Drive</span>
+        <span className="opacity-30">·</span>
         <span>A/D Steer</span>
         <span className="opacity-30">·</span>
         <span>H Horn</span>
         <span className="opacity-30">·</span>
-        <span>1-2 Mood</span>
+        <span>1-4 Mood</span>
         <span className="opacity-30">·</span>
         <span>L Lights</span>
       </div>
