@@ -31,6 +31,8 @@ export default function PersistentPlayer() {
     volume,
     isMuted,
     isTuning,
+    reverbEnabled,
+    toggleReverb,
     setVolume,
     toggleMute,
     showVideoScreen,
@@ -246,8 +248,20 @@ export default function PersistentPlayer() {
                 </span>
               </div>
 
-              {/* Action Buttons: Dice & Minimize */}
+              {/* Action Buttons: Reverb, Dice & Minimize */}
               <div className="flex items-center gap-1.5">
+                <button
+                  onClick={toggleReverb}
+                  title={reverbEnabled ? "Cabin Reverb Filter: ON" : "Cabin Reverb Filter: OFF"}
+                  className={`rounded-full px-1.5 py-0.5 text-[9px] font-mono transition cursor-pointer flex items-center gap-1 ${
+                    reverbEnabled
+                      ? "bg-amber-500/25 text-amber-300 ring-1 ring-amber-400/40"
+                      : "bg-white/5 text-neutral-400 hover:text-neutral-200"
+                  }`}
+                >
+                  <span>🏛️</span>
+                  <span>{reverbEnabled ? "REVERB" : "DRY"}</span>
+                </button>
                 <button
                   onClick={playRandomSong}
                   title="Random Song"
@@ -449,6 +463,23 @@ export default function PersistentPlayer() {
                 </span>
               </div>
             </div>
+
+            {/* 🏛️ Cabin Reverb Acoustic Filter Toggle */}
+            <button
+              onClick={toggleReverb}
+              title={
+                reverbEnabled
+                  ? "Cabin Reverb: ON (Warm bus interior acoustic echo)"
+                  : "Cabin Reverb: OFF (Click to enable cozy cabin echo)"
+              }
+              className={`flex h-8 w-8 items-center justify-center rounded-full transition-all cursor-pointer text-xs ${
+                reverbEnabled
+                  ? "bg-amber-500/25 text-amber-300 ring-1 ring-amber-400/60 shadow-sm"
+                  : "text-amber-200/50 hover:bg-white/10 hover:text-amber-100"
+              }`}
+            >
+              🏛️
+            </button>
 
             {/* 📱 Phone Mockup Dashboard Toggle */}
             <button

@@ -4,7 +4,6 @@ import {
   JUKEBOX_SONGS,
   getRandomSongIndex,
   getSongByIndex,
-  getSongEffectiveStart,
   type JukeboxSong,
 } from "./songs-catalog";
 import { playRadioStatic } from "./radio-static";
@@ -17,7 +16,7 @@ export interface Track {
 }
 
 /**
- * Audio playback state for 100 Gaane Bus-Driver Jukebox & Scene Lighting.
+ * Audio playback state for 100 Gaane Bus-Driver Jukebox, Reverb Filter & Scene Lighting.
  */
 interface AudioState {
   rotationId: string;
@@ -34,9 +33,10 @@ interface AudioState {
   hasRandomizedOnMount: boolean;
   isTuning: boolean;
 
-  // Volume & Screen state
+  // Volume, Reverb & Screen state
   volume: number; // 0.0 to 1.0
   isMuted: boolean;
+  reverbEnabled: boolean; // Cozy Bus Cabin Acoustic Reverb Filter
   showVideoScreen: boolean;
 
   play: () => void;
@@ -50,6 +50,8 @@ interface AudioState {
   toggleShuffle: () => void;
   setVolume: (volume: number) => void;
   toggleMute: () => void;
+  toggleReverb: () => void;
+  setReverbEnabled: (enabled: boolean) => void;
   toggleVideoScreen: () => void;
   setVideoScreenVisible: (visible: boolean) => void;
   setAudioSource: (source: "youtube" | "local") => void;
@@ -91,7 +93,8 @@ export const useAudioStore = create<AudioState>((set, get) => {
 
     volume: 0.9,
     isMuted: false,
-    showVideoScreen: true, // Visible by default as sleek phone dashboard mockup
+    reverbEnabled: true, // Enabled by default for cozy bus interior acoustics
+    showVideoScreen: true,
 
     play: () => set({ isPlaying: true }),
     pause: () => set({ isPlaying: false }),
@@ -170,6 +173,14 @@ export const useAudioStore = create<AudioState>((set, get) => {
 
     toggleMute: () => {
       set((s) => ({ isMuted: !s.isMuted }));
+    },
+
+    toggleReverb: () => {
+      set((s) => ({ reverbEnabled: !s.reverbEnabled }));
+    },
+
+    setReverbEnabled: (enabled: boolean) => {
+      set({ reverbEnabled: enabled });
     },
 
     toggleVideoScreen: () => set((s) => ({ showVideoScreen: !s.showVideoScreen })),

@@ -6,6 +6,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { useWeatherStore, TIME_LIGHTING_CONFIGS } from "@/lib/weather-store";
 import { useDriveStore } from "@/lib/drive-store";
+import { useLightningStore } from "@/lib/lightning-system";
 import DriverRig from "./DriverRig";
 import DriveController from "./DriveController";
 import RoadChunkManager from "./RoadChunkManager";
@@ -18,24 +19,25 @@ import HornButton from "./HornButton";
 import TimeOfDayBar from "./TimeOfDayBar";
 
 /**
- * Dynamic Atmospheric Scene Lighting with Extended Directional Sunlight & Hard Shadows:
- * 1. Exactly ONE shadow-casting light in the scene (Primary Warm Directional Sunlight).
- * 2. Hard, sharp comic-book-style shadows via THREE.BasicShadowMap.
- * 3. Extended 2048x2048 shadow map covering 200m+ ahead along the road.
- * 4. Dynamic shadow camera follows the player's lateral steering position each frame.
+ * Dynamic Atmospheric Scene Lighting with Extended Directional Sunlight,
+ * Hard Shadows & Organic Lightning Flashes:
  */
 function SceneLighting() {
   const timeOfDay = useWeatherStore((s) => s.timeOfDay);
   const L = TIME_LIGHTING_CONFIGS[timeOfDay];
   const sunLightRef = useRef<THREE.DirectionalLight>(null);
   const sunTargetRef = useRef<THREE.Object3D>(null);
+  const lightningLightRef = useRef<THREE.DirectionalLight>(null);
+  const ambientLightRef = useRef<THREE.AmbientLight>(null);
+  const fogRef = useRef<THREE.Fog>(null);
 
   useFrame(() => {
     const lateralOffset = useDriveStore.getState().lateralOffset;
+    const flash = useLightningStore.getState().lightningFlash;
+
     if (sunLightRef.current && sunTargetRef.current) {
-      // Focus the shadow camera deep along the forward road corridor (up to 200m+ ahead)
+      // Focus shadow camera forward
       sunTargetRef.current.position.set(lateralOffset, 0, -65);
-      // Position the sunlight relative to the player to maintain consistent sun angle
       sunLightRef.current.position.set(
         lateralOffset + L.sunPosition[0] * 1.5,
         L.sunPosition[1] * 1.5,
@@ -43,13 +45,44 @@ function SceneLighting() {
       );
       sunLightRef.current.target = sunTargetRef.current;
     }
+
+    // Dynamic lightning burst lighting
+    if (lightningLightRef.current) {
+      lightningLightRef.current.position.set(lateralOffset + 25, 75, -85);
+      lightningLightRef.current.intensity = flash * 5.2;
+    }
+
+    if (ambientLightRef.current) {
+      ambientLightRef.current.intensity = L.ambientIntensity * 0.65 + flash * 2.0;
+      if (flash > 0.01) {
+        ambientLightRef.current.color.lerpColors(
+          new THREE.Color(L.ambientColor),
+          new THREE.Color("#e0f2fe"),
+          flash * 0.8
+        );
+      } else {
+        ambientLightRef.current.color.set(L.ambientColor);
+      }
+    }
+
+    if (fogRef.current) {
+      if (flash > 0.01) {
+        fogRef.current.color.lerpColors(
+          new THREE.Color(L.fogColor),
+          new THREE.Color("#93b5d6"),
+          flash * 0.6
+        );
+      } else {
+        fogRef.current.color.set(L.fogColor);
+      }
+    }
   });
 
   return (
     <>
       <color attach="background" args={[L.skyHorizon]} />
-      <fog attach="fog" args={[L.fogColor, L.fogNear, L.fogFar]} />
-      <ambientLight color={L.ambientColor} intensity={L.ambientIntensity * 0.65} />
+      <fog ref={fogRef} attach="fog" args={[L.fogColor, L.fogNear, L.fogFar]} />
+      <ambientLight ref={ambientLightRef} color={L.ambientColor} intensity={L.ambientIntensity * 0.65} />
 
       {/* Target object for the directional sunlight shadow camera */}
       <object3D ref={sunTargetRef} position={[0, 0, -65]} />
@@ -86,6 +119,15 @@ function SceneLighting() {
         color="#ffffff"
         intensity={timeOfDay === "morning" ? 0.55 : 0.35}
         position={[0, 60, 0]}
+        castShadow={false}
+      />
+
+      {/* 4. Atmospheric Electric Lightning Flash Fill Light */}
+      <directionalLight
+        ref={lightningLightRef}
+        color="#dbeafe"
+        intensity={0}
+        position={[25, 75, -85]}
         castShadow={false}
       />
     </>

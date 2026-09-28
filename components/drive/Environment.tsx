@@ -5,6 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { useWeatherStore, TIME_LIGHTING_CONFIGS } from "@/lib/weather-store";
+import { useLightningStore } from "@/lib/lightning-system";
 import { xform } from "@/lib/cockpit-assets";
 import { useDriveStore } from "@/lib/drive-store";
 
@@ -68,6 +69,25 @@ function SkyDome() {
     material.uniforms.uHorizon.value.set(cfg.skyHorizon);
     material.uniforms.uBottom.value.set(cfg.skyBottom);
   }, [cfg, material]);
+
+  useFrame(() => {
+    const flash = useLightningStore.getState().lightningFlash;
+    if (flash > 0.01) {
+      const topCol = new THREE.Color(cfg.skyTop).lerp(
+        new THREE.Color("#90afce"),
+        flash * 0.7
+      );
+      const horizCol = new THREE.Color(cfg.skyHorizon).lerp(
+        new THREE.Color("#c6dff8"),
+        flash * 0.85
+      );
+      material.uniforms.uTop.value.copy(topCol);
+      material.uniforms.uHorizon.value.copy(horizCol);
+    } else {
+      material.uniforms.uTop.value.set(cfg.skyTop);
+      material.uniforms.uHorizon.value.set(cfg.skyHorizon);
+    }
+  });
 
   useEffect(() => () => material.dispose(), [material]);
 

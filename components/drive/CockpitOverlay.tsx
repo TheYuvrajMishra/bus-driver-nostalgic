@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useCallback } from "react";
 import { useDriveStore } from "@/lib/drive-store";
 import { useWeatherStore } from "@/lib/weather-store";
+import { useLightningStore } from "@/lib/lightning-system";
 import { steeringInput } from "@/lib/steering-input";
 import { honk } from "./HornButton";
 
@@ -150,6 +151,7 @@ export default function CockpitOverlay() {
   const cockpitWrapRef = useRef<HTMLDivElement>(null);
   const wheelRef = useRef<HTMLDivElement>(null);
   const nimbuRef = useRef<HTMLDivElement>(null);
+  const lightningFlash = useLightningStore((s) => s.lightningFlash);
 
   // Mouse / Pointer drag state for steering wheel
   const isDragging = useRef(false);
@@ -332,6 +334,18 @@ export default function CockpitOverlay() {
                 className="h-full w-full object-fill"
               />
             </div>
+
+            {/* Ambient Lightning Flash Sheen across Windshield & Interior Glass */}
+            {lightningFlash > 0.01 && (
+              <div
+                className="pointer-events-none absolute inset-0 mix-blend-screen transition-opacity duration-75"
+                style={{
+                  backgroundColor: "rgba(219, 234, 254, 0.22)",
+                  opacity: lightningFlash,
+                  zIndex: 12,
+                }}
+              />
+            )}
 
             {/* 3. Hanging Nimbu-Mirchi Talisman (zIndex: 15) */}
             <div

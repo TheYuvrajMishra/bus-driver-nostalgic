@@ -2,27 +2,72 @@
 
 import { useEffect, useRef } from "react";
 import { useAudioStore } from "@/lib/audio-store";
+import { ambientAudio } from "@/lib/ambient-audio";
+import { initLightningScheduler } from "@/lib/lightning-system";
+import {
+  getSharedAudioContext,
+  createBusReverbChain,
+  type ReverbGraph,
+} from "@/lib/reverb-processor";
 
 /**
  * RadioEngine — mounted ONCE in RootLayout (app/layout.tsx).
  *
- * Handles Web Audio unlock and local fallback HTML5 audio.
+ * Handles:
+ * 1. Web Audio unlock & persistent audio subsystem.
+ * 2. Looping rain ambient audio manager with smooth fade-in/fade-out.
+ * 3. Atmospheric lightning & delayed thunder strike scheduler.
+ * 4. Bus cabin acoustic reverb processor & vintage filter network.
  */
 export default function RadioEngine() {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const { track, isPlaying, volume, isMuted, audioSource, pause } =
-    useAudioStore();
+  const reverbGraphRef = useRef<ReverbGraph | null>(null);
+  const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
 
-  // Unlock browser audio context on first user interaction
+  const {
+    track,
+    isPlaying,
+    volume,
+    isMuted,
+    audioSource,
+    reverbEnabled,
+    pause,
+  } = useAudioStore();
+
+  // Initialize ambient rain and lightning scheduler on mount
+  useEffect(() => {
+    ambientAudio.init();
+    initLightningScheduler();
+
+    return () => {
+      ambientAudio.cleanup();
+    };
+  }, []);
+
+  // Unlock browser audio context & setup Web Audio reverb graph on first user interaction
   useEffect(() => {
     const unlock = () => {
       try {
-        const AudioCtx =
-          window.AudioContext || (window as any).webkitAudioContext;
-        if (AudioCtx) {
-          const ctx = new AudioCtx();
+        const ctx = getSharedAudioContext();
+        if (ctx) {
           if (ctx.state === "suspended") {
             ctx.resume();
+          }
+
+          // Wire local audio through the Cabin Reverb graph
+          if (audioRef.current && !sourceNodeRef.current) {
+            try {
+              const source = ctx.createMediaElementSource(audioRef.current);
+              sourceNodeRef.current = source;
+              const graph = createBusReverbChain(ctx);
+              reverbGraphRef.current = graph;
+
+              source.connect(graph.inputNode);
+              graph.outputNode.connect(ctx.destination);
+              graph.setReverb(useAudioStore.getState().reverbEnabled);
+            } catch {
+              // fallback if element source already connected
+            }
           }
         }
       } catch {
@@ -37,6 +82,13 @@ export default function RadioEngine() {
       window.removeEventListener("keydown", unlock);
     };
   }, []);
+
+  // Sync reverb state changes
+  useEffect(() => {
+    if (reverbGraphRef.current) {
+      reverbGraphRef.current.setReverb(reverbEnabled);
+    }
+  }, [reverbEnabled]);
 
   // Sync volume & mute for local audio
   useEffect(() => {
