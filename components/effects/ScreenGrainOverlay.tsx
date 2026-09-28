@@ -7,24 +7,24 @@ interface ScreenGrainOverlayProps {
   opacity?: number;
   /** Blend mode to use. Default: "overlay" */
   blendMode?: "overlay" | "soft-light" | "multiply" | "screen";
-  /** Whether to apply subtle vintage film grain jitter. Default: true */
-  animated?: boolean;
-  /** Size preset for the grain tile. Default: "medium" */
+  /** Size preset for the grain tile. Default: "fine" (small tile, dense repeat = high-res look) */
   grainScale?: "fine" | "medium" | "coarse";
 }
 
 /**
  * ScreenGrainOverlay
- * 
+ *
  * Lightweight, high-performance screen texture overlay created from optimized
  * dark-stone/concrete grain. Overlaid with `mix-blend-mode: overlay` to give the
  * whole screen an authentic, tactile nostalgic highway vibe without blocking pointer interactions.
+ *
+ * Static (no animation) — the fine tile repeats densely across the screen so the
+ * grain reads high-res instead of chunky.
  */
 export default function ScreenGrainOverlay({
   opacity = 0.22,
   blendMode = "overlay",
-  animated = true,
-  grainScale = "medium",
+  grainScale = "fine",
 }: ScreenGrainOverlayProps) {
   const tileSize =
     grainScale === "fine" ? "256px" : grainScale === "coarse" ? "512px" : "384px";
@@ -43,9 +43,7 @@ export default function ScreenGrainOverlay({
       }}
     >
       <div
-        className={`pointer-events-none absolute -inset-[10%] h-[120%] w-[120%] will-change-transform ${
-          animated ? "animate-grain" : ""
-        }`}
+        className="pointer-events-none absolute inset-0"
         style={{
           backgroundImage: `url(${textureUrl})`,
           backgroundRepeat: "repeat",

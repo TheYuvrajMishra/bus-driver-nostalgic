@@ -19,7 +19,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <main className="h-full w-full">{children}</main>
         <RadioEngine />
         <PersistentPlayer />
-        <ScreenGrainOverlay opacity={0.24} blendMode="overlay" animated={true} grainScale="medium" />
+        <ScreenGrainOverlay opacity={0.24} blendMode="overlay" grainScale="fine" />
       </body>
     </html>
   );
