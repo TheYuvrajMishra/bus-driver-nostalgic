@@ -24,13 +24,13 @@ export interface WeatherLighting {
 export const TIME_LIGHTING_CONFIGS: Record<TimeOfDay, WeatherLighting> = {
   // 1. Natural White Sunny Day - Clean Crisp 6500K Daylight, Balanced Sky Ambient & Natural Earth
   morning: {
-    skyTop: "#0f62d6", // Vibrant anime sky blue
-    skyHorizon: "#4da6f5", // Bright saturated horizon blue
-    skyBottom: "#a8d9ff", // Below horizon sky continuation
+    skyTop: "#1a6fdd", // Vibrant saturated blue (reference match)
+    skyHorizon: "#4198f2", // Bright clean horizon blue
+    skyBottom: "#8fc8ff", // Below horizon sky continuation
     skyCloud: "#ffffff",
-    fogColor: "#6fb5f0", // Soft blue atmospheric haze
-    fogNear: 180,
-    fogFar: 880,
+    fogColor: "#7db9f0", // Light atmospheric haze, keeps sky clear
+    fogNear: 200,
+    fogFar: 900,
     ambientColor: "#dbe8f5", // Soft natural daylight sky ambient
     ambientIntensity: 1.15,
     sunColor: "#ffffff", // Pure crisp natural white sunlight (no yellow/orange cast)

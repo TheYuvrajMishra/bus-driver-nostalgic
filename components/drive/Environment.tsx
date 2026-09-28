@@ -140,200 +140,131 @@ function makeCloudSubMesh(
   return g;
 }
 
-import { useTexture } from "@react-three/drei";
-
 // ----------------------------------------------------------------------------
-// Anime-style cloud billboards (PNG sprites scattered across the sky)
+// Faceted low-poly clouds (crisp geometric style) — instanced for performance.
+// Vertex colors baked by face normal: white tops, pale blue-grey shaded sides.
+// Instance color tints per weather (white in sun, dark grey in rain).
 // ----------------------------------------------------------------------------
-const ANIME_CLOUDS = [
-  // Near-mid sky — large hero clouds
-  { tex: 0, x: -180, y: 135, z: -280, w: 170, o: 1.0 },
-  { tex: 1, x: -40, y: 120, z: -350, w: 90, o: 1.0 },
-  { tex: 0, x: 200, y: 150, z: -300, w: 190, o: 1.0 },
-  { tex: 2, x: 120, y: 100, z: -240, w: 220, o: 0.98 },
-  { tex: 1, x: -120, y: 170, z: -200, w: 75, o: 1.0 },
-  // Distant horizon layer — smaller, softer
-  { tex: 0, x: -320, y: 90, z: -480, w: 150, o: 0.9 },
-  { tex: 2, x: 330, y: 95, z: -520, w: 200, o: 0.88 },
-  { tex: 0, x: 0, y: 85, z: -560, w: 160, o: 0.85 },
-  { tex: 1, x: 250, y: 110, z: -450, w: 80, o: 0.9 },
-  { tex: 2, x: -250, y: 105, z: -420, w: 180, o: 0.88 },
-  // High overhead clouds
-  { tex: 0, x: -100, y: 200, z: -180, w: 140, o: 1.0 },
-  { tex: 2, x: 150, y: 210, z: -190, w: 170, o: 0.95 },
-  { tex: 1, x: 40, y: 190, z: -160, w: 70, o: 1.0 },
-  { tex: 0, x: -300, y: 180, z: -250, w: 120, o: 0.95 },
-];
-
-// Texture aspect ratios (width / height)
-const CLOUD_ASPECTS = [1920 / 1280, 1120 / 2240, 2736 / 912];
-
-function AnimeClouds() {
-  const groupRef = useRef<THREE.Group>(null);
-  const textures = useTexture([
-    "/assets/clouds/cloud-fluffy.png",
-    "/assets/clouds/cloud-puffy.png",
-    "/assets/clouds/cloud-wispy.png",
-  ]);
-
-  useFrame((state) => {
-    const g = groupRef.current;
-    if (!g) return;
-    // Slow dreamy drift
-    const t = state.clock.elapsedTime;
-    g.position.x = Math.sin(t * 0.02) * 12;
-    g.position.z = (t * 1.2) % 60;
-  });
-
-  return (
-    <group ref={groupRef}>
-      {ANIME_CLOUDS.map((c, i) => {
-        const h = c.w / CLOUD_ASPECTS[c.tex];
-        return (
-          <sprite key={i} position={[c.x, c.y, c.z]} scale={[c.w, h, 1]}>
-            <spriteMaterial
-              map={textures[c.tex]}
-              transparent
-              depthWrite={false}
-              opacity={c.o}
-              fog={false}
-            />
-          </sprite>
-        );
-      })}
-    </group>
-  );
-}
-
-// -----------------------------------------------------------------------------
-// 3. Horizon Mountain Range (Rugged 3D Faceted Peaks, Rust-to-Slate Gradient)
-// -----------------------------------------------------------------------------
-function makeHorizonMountains(
-  radius: number,
-  baseY: number,
-  peakHeight: number,
-  segments: number,
-  seedOffset: number,
-  rustColor: string,
-  slateColor: string
-): THREE.BufferGeometry {
-  const positions: number[] = [];
-  const colors: number[] = [];
-  const indices: number[] = [];
-
-  let seed = 47281 + seedOffset;
+function makeFacetedCloud(seedOffset = 0): THREE.BufferGeometry {
+  const parts: THREE.BufferGeometry[] = [];
+  let seed = 54321 + seedOffset;
   const rand = () => {
     seed = (seed * 1664525 + 1013904223) >>> 0;
     return seed / 0xffffffff;
   };
 
-  const colRust = new THREE.Color(rustColor);
-  const colSlate = new THREE.Color(slateColor);
-  const colMid = new THREE.Color("#755358"); // warm purplish slate
+  // Cluster of flattened polyhedra — wide, clean cloud slab (reference style)
+  const puffs = 5 + Math.floor(rand() * 2);
+  for (let i = 0; i < puffs; i++) {
+    const angle = (i / puffs) * Math.PI * 2 + rand() * 0.6;
+    const dist = rand() * 12;
+    const px = Math.cos(angle) * dist;
+    const pz = Math.sin(angle) * dist * 0.5;
+    const py = (rand() - 0.35) * 3.0;
+    const r = 6.5 + rand() * 4.0;
 
-  // Ring of mountain vertices: 3 rings (base, mid-ridge, summit peaks)
-  const angleStep = (Math.PI * 2) / segments;
+    // Dodecahedron = larger, crisper facets than icosahedron
+    const g = new THREE.DodecahedronGeometry(r, 0);
+    // Flatten vertically for the classic wide cloud slab look
+    g.scale(1.45, 0.48, 1.0);
+    g.translate(px, py, pz);
 
-  for (let i = 0; i < segments; i++) {
-    const angle = i * angleStep;
-    const sinA = Math.sin(angle);
-    const cosA = Math.cos(angle);
-
-    // Peak height variation with sharp jagged ridges
-    const ridgeNoise =
-      Math.sin(angle * 5.0 + seedOffset) * 0.45 +
-      Math.sin(angle * 11.0 + 1.2) * 0.35 +
-      Math.sin(angle * 19.0 + 2.7) * 0.2;
-    const hPeak = baseY + Math.max(12, peakHeight * (0.65 + ridgeNoise * 0.45));
-    const hMid = baseY + hPeak * 0.48;
-
-    const rBase = radius * (1.0 + (rand() - 0.5) * 0.08);
-    const rMid = radius * (0.95 + (rand() - 0.5) * 0.06);
-    const rPeak = radius * (0.9 + (rand() - 0.5) * 0.05);
-
-    // 0: Base vertex
-    positions.push(sinA * rBase, baseY - 6, -cosA * rBase);
-    colors.push(colRust.r, colRust.g, colRust.b);
-
-    // 1: Mid-ridge vertex
-    positions.push(sinA * rMid, hMid, -cosA * rMid);
-    colors.push(colMid.r, colMid.g, colMid.b);
-
-    // 2: Summit peak vertex
-    positions.push(sinA * rPeak, hPeak, -cosA * rPeak);
-    colors.push(colSlate.r, colSlate.g, colSlate.b);
+    // Bake facet colors by face normal: white tops, blue-grey sides/underside.
+    // toNonIndexed + computeVertexNormals => true flat facets (crisp, no smoothing)
+    const geo = g.index ? g.toNonIndexed() : g;
+    geo.computeVertexNormals();
+    const pos = geo.attributes.position;
+    const norm = geo.attributes.normal;
+    const colors = new Float32Array(pos.count * 3);
+    const top = new THREE.Color("#ffffff");
+    const side = new THREE.Color("#a9c3e2");
+    const bottom = new THREE.Color("#8ba7cf");
+    const c = new THREE.Color();
+    for (let v = 0; v < pos.count; v++) {
+      const ny = norm.getY(v);
+      if (ny > 0.45) c.copy(top);
+      else if (ny > -0.25) c.copy(side).lerp(top, Math.max(0, (ny + 0.25) / 0.7) * 0.5);
+      else c.copy(bottom);
+      colors[v * 3] = c.r;
+      colors[v * 3 + 1] = c.g;
+      colors[v * 3 + 2] = c.b;
+    }
+    geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    geo.deleteAttribute("uv");
+    parts.push(geo);
   }
 
-  // Create faceted triangles between adjacent angular segments
-  for (let i = 0; i < segments; i++) {
-    const next = (i + 1) % segments;
-    const i0 = i * 3 + 0;
-    const i1 = i * 3 + 1;
-    const i2 = i * 3 + 2;
-
-    const n0 = next * 3 + 0;
-    const n1 = next * 3 + 1;
-    const n2 = next * 3 + 2;
-
-    // Lower facet quad (2 tris)
-    indices.push(i0, n0, i1);
-    indices.push(n0, n1, i1);
-
-    // Upper facet quad (2 tris)
-    indices.push(i1, n1, i2);
-    indices.push(n1, n2, i2);
-  }
-
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-  geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
-  geo.setIndex(indices);
-  geo.computeVertexNormals();
-  return geo;
+  const merged = mergeGeometries(parts);
+  parts.forEach((p) => p.dispose());
+  return merged;
 }
 
-function HorizonMountains() {
-  const outerMountains = useMemo(
-    () =>
-      makeHorizonMountains(
-        700,
-        -15,
-        155,
-        48,
-        101,
-        "#bd6e3c", // base rust
-        "#424e62"  // summit cool slate grey
-      ),
-    []
-  );
+const FACETED_CLOUD_POSITIONS = [
+  // Near-mid sky — big hero clouds (reference-style presence)
+  { x: -130, y: 32, z: -150, s: 4.6, ry: 0.4 },
+  { x: 30, y: 42, z: -190, s: 4.0, ry: 1.2 },
+  { x: 165, y: 35, z: -160, s: 4.8, ry: -0.5 },
+  { x: -45, y: 25, z: -120, s: 3.4, ry: 2.1 },
+  { x: 95, y: 48, z: -230, s: 3.8, ry: 0.6 },
+  // Mid layer
+  { x: -220, y: 45, z: -300, s: 4.2, ry: 0.9 },
+  { x: 240, y: 50, z: -320, s: 4.4, ry: -1.1 },
+  { x: 0, y: 40, z: -340, s: 3.8, ry: 1.6 },
+  { x: -90, y: 55, z: -260, s: 3.2, ry: -0.7 },
+  // Distant horizon layer
+  { x: -330, y: 60, z: -480, s: 4.6, ry: 2.8 },
+  { x: 340, y: 65, z: -500, s: 4.8, ry: -2.2 },
+  { x: 120, y: 70, z: -450, s: 4.0, ry: 0.2 },
+];
 
-  const innerRidge = useMemo(
-    () =>
-      makeHorizonMountains(
-        480,
-        -12,
-        82,
-        36,
-        202,
-        "#c9783e", // warm terracotta
-        "#624e52"  // purplish slate ridge
-      ),
-    []
-  );
+function FacetedClouds() {
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+  const timeOfDay = useWeatherStore((s) => s.timeOfDay);
+  const cfg = TIME_LIGHTING_CONFIGS[timeOfDay];
+
+  const cloudGeo = useMemo(() => makeFacetedCloud(0), []);
+
+  useLayoutEffect(() => {
+    const mesh = meshRef.current;
+    if (!mesh) return;
+    const m = new THREE.Matrix4();
+    const q = new THREE.Quaternion();
+    const e = new THREE.Euler();
+    const v = new THREE.Vector3();
+    const s = new THREE.Vector3();
+    const c = new THREE.Color(cfg.cloudColor);
+
+    FACETED_CLOUD_POSITIONS.forEach((p, i) => {
+      e.set(0, p.ry, 0);
+      q.setFromEuler(e);
+      v.set(p.x, p.y, p.z);
+      s.set(p.s, p.s, p.s);
+      m.compose(v, q, s);
+      mesh.setMatrixAt(i, m);
+      mesh.setColorAt(i, c);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+  }, [cloudGeo, cfg]);
+
+  useFrame((state) => {
+    const mesh = meshRef.current;
+    if (!mesh) return;
+    mesh.position.z = (state.clock.elapsedTime * 1.4) % 70;
+  });
 
   return (
-    <group position={[0, 0, 0]}>
-      {/* Distant Rugged Mountain Peaks */}
-      <mesh geometry={outerMountains} frustumCulled={false}>
-        <meshLambertMaterial vertexColors flatShading />
-      </mesh>
-      {/* Mid-Distance Foothill Ridge */}
-      <mesh geometry={innerRidge} frustumCulled={false}>
-        <meshLambertMaterial vertexColors flatShading />
-      </mesh>
-    </group>
+    <instancedMesh
+      ref={meshRef}
+      args={[cloudGeo, undefined, FACETED_CLOUD_POSITIONS.length]}
+      frustumCulled={false}
+    >
+      {/* Unlit = always bright white, crisp facets via baked vertex colors */}
+      <meshBasicMaterial vertexColors toneMapped={false} />
+    </instancedMesh>
   );
 }
+
 
 // -----------------------------------------------------------------------------
 // 4. Volumetric Natural Rain (Secondary Mode)
@@ -490,8 +421,7 @@ export default function Environment() {
   return (
     <group>
       <SkyDome />
-      <HorizonMountains />
-      <AnimeClouds />
+      <FacetedClouds />
       <LineRain />
       <BusHeadlights />
     </group>
