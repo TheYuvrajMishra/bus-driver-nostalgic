@@ -8,8 +8,7 @@ import { useAudioStore } from "@/lib/audio-store";
  *
  * Provides:
  * 1. Retro Bus TV Monitor with active YouTube embed playback & video.
- * 2. Bottom Radio Bar with 100-Gaane Jukebox Controls, Volume Slider, Mute,
- *    and Audio Source selector (YouTube / Local Cassette).
+ * 2. Bottom Radio Bar with 100-Gaane Jukebox Controls, Volume Slider, and Mute.
  */
 export default function PersistentPlayer() {
   const mountId = useId();
@@ -25,8 +24,6 @@ export default function PersistentPlayer() {
     toggleMute,
     showVideoScreen,
     toggleVideoScreen,
-    audioSource,
-    setAudioSource,
     toggle,
     next,
     prev,
@@ -40,15 +37,8 @@ export default function PersistentPlayer() {
     initRandomOnClientMount();
   }, [initRandomOnClientMount]);
 
-  const title =
-    audioSource === "youtube"
-      ? currentSong?.title || "Bollywood 90s Hits"
-      : track.title;
-
-  const subtitle =
-    audioSource === "youtube"
-      ? `📻 Gaana #${currentSong?.id || 1}/100 · 80s-90s Classics`
-      : `📼 Local Cassette · ${track.artist}`;
+  const title = currentSong?.title || "Bollywood 90s Hits";
+  const subtitle = `📻 Gaana #${currentSong?.id || 1}/100 · 80s-90s Classics`;
 
   // Space = play/pause. Skip when typing in inputs.
   useEffect(() => {
@@ -74,14 +64,13 @@ export default function PersistentPlayer() {
   const volumePercent = Math.round((isMuted ? 0 : volume) * 100);
 
   // YouTube embed URL with autoplay parameter when isPlaying is true
-  const ytEmbedUrl =
-    currentSong && audioSource === "youtube"
-      ? `https://www.youtube.com/embed/${currentSong.videoId}?autoplay=${
-          isPlaying ? 1 : 0
-        }&playsinline=1&rel=0&modestbranding=1${
-          currentSong.startSeconds ? `&start=${currentSong.startSeconds}` : ""
-        }`
-      : null;
+  const ytEmbedUrl = currentSong
+    ? `https://www.youtube.com/embed/${currentSong.videoId}?autoplay=${
+        isPlaying ? 1 : 0
+      }&playsinline=1&rel=0&modestbranding=1${
+        currentSong.startSeconds ? `&start=${currentSong.startSeconds}` : ""
+      }`
+    : null;
 
   return (
     <div
@@ -89,7 +78,7 @@ export default function PersistentPlayer() {
       className="fixed bottom-4 left-4 z-40 flex flex-col gap-2 select-none"
     >
       {/* 📺 Retro Bus TV Screen (Mounted above the radio bar) */}
-      {showVideoScreen && audioSource === "youtube" && (
+      {showVideoScreen && (
         <div className="relative w-80 sm:w-96 rounded-2xl border-2 border-amber-500/60 bg-[#120a06]/95 p-2 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-3 duration-300">
           {/* TV Bezel Header */}
           <div className="flex items-center justify-between px-2 pb-1.5 text-xs text-amber-200">
@@ -155,38 +144,36 @@ export default function PersistentPlayer() {
         </button>
 
         {/* Track Navigation Controls */}
-        {audioSource === "youtube" && (
-          <div className="flex shrink-0 items-center gap-1">
-            <button
-              onClick={prev}
-              aria-label="Previous song"
-              title="Previous song"
-              className="flex h-8 w-8 items-center justify-center rounded-full text-amber-200/70 transition hover:bg-amber-500/10 hover:text-amber-100 cursor-pointer"
-            >
-              <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden>
-                <path d="M6 5h2.5v14H6zM19 5.5v13a1 1 0 0 1-1.53.85L8.6 13.2a1 1 0 0 1 0-1.7l8.87-6.15A1 1 0 0 1 19 5.5Z" />
-              </svg>
-            </button>
-            <button
-              onClick={next}
-              aria-label="Next song"
-              title="Next song"
-              className="flex h-8 w-8 items-center justify-center rounded-full text-amber-200/70 transition hover:bg-amber-500/10 hover:text-amber-100 cursor-pointer"
-            >
-              <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden>
-                <path d="M15.5 5H18v14h-2.5zM5 5.5v13a1 1 0 0 0 1.53.85l8.87-6.15a1 1 0 0 0 0-1.7L6.53 4.65A1 1 0 0 0 5 5.5Z" />
-              </svg>
-            </button>
-            <button
-              onClick={playRandomSong}
-              aria-label="Random Song"
-              title="Surprise Me (Play Random Track)"
-              className="flex h-8 w-8 items-center justify-center rounded-full text-amber-300/80 hover:bg-amber-500/10 hover:text-amber-100 transition cursor-pointer text-xs"
-            >
-              🎲
-            </button>
-          </div>
-        )}
+        <div className="flex shrink-0 items-center gap-1">
+          <button
+            onClick={prev}
+            aria-label="Previous song"
+            title="Previous song"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-amber-200/70 transition hover:bg-amber-500/10 hover:text-amber-100 cursor-pointer"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden>
+              <path d="M6 5h2.5v14H6zM19 5.5v13a1 1 0 0 1-1.53.85L8.6 13.2a1 1 0 0 1 0-1.7l8.87-6.15A1 1 0 0 1 19 5.5Z" />
+            </svg>
+          </button>
+          <button
+            onClick={next}
+            aria-label="Next song"
+            title="Next song"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-amber-200/70 transition hover:bg-amber-500/10 hover:text-amber-100 cursor-pointer"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden>
+              <path d="M15.5 5H18v14h-2.5zM5 5.5v13a1 1 0 0 0 1.53.85l8.87-6.15a1 1 0 0 0 0-1.7L6.53 4.65A1 1 0 0 0 5 5.5Z" />
+            </svg>
+          </button>
+          <button
+            onClick={playRandomSong}
+            aria-label="Random Song"
+            title="Surprise Me (Play Random Track)"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-amber-300/80 hover:bg-amber-500/10 hover:text-amber-100 transition cursor-pointer text-xs"
+          >
+            🎲
+          </button>
+        </div>
 
         {/* Song Info */}
         <div className="min-w-0 flex-1">
@@ -250,33 +237,16 @@ export default function PersistentPlayer() {
           </div>
 
           {/* 📺 TV Screen Toggle */}
-          {audioSource === "youtube" && (
-            <button
-              onClick={toggleVideoScreen}
-              title={showVideoScreen ? "Hide Bus TV" : "Show Bus TV"}
-              className={`flex h-8 w-8 items-center justify-center rounded-full transition cursor-pointer text-sm ${
-                showVideoScreen
-                  ? "bg-amber-500/20 text-amber-300 ring-1 ring-amber-400"
-                  : "text-amber-200/70 hover:bg-amber-500/10 hover:text-amber-100"
-              }`}
-            >
-              📺
-            </button>
-          )}
-
-          {/* Source Selector: YouTube vs Local Cassette */}
           <button
-            onClick={() =>
-              setAudioSource(audioSource === "youtube" ? "local" : "youtube")
-            }
-            title={
-              audioSource === "youtube"
-                ? "Switch to Offline Local Cassette"
-                : "Switch to 100 Gaane YouTube Jukebox"
-            }
-            className="flex h-8 px-2 items-center justify-center rounded-full text-[10px] font-bold tracking-tight bg-amber-950/80 text-amber-300 hover:bg-amber-900/80 border border-amber-800/40 transition cursor-pointer"
+            onClick={toggleVideoScreen}
+            title={showVideoScreen ? "Hide Bus TV" : "Show Bus TV"}
+            className={`flex h-8 w-8 items-center justify-center rounded-full transition cursor-pointer text-sm ${
+              showVideoScreen
+                ? "bg-amber-500/20 text-amber-300 ring-1 ring-amber-400"
+                : "text-amber-200/70 hover:bg-amber-500/10 hover:text-amber-100"
+            }`}
           >
-            {audioSource === "youtube" ? "📻 YT" : "📼 MP3"}
+            📺
           </button>
         </div>
       </div>
