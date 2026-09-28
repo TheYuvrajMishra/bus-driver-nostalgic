@@ -2,19 +2,22 @@
  * Module-scope holder for YouTube IFrame player instance and Audio helpers.
  */
 
-interface YtPlayerLike {
+export interface YtPlayerLike {
   playVideo(): void;
   pauseVideo(): void;
   nextVideo(): void;
   previousVideo(): void;
   loadVideoById(args: { videoId: string; startSeconds?: number } | string): void;
   cueVideoById(args: { videoId: string; startSeconds?: number } | string): void;
+  seekTo(seconds: number, allowSeekAhead?: boolean): void;
   unMute(): void;
   mute(): void;
   isMuted(): boolean;
   setVolume(volume: number): void;
   getVolume(): number;
   getPlayerState(): number;
+  getCurrentTime(): number;
+  getDuration(): number;
   getVideoData(): { title?: string };
 }
 
@@ -26,6 +29,10 @@ export function setYtPlayer(p: YtPlayerLike | null) {
 
 export function isYtReady(): boolean {
   return player !== null;
+}
+
+export function getYtPlayer(): YtPlayerLike | null {
+  return player;
 }
 
 export function ytUnmute() {
@@ -111,6 +118,30 @@ export function ytPrev() {
   try {
     ytUnmute();
     player?.previousVideo();
+  } catch {
+    /* ignore */
+  }
+}
+
+export function ytGetCurrentTime(): number {
+  try {
+    return player?.getCurrentTime() ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+export function ytGetDuration(): number {
+  try {
+    return player?.getDuration() ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+export function ytSeekTo(seconds: number) {
+  try {
+    player?.seekTo(seconds, true);
   } catch {
     /* ignore */
   }

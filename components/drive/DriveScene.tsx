@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import Link from "next/link";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { useWeatherStore, TIME_LIGHTING_CONFIGS } from "@/lib/weather-store";
@@ -140,9 +141,33 @@ export default function DriveScene() {
       <SteeringKeys />
       <HornButton />
 
-      {/* Subtle Controls Badge */}
-      <div className="pointer-events-none fixed right-4 bottom-4 z-30 rounded-lg bg-black/60 px-3.5 py-1.5 text-xs font-mono text-amber-200/90 backdrop-blur-md border border-amber-800/40 shadow-xl">
-        A/D to Steer · H = Horn · 1-2 = Weather/Time · L = Lights
+      {/* Floating Top Right Glass Pill Navigation (Catalog & Playlists) */}
+      <div className="fixed top-4 right-4 sm:right-6 z-40 hidden sm:flex items-center gap-2">
+        <Link
+          href="/songs"
+          className="glass-pill rounded-full px-3.5 py-1.5 text-xs font-semibold text-amber-100/90 shadow-xl transition-all duration-300 hover:scale-105 hover:text-white active:scale-95 flex items-center gap-1.5"
+        >
+          <span>📻</span>
+          <span>100 Songs</span>
+        </Link>
+        <Link
+          href="/playlists"
+          className="glass-pill rounded-full px-3.5 py-1.5 text-xs font-semibold text-amber-100/90 shadow-xl transition-all duration-300 hover:scale-105 hover:text-white active:scale-95 flex items-center gap-1.5"
+        >
+          <span>📼</span>
+          <span>Stations</span>
+        </Link>
+      </div>
+
+      {/* Subtle Minimalist Controls Glass Badge (Bottom Left next to Horn) */}
+      <div className="pointer-events-none fixed left-18 sm:left-22 bottom-6 z-30 hidden md:flex items-center gap-2 rounded-full glass-pill px-3 py-1 text-[11px] font-mono text-amber-200/80 shadow-lg">
+        <span>A/D Steer</span>
+        <span className="opacity-30">·</span>
+        <span>H Horn</span>
+        <span className="opacity-30">·</span>
+        <span>1-2 Mood</span>
+        <span className="opacity-30">·</span>
+        <span>L Lights</span>
       </div>
     </div>
   );

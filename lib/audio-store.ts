@@ -4,8 +4,10 @@ import {
   JUKEBOX_SONGS,
   getRandomSongIndex,
   getSongByIndex,
+  getSongEffectiveStart,
   type JukeboxSong,
 } from "./songs-catalog";
+import { playRadioStatic } from "./radio-static";
 
 export interface Track {
   id: string;
@@ -30,6 +32,7 @@ interface AudioState {
   currentSong: JukeboxSong;
   shuffleMode: boolean;
   hasRandomizedOnMount: boolean;
+  isTuning: boolean;
 
   // Volume & Screen state
   volume: number; // 0.0 to 1.0
@@ -48,119 +51,144 @@ interface AudioState {
   setVolume: (volume: number) => void;
   toggleMute: () => void;
   toggleVideoScreen: () => void;
+  setVideoScreenVisible: (visible: boolean) => void;
   setAudioSource: (source: "youtube" | "local") => void;
   setRadioTitle: (t: string | null) => void;
   setRotation: (id: string, auto?: boolean) => void;
   enableAutoFollow: () => void;
+  triggerTuningStatic: () => void;
 }
 
 // Deterministic initial state for SSR
 const initialRotation = getCurrentRotation();
 const initialSong = JUKEBOX_SONGS[0];
 
-export const useAudioStore = create<AudioState>((set, get) => ({
-  rotationId: initialRotation.id,
-  autoFollow: true,
-  track: initialRotation.track,
-  isPlaying: false,
-  audioSource: "youtube",
-  radioTitle: initialSong.title,
+export const useAudioStore = create<AudioState>((set, get) => {
+  let tuningTimeout: NodeJS.Timeout | null = null;
 
-  currentSongIndex: 0,
-  currentSong: initialSong,
-  shuffleMode: true,
-  hasRandomizedOnMount: false,
+  const triggerTuning = () => {
+    playRadioStatic(0.38, 0.32);
+    set({ isTuning: true });
+    if (tuningTimeout) clearTimeout(tuningTimeout);
+    tuningTimeout = setTimeout(() => {
+      set({ isTuning: false });
+    }, 420);
+  };
 
-  volume: 0.9,
-  isMuted: false,
-  showVideoScreen: true, // Visible by default so user sees and hears video immediately!
+  return {
+    rotationId: initialRotation.id,
+    autoFollow: true,
+    track: initialRotation.track,
+    isPlaying: false,
+    audioSource: "youtube",
+    radioTitle: initialSong.title,
 
-  play: () => set({ isPlaying: true }),
-  pause: () => set({ isPlaying: false }),
-  toggle: () => set((s) => ({ isPlaying: !s.isPlaying })),
+    currentSongIndex: 0,
+    currentSong: initialSong,
+    shuffleMode: true,
+    hasRandomizedOnMount: false,
+    isTuning: false,
 
-  initRandomOnClientMount: () => {
-    if (get().hasRandomizedOnMount) return;
-    const rndIdx = getRandomSongIndex();
-    const song = getSongByIndex(rndIdx);
-    set({
-      currentSongIndex: rndIdx,
-      currentSong: song,
-      radioTitle: song.title,
-      hasRandomizedOnMount: true,
-    });
-  },
+    volume: 0.9,
+    isMuted: false,
+    showVideoScreen: true, // Visible by default as sleek phone dashboard mockup
 
-  playSongIndex: (index: number) => {
-    const s = getSongByIndex(index);
-    set({
-      currentSongIndex: index,
-      currentSong: s,
-      radioTitle: s.title,
-      isPlaying: true,
-    });
-  },
+    play: () => set({ isPlaying: true }),
+    pause: () => set({ isPlaying: false }),
+    toggle: () => set((s) => ({ isPlaying: !s.isPlaying })),
 
-  playRandomSong: () => {
-    const current = get().currentSongIndex;
-    let nextIdx = getRandomSongIndex();
-    if (JUKEBOX_SONGS.length > 1 && nextIdx === current) {
-      nextIdx = (nextIdx + 1) % JUKEBOX_SONGS.length;
-    }
-    const s = getSongByIndex(nextIdx);
-    set({
-      currentSongIndex: nextIdx,
-      currentSong: s,
-      radioTitle: s.title,
-      isPlaying: true,
-    });
-  },
+    initRandomOnClientMount: () => {
+      if (get().hasRandomizedOnMount) return;
+      const rndIdx = getRandomSongIndex();
+      const song = getSongByIndex(rndIdx);
+      set({
+        currentSongIndex: rndIdx,
+        currentSong: song,
+        radioTitle: song.title,
+        hasRandomizedOnMount: true,
+      });
+    },
 
-  next: () => {
-    const { shuffleMode, currentSongIndex } = get();
-    if (shuffleMode) {
-      get().playRandomSong();
-    } else {
-      const nextIdx = (currentSongIndex + 1) % JUKEBOX_SONGS.length;
-      get().playSongIndex(nextIdx);
-    }
-  },
+    triggerTuningStatic: () => {
+      triggerTuning();
+    },
 
-  prev: () => {
-    const { shuffleMode, currentSongIndex } = get();
-    if (shuffleMode) {
-      get().playRandomSong();
-    } else {
-      const prevIdx =
-        (currentSongIndex - 1 + JUKEBOX_SONGS.length) % JUKEBOX_SONGS.length;
-      get().playSongIndex(prevIdx);
-    }
-  },
+    playSongIndex: (index: number) => {
+      triggerTuning();
+      const s = getSongByIndex(index);
+      set({
+        currentSongIndex: index,
+        currentSong: s,
+        radioTitle: s.title,
+        isPlaying: true,
+      });
+    },
 
-  toggleShuffle: () => set((s) => ({ shuffleMode: !s.shuffleMode })),
+    playRandomSong: () => {
+      triggerTuning();
+      const current = get().currentSongIndex;
+      let nextIdx = getRandomSongIndex();
+      if (JUKEBOX_SONGS.length > 1 && nextIdx === current) {
+        nextIdx = (nextIdx + 1) % JUKEBOX_SONGS.length;
+      }
+      const s = getSongByIndex(nextIdx);
+      set({
+        currentSongIndex: nextIdx,
+        currentSong: s,
+        radioTitle: s.title,
+        isPlaying: true,
+      });
+    },
 
-  setVolume: (vol: number) => {
-    const clamped = Math.max(0, Math.min(1, vol));
-    set({ volume: clamped, isMuted: clamped === 0 });
-  },
+    next: () => {
+      const { shuffleMode, currentSongIndex } = get();
+      if (shuffleMode) {
+        get().playRandomSong();
+      } else {
+        const nextIdx = (currentSongIndex + 1) % JUKEBOX_SONGS.length;
+        get().playSongIndex(nextIdx);
+      }
+    },
 
-  toggleMute: () => {
-    set((s) => ({ isMuted: !s.isMuted }));
-  },
+    prev: () => {
+      const { shuffleMode, currentSongIndex } = get();
+      if (shuffleMode) {
+        get().playRandomSong();
+      } else {
+        const prevIdx =
+          (currentSongIndex - 1 + JUKEBOX_SONGS.length) % JUKEBOX_SONGS.length;
+        get().playSongIndex(prevIdx);
+      }
+    },
 
-  toggleVideoScreen: () => set((s) => ({ showVideoScreen: !s.showVideoScreen })),
+    toggleShuffle: () => set((s) => ({ shuffleMode: !s.shuffleMode })),
 
-  setAudioSource: (audioSource) => set({ audioSource }),
-  setRadioTitle: (radioTitle) => set({ radioTitle }),
+    setVolume: (vol: number) => {
+      const clamped = Math.max(0, Math.min(1, vol));
+      set({ volume: clamped, isMuted: clamped === 0 });
+    },
 
-  setRotation: (id, auto = false) => {
-    const r = ROTATIONS.find((x) => x.id === id);
-    if (!r) return;
-    set({ rotationId: id, track: r.track, autoFollow: auto });
-  },
+    toggleMute: () => {
+      set((s) => ({ isMuted: !s.isMuted }));
+    },
 
-  enableAutoFollow: () => {
-    const r = getCurrentRotation();
-    set({ rotationId: r.id, track: r.track, autoFollow: true });
-  },
-}));
+    toggleVideoScreen: () => set((s) => ({ showVideoScreen: !s.showVideoScreen })),
+
+    setVideoScreenVisible: (visible: boolean) => set({ showVideoScreen: visible }),
+
+    setAudioSource: (audioSource) => set({ audioSource }),
+    setRadioTitle: (radioTitle) => set({ radioTitle }),
+
+    setRotation: (id, auto = false) => {
+      triggerTuning();
+      const r = ROTATIONS.find((x) => x.id === id);
+      if (!r) return;
+      set({ rotationId: id, track: r.track, autoFollow: auto });
+    },
+
+    enableAutoFollow: () => {
+      const r = getCurrentRotation();
+      set({ rotationId: r.id, track: r.track, autoFollow: true });
+    },
+  };
+});

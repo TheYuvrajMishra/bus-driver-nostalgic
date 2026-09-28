@@ -25,7 +25,110 @@ body {
   user-select: none;
 }
 
-/* Subtle vintage film / analog grain jitter animation */
+/* ==========================================================================
+   REALISTIC LIGHT-BENDING OPTICAL GLASSMORHPISM & HUD STYLING
+   ========================================================================== */
+
+/* Floating minimalist glass pill (Player & Top Nav) */
+.glass-pill {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.03) 40%,
+    rgba(18, 10, 6, 0.72) 100%
+  ),
+  rgba(14, 8, 5, 0.82);
+  backdrop-filter: blur(24px) saturate(190%) contrast(105%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%) contrast(105%);
+  box-shadow:
+    0 20px 48px -10px rgba(0, 0, 0, 0.75),
+    0 1px 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 -1px 1px 0 rgba(0, 0, 0, 0.6) inset,
+    0 0 20px 0 rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+}
+
+/* Minimalist Glass Panel / Card (Double-Bezel Inner Core) */
+.glass-panel {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.02) 45%,
+    rgba(12, 6, 3, 0.75) 100%
+  ),
+  rgba(15, 8, 4, 0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow:
+    0 24px 60px -12px rgba(0, 0, 0, 0.8),
+    0 1px 1px 0 rgba(255, 255, 255, 0.22) inset,
+    0 -1px 1px 0 rgba(0, 0, 0, 0.5) inset;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+/* Phone Mockup on Dashboard */
+.glass-phone-body {
+  background: linear-gradient(
+    145deg,
+    #2c1a12 0%,
+    #180e08 40%,
+    #0d0604 100%
+  );
+  box-shadow:
+    0 30px 70px -15px rgba(0, 0, 0, 0.95),
+    0 0 0 1px rgba(255, 255, 255, 0.14),
+    0 0 35px 2px rgba(245, 158, 11, 0.12),
+    0 2px 4px 0 rgba(255, 255, 255, 0.25) inset;
+}
+
+/* Light-bending refraction lens reflection streak */
+.glass-reflection {
+  background: linear-gradient(
+    125deg,
+    rgba(255, 255, 255, 0.25) 0%,
+    rgba(255, 255, 255, 0.08) 22%,
+    transparent 42%,
+    transparent 100%
+  );
+}
+
+/* Equalizer Bars Animation */
+@keyframes eq-pulse-1 {
+  0%, 100% { height: 4px; }
+  50% { height: 16px; }
+}
+@keyframes eq-pulse-2 {
+  0%, 100% { height: 14px; }
+  50% { height: 6px; }
+}
+@keyframes eq-pulse-3 {
+  0%, 100% { height: 8px; }
+  50% { height: 18px; }
+}
+@keyframes eq-pulse-4 {
+  0%, 100% { height: 18px; }
+  50% { height: 5px; }
+}
+
+.eq-bar-1 { animation: eq-pulse-1 0.75s ease-in-out infinite; }
+.eq-bar-2 { animation: eq-pulse-2 0.62s ease-in-out infinite; }
+.eq-bar-3 { animation: eq-pulse-3 0.88s ease-in-out infinite; }
+.eq-bar-4 { animation: eq-pulse-4 0.71s ease-in-out infinite; }
+
+/* Radio tuning static scanline flash */
+@keyframes radio-tuning-glitch {
+  0% { opacity: 0; transform: translateY(-100%); }
+  25% { opacity: 0.8; transform: translateY(20%); }
+  50% { opacity: 0.4; transform: translateY(-30%); }
+  75% { opacity: 0.9; transform: translateY(60%); }
+  100% { opacity: 0; transform: translateY(100%); }
+}
+
+.animate-tuning-glitch {
+  animation: radio-tuning-glitch 0.4s steps(4) forwards;
+}
+
+/* Vintage film / analog grain jitter animation */
 @keyframes grain-jitter {
   0%, 100% { transform: translate3d(0, 0, 0); }
   10% { transform: translate3d(-1.5%, -2%, 0); }
@@ -42,4 +145,3 @@ body {
 .animate-grain {
   animation: grain-jitter 7s steps(8) infinite;
 }
-

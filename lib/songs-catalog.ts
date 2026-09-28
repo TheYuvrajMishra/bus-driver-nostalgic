@@ -938,3 +938,24 @@ export function getSongByIndex(index: number): JukeboxSong {
   const safeIdx = ((index % JUKEBOX_SONGS.length) + JUKEBOX_SONGS.length) % JUKEBOX_SONGS.length;
   return JUKEBOX_SONGS[safeIdx];
 }
+
+/**
+ * Returns the effective start time in seconds for a song.
+ * Every song starts after 60 seconds (or 60s past its custom album offset).
+ */
+export function getSongEffectiveStart(song: JukeboxSong): number {
+  if (typeof song.startSeconds === "number" && song.startSeconds > 0) {
+    return song.startSeconds + 60;
+  }
+  return 60;
+}
+
+/**
+ * Returns the complete embed URL for a song with effective start time,
+ * JS API enabled, and responsive configuration.
+ */
+export function getSongEmbedUrl(song: JukeboxSong, autoplay = true): string {
+  const start = getSongEffectiveStart(song);
+  return `https://www.youtube.com/embed/${song.videoId}?autoplay=${autoplay ? 1 : 0}&start=${start}&enablejsapi=1&playsinline=1&rel=0&modestbranding=1&controls=1&iv_load_policy=3`;
+}
+
